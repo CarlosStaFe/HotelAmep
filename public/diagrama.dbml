@@ -1,0 +1,146 @@
+table Localidades {
+  id int [pk, increment]
+  id_prov varchar(2) [not null]
+  provincia varchar(100) [not null]
+  id_local varchar(11) [not null]
+  localidad varchar(100) [not null]
+  cod_postal varchar(10) [not null]
+}
+
+Table CtroCostos {
+  id int [pk, increment]
+  nombre varchar(255) [not null]
+  tipo varchar(100) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+
+Table Rubros {
+  id int [pk, increment]
+  ctrocosto_id int [not null]
+  nombre varchar(255) [not null]
+  activo boolean [default: true]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Rubros.ctrocosto_id > CtroCostos.id
+
+table Articulos {
+  id int [pk, increment]
+  rubro_id int [not null]
+  nombre varchar(255) [not null]
+  precio decimal(12,2) [not null]
+  stock decimal(12,3) [default: 0]
+  activo boolean [default: true]
+  comanda boolean [default: true]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Articulos.rubro_id > Rubros.id
+
+table Proveedores {
+  id int [pk, increment]
+  nombre varchar(100) [not null]
+  razon_social varchar(100) [not null]
+  cuit varchar(11) [not null]
+  tipo_iva varchar(50) [not null]
+  domicilio varchar(100) [not null]
+  cod_postal_id varchar(10) [not null]
+  telefono varchar(50)
+  email varchar(100)
+  activo boolean [default: true]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Proveedores.cod_postal_id > Localidades.id
+
+table Cab_Compras {
+  id int [pk, increment]
+  proveedor_id int [not null]
+  fecha datetime [not null]
+  prefijo varchar(4) [not null]
+  subfijo varchar(8) [not null]
+  subtotal decimal(12,2) [not null]
+  impuesto decimal(12,2) [not null]
+  total decimal(12,2) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Cab_Compras.proveedor_id > Proveedores.id
+
+table Det_Compras {
+  id int [pk, increment]
+  cab_compra_id int [not null]
+  articulo_id int [not null]
+  cantidad decimal(12,3) [not null]
+  importe decimal(12,2) [not null]
+  impuesto decimal(12,2) [not null]
+  total decimal(12,2) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Det_Compras.cab_compra_id > Cab_Compras.id
+Ref: Det_Compras.articulo_id > Articulos.id
+
+table Pasajeros {
+  id int [pk, increment]
+  documento varchar(8) [not null]
+  apelynombre varchar(100) [not null]
+  fecha_nacimiento date
+  telefono varchar(50)
+  email varchar(100)
+  direccion varchar(100)
+  cod_postal_id varchar(10) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Pasajeros.cod_postal_id > Localidades.id
+
+table Comandas {
+  id int [pk, increment]
+  articulo_id int [not null]
+  pasajero_id int [not null]
+  fecha datetime [not null]
+  vendedor varchar(20) [not null]
+  habitacion varchar(10) [not null]
+  cantidad decimal(12,3) [not null]
+  total decimal(12,2) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Comandas.articulo_id > Articulos.id
+Ref: Comandas.pasajero_id > Pasajeros.id
+
+table Pasajeros {
+  id int [pk, increment]
+  documento varchar(8) [not null]
+  apelynombre varchar(100) [not null]
+  fecha_nacimiento date
+  telefono varchar(50)
+  email varchar(100)
+  direccion varchar(100)
+  cod_postal_id varchar(10) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: Pasajeros.cod_postal_id > Localidades.id
+
+table habitaciones {
+  id int [pk, increment]
+  numero varchar(10) [not null]
+  tipo varchar(50) [not null]
+  estado varchar(20) [not null]
+  observacion varchar(100)
+  fecha_creacion datetime
+  fecha_actualizacion datetime
+}
+Ref: habitaciones.id > Comandas.habitacion
