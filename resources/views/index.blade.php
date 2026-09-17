@@ -10,7 +10,7 @@
 
     <!-- Favicons -->
     <link href="{{ asset('assets/img/favicon.png') }}" rel="icon" type="image/png">
-    <link href="{{ asset('assets/img/favicon.png') }}" rel="shortcut icon" type="image/png">
+    <link href="{{ asset('favicon.ico') }}" rel="shortcut icon" type="image/x-icon">
     <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
 
     <!-- Fonts -->
@@ -801,15 +801,6 @@
                                 <img src="assets/img/DSC_4860.jpg" alt="Spa and Wellness Center"
                                     class="img-fluid" loading="lazy">
                                 <a href="assets/img/DSC_4860.jpg" class="gallery-overlay glightbox">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div class="gallery-item">
-                                <img src="assets/img/tarifario.png" alt="Conference Facilities"
-                                    class="img-fluid" loading="lazy">
-                                <a href="assets/img/tarifario.png" class="gallery-overlay glightbox">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </div>

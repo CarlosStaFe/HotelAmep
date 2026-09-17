@@ -27,14 +27,18 @@ class UsuarioController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'telefono' => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'string', 'exists:roles,name'],
+            'activo' => ['required', 'boolean'],
         ]);
 
         $usuario = User::create([
             'name' => $validated['nombre'],
             'email' => $validated['email'],
+            'telefono' => $validated['telefono'],
             'password' => Hash::make($validated['password']),
+            'activo' => $validated['activo'],
         ]);
 
         $usuario->assignRole($validated['role']);

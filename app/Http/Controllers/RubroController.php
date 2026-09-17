@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CtroCosto;
-use App\Models\rubro;
+use App\Models\Rubro;
 use Illuminate\Http\Request;
 
 class RubroController extends Controller
@@ -13,7 +13,7 @@ class RubroController extends Controller
      */
     public function index()
     {
-        $rubros = rubro::with('ctrocosto')->get();
+        $rubros = Rubro::with('ctrocosto')->get();
         return view('admin.rubros.index', compact('rubros'));
     }
 
@@ -38,7 +38,7 @@ class RubroController extends Controller
             'activo' => 'required|boolean',
         ]);
 
-        $rubro = new rubro();
+        $rubro = new Rubro();
         $rubro->ctrocosto_id = $request->input('ctrocosto_id');
         $rubro->nombre = $request->input('nombre');
         $rubro->descripcion = $request->input('descripcion');
@@ -59,7 +59,7 @@ class RubroController extends Controller
      */
     public function show($id)
     {
-        $rubro = rubro::with('ctrocosto')->findOrFail($id);
+        $rubro = Rubro::with('ctrocosto')->findOrFail($id);
         return view('admin.rubros.show', compact('rubro'));
     }
 
@@ -68,7 +68,7 @@ class RubroController extends Controller
      */
     public function edit($id)
     {
-        $rubro = rubro::findOrFail($id);
+        $rubro = Rubro::findOrFail($id);
         $ctrocostos = CtroCosto::orderBy('nombre')->get();
 
         return view('admin.rubros.edit', compact('rubro', 'ctrocostos'));
@@ -79,7 +79,7 @@ class RubroController extends Controller
      */
     public function delete($id)
     {
-        $rubro = rubro::with('ctrocosto')->findOrFail($id);
+        $rubro = Rubro::with('ctrocosto')->findOrFail($id);
         return view('admin.rubros.delete', compact('rubro'));
     }
 
@@ -95,7 +95,7 @@ class RubroController extends Controller
             'activo' => 'required|boolean',
         ]);
 
-        $rubro = rubro::findOrFail($id);
+        $rubro = Rubro::findOrFail($id);
         $rubro->ctrocosto_id = $request->input('ctrocosto_id');
         $rubro->nombre = $request->input('nombre');
         $rubro->descripcion = $request->input('descripcion');
@@ -115,7 +115,7 @@ class RubroController extends Controller
      */
     public function destroy($id)
     {
-        $rubro = rubro::findOrFail($id);
+        $rubro = Rubro::findOrFail($id);
         $rubro->delete();
 
         return redirect()->route('rubros.index')

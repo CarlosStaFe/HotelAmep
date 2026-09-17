@@ -29,14 +29,14 @@
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
-                                <th style="width: 50px; min-width: 50px;">Nro.</th>
-                                <th style="width: 250px; min-width: 250px;">Rubro</th>
-                                <th style="width: 250px; min-width: 250px;">Nombre</th>
-                                <th style="width: 50px; min-width: 50px;">Stock</th>
-                                <th style="width: 70px; min-width: 70px;">Precio</th>
-                                <th style="width: 50px; min-width: 50px;">Activo?</th>
-                                <th style="width: 50px; min-width: 50px;">Comanda?</th>
-                                <th style="width: 140px; min-width: 140px;">Acciones</th>
+                                <th style="width: 50px;">Nro.</th>
+                                <th style="width: 250px;">Rubro</th>
+                                <th style="width: 250px;">Nombre</th>
+                                <th style="width: 50px;">Stock</th>
+                                <th style="width: 70px;">Precio</th>
+                                <th style="width: 50px;">Activo?</th>
+                                <th style="width: 50px;">Comanda?</th>
+                                <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>

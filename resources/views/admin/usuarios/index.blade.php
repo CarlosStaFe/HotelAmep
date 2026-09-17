@@ -21,20 +21,19 @@
                         <a href="{{ url('/admin/usuarios/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
 
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
-                                <th style="width: 50px; min-width: 50px;">Nro.</th>
-                                <th style="width: 250px; min-width: 100px;">Nombre</th>
-                                <th style="width: 250px; min-width: 100px;">Rol</th>
-                                <th style="width: 250px; min-width: 100px;">Email</th>
-                                <th style="width: 130px; min-width: 50px;">Activo?</th>
-                                <th style="width: 140px; min-width: 120px;">Acciones</th>
+                                <th style="width: 50px;">Nro.</th>
+                                <th style="width: 250px;">Nombre</th>
+                                <th style="width: 250px;">Rol</th>
+                                <th style="width: 250px;">Email</th>
+                                <th style="width: 250px;">Teléfono</th>
+                                <th style="width: 130px">Activo?</th>
+                                <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -44,6 +43,7 @@
                                     <td>{{ $usuario->name }}</td>
                                     <td>{{ $usuario->roles->pluck('name')->join(', ') ?: 'Sin rol' }}</td>
                                     <td>{{ $usuario->email }}</td>
+                                    <td>{{ $usuario->telefono }}</td>
                                     <td class="text-center">
                                         @if ($usuario->activo)
                                             <span class="badge badge-success">Activo</span>
@@ -62,10 +62,8 @@
                             @endforeach
                         </tbody>
                     </table>
-
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

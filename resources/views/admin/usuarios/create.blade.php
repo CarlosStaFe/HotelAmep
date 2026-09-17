@@ -44,11 +44,19 @@
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-3 mb-3">
                                 <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
                                 <input type="email" class="form-control" id="email" name="email"
                                     placeholder="Ingrese el email del usuario" value="{{ old('email') }}" required>
                                 @error('email')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="telefono" class="form-label">Teléfono <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="telefono" name="telefono"
+                                    placeholder="Ingrese el teléfono del usuario" value="{{ old('telefono') }}" required>
+                                @error('telefono')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>

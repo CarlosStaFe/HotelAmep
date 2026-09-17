@@ -30,7 +30,7 @@ return [
     |
     */
 
-    'use_ico_only' => false,
+    'use_ico_only' => true,
     'use_full_favicon' => false,
 
     /*
@@ -394,6 +394,18 @@ return [
                             'icon' => 'bi bi-inboxes',
                             'classes' => 'bg-cyan text-white',
                         ],
+                        [
+                            'text' => 'Ajustar Artículo',
+                            'url' => '/admin/articulos/ajustar',
+                            'icon' => 'bi bi-pencil',
+                            'classes' => 'bg-cyan text-white',
+                        ],
+                        [
+                            'text' => 'Listado de Ajustes',
+                            'url' => '/admin/articulos/listar-ajustes',
+                            'icon' => 'bi bi-list-check',
+                            'classes' => 'bg-cyan text-white',
+                        ],
                     ],
                 ],
                 [
@@ -402,14 +414,20 @@ return [
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
                         [
+                            'text' => 'Listado de Proveedores',
+                            'url' => '/admin/proveedores/index',
+                            'icon' => 'bi bi-list-check',
+                            'classes' => 'bg-cyan text-white',
+                        ],
+                        [
                             'text' => 'Registrar Proveedor',
                             'url' => '/admin/proveedores/create',
                             'icon' => 'bi bi-inboxes',
                             'classes' => 'bg-cyan text-white',
                         ],
                         [
-                            'text' => 'Listado de Proveedores',
-                            'url' => '/admin/proveedores/index',
+                            'text' => 'Listar Compras',
+                            'url' => '/admin/compras/index',
                             'icon' => 'bi bi-list-check',
                             'classes' => 'bg-cyan text-white',
                         ],
@@ -417,12 +435,6 @@ return [
                             'text' => 'Compras',
                             'url' => '/admin/compras/create',
                             'icon' => 'bi bi-cart3',
-                            'classes' => 'bg-cyan text-white',
-                        ],
-                        [
-                            'text' => 'Listar Compras',
-                            'url' => '/admin/compras/index',
-                            'icon' => 'bi bi-list-check',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],
