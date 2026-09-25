@@ -31,13 +31,13 @@ class CtroCostoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string|max:100',
+            'observacion' => 'nullable|string|max:100',
             'tipo' => 'required|string|max:100',
         ]);
 
         $ctrocosto = new CtroCosto();
         $ctrocosto->nombre = $request->input('nombre');
-        $ctrocosto->descripcion = $request->input('descripcion');
+        $ctrocosto->observacion = $request->input('observacion');
         $ctrocosto->tipo = $request->input('tipo');
         $ctrocosto->fecha_creacion = now();
         $ctrocosto->fecha_actualizacion = now();
@@ -84,13 +84,13 @@ class CtroCostoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string|max:100',
+            'observacion' => 'nullable|string|max:100',
             'tipo' => 'required|string|max:100',
         ]);
 
         $ctrocosto = CtroCosto::findOrFail($id);
         $ctrocosto->nombre = $request->input('nombre');
-        $ctrocosto->descripcion = $request->input('descripcion');
+        $ctrocosto->observacion = $request->input('observacion');
         $ctrocosto->tipo = $request->input('tipo');
         $ctrocosto->fecha_actualizacion = now();
         $ctrocosto->save();

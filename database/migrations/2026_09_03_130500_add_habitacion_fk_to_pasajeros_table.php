@@ -14,6 +14,10 @@ return new class extends Migration
         Schema::table('pasajeros', function (Blueprint $table) {
             $table->foreign('habitacion_id')->references('id')->on('habitaciones');
         });
+
+        Schema::table('comandas', function (Blueprint $table) {
+            $table->foreign('pasajero_id')->references('id')->on('pasajeros');
+        });
     }
 
     /**
@@ -23,6 +27,10 @@ return new class extends Migration
     {
         Schema::table('pasajeros', function (Blueprint $table) {
             $table->dropForeign(['habitacion_id']);
+        });
+
+        Schema::table('comandas', function (Blueprint $table) {
+            $table->dropForeign(['pasajero_id']);
         });
     }
 };

@@ -41,6 +41,15 @@ Route::get('/admin/usuarios/create', [App\Http\Controllers\UsuarioController::cl
 Route::post('/admin/usuarios/create', [App\Http\Controllers\UsuarioController::class, 'store'])
 ->name('usuarios.store')
 ->middleware('auth');
+Route::get('/admin/usuarios/{id}', [App\Http\Controllers\UsuarioController::class, 'show'])
+->name('usuarios.show')
+->middleware('auth');
+Route::get('/admin/usuarios/{id}/edit', [App\Http\Controllers\UsuarioController::class, 'edit'])
+->name('usuarios.edit')
+->middleware('auth');
+Route::put('/admin/usuarios/{id}', [App\Http\Controllers\UsuarioController::class, 'update'])
+->name('usuarios.update')
+->middleware('auth');
 
 //RUTA PARA CENTRO DE COSTOS
 Route::get('/admin/ctrocostos/index', [App\Http\Controllers\CtroCostoController::class, 'index'])
@@ -147,6 +156,30 @@ Route::delete('/admin/proveedores/{id}', [App\Http\Controllers\ProveedorControll
 ->middleware('auth');
 
 //RUTAS PARA PASAJEROS
+Route::get('/admin/pasajeros/index', [App\Http\Controllers\PasajeroController::class, 'index'])
+->name('pasajeros.index')
+->middleware('auth');
+Route::get('/admin/pasajeros/create', [App\Http\Controllers\PasajeroController::class, 'create'])
+->name('pasajeros.create')
+->middleware('auth');
+Route::post('/admin/pasajeros/create', [App\Http\Controllers\PasajeroController::class, 'store'])
+->name('pasajeros.store')
+->middleware('auth');
+Route::get('/admin/pasajeros/{id}', [App\Http\Controllers\PasajeroController::class, 'show'])
+->name('pasajeros.show')
+->middleware('auth');
+Route::get('/admin/pasajeros/{id}/edit', [App\Http\Controllers\PasajeroController::class, 'edit'])
+->name('pasajeros.edit')
+->middleware('auth');
+Route::get('/admin/pasajeros/{id}/delete', [App\Http\Controllers\PasajeroController::class, 'delete'])
+->name('pasajeros.delete')
+->middleware('auth');
+Route::put('/admin/pasajeros/{id}', [App\Http\Controllers\PasajeroController::class, 'update'])
+->name('pasajeros.update')
+->middleware('auth');
+Route::delete('/admin/pasajeros/{id}', [App\Http\Controllers\PasajeroController::class, 'destroy'])
+->name('pasajeros.destroy')
+->middleware('auth');
 
 //RUTAS PARA COMANDAS
 Route::get('/admin/comandas/index', [App\Http\Controllers\ComandaController::class, 'index'])

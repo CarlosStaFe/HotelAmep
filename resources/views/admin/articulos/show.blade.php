@@ -16,14 +16,11 @@
             <div class="card card-success">
                 <div class="card-header">
                     <h2 class="card-title"><b>Ver Artículo</b></h2>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <div class="mb-6">
-                        <label for="ctrocosto_id" class="form-label">Rubro <b style="color: red;">(*)</b></label>
-                        <input type="text" class="form-control" id="rubro_id" name="rubro_id"
-                            value="{{ $articulo->rubro->nombre ?? 'Sin rubro' }}" readonly>
+                        <label for="ctrocosto_id" class="form-label">Rubro</label>
+                        <input type="text" class="form-control" id="rubro_id" name="rubro_id" value="{{ $articulo->rubro->nombre }}" readonly>
                     </div>
                     <div class="mb-6">
                         <label for="nombre" class="form-label">Nombre</label>
@@ -63,7 +60,6 @@
                     </div>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

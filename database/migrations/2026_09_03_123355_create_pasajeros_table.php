@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('pasajeros', function (Blueprint $table) {
             $table->id();
+            $table->string('tipo_documento', 3);
             $table->string('documento', 8);
             $table->string('apelynombre', 100);
             $table->date('fecha_nacimiento')->nullable();
@@ -20,7 +21,7 @@ return new class extends Migration
             $table->string('email', 100)->nullable();
             $table->string('direccion', 100);
             $table->foreignId('cod_postal_id')->constrained('localidades');
-            $table->unsignedBigInteger('habitacion_id')->nullable();
+            $table->foreignId('habitacion_id')->nullable();
             $table->dateTime('fecha_creacion');
             $table->dateTime('fecha_actualizacion');
         });

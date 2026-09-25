@@ -63,7 +63,8 @@ class PasajeroController extends Controller
      */
     public function index()
     {
-        //
+        $pasajeros = Pasajero::all();
+        return view('admin.pasajeros.index', compact('pasajeros'));
     }
 
     /**
@@ -71,7 +72,7 @@ class PasajeroController extends Controller
      */
     public function create()
     {
-        //
+        return view('admin.pasajeros.create');
     }
 
     /**
@@ -79,15 +80,43 @@ class PasajeroController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'tipo_documento' => 'required|in:DNI,CI,PAS,LE',
+            'documento' => 'required|string|max:8',
+            'apelynombre' => 'required|string|max:100',
+            'telefono' => 'required|string|max:50',
+            'domicilio' => 'required|string|max:100',
+            'cod_postal_id' => 'required|exists:localidades,id',
+            'email' => 'required|email|max:100',
+        ]);
+
+        Pasajero::create([
+            'tipo_documento' => $validated['tipo_documento'],
+            'documento' => $validated['documento'],
+            'apelynombre' => $validated['apelynombre'],
+            'telefono' => $validated['telefono'],
+            'email' => $validated['email'],
+            'direccion' => $validated['domicilio'],
+            'cod_postal_id' => $validated['cod_postal_id'],
+            'fecha_creacion' => now(),
+            'fecha_actualizacion' => now(),
+        ]);
+
+        return redirect()->route('pasajeros.index')
+            ->with('mensaje', 'Pasajero creado exitosamente.')
+            ->with('icono', 'success')
+            ->with('showConfirmButton', false)
+            ->with('textoBoton', '');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Pasajero $pasajero)
+    public function show($id)
     {
-        //
+        $pasajero = Pasajero::with('localidad')->findOrFail($id);
+        return view('admin.pasajeros.show', compact('pasajero'));
+
     }
 
     /**
@@ -95,7 +124,8 @@ class PasajeroController extends Controller
      */
     public function edit(Pasajero $pasajero)
     {
-        //
+        $pasajero = Pasajero::with('localidad')->findOrFail($pasajero->id);
+        return view('admin.pasajeros.edit', compact('pasajero'));
     }
 
     /**

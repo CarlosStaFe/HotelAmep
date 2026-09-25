@@ -16,9 +16,7 @@
             <div class="card card-success">
                 <div class="card-header">
                     <h2 class="card-title"><b>Ver Centro de Costos</b></h2>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <div class="mb-3">
                         <label for="nombre" class="form-label">Nombre</label>
@@ -42,7 +40,6 @@
                     </div>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

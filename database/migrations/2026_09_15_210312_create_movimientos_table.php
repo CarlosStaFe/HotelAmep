@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('movimientos', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->date('fecha');
+            $table->foreignId('articulo_id')->constrained('articulos');
+            $table->string('tipo', 20);
+            $table->decimal('cantidad', 10, 3);
+            $table->string('observacion',100)->nullable();
+            $table->string('usuario', 50);
+            $table->dateTime('fecha_creacion')->nullable()->useCurrent();
+            $table->dateTime('fecha_actualizacion')->nullable()->useCurrent();
         });
     }
 

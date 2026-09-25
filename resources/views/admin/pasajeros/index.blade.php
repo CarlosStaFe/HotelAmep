@@ -4,8 +4,8 @@
     <nav aria-label="breadcrumb" style="font-size: 14pt">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url('/admin') }}">Inicio</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Usuarios</li>
-            <li class="breadcrumb-item active" aria-current="page">Listado de Usuarios</li>
+            <li class="breadcrumb-item active" aria-current="page">Pasajeros</li>
+            <li class="breadcrumb-item active" aria-current="page">Listado de Pasajeros</li>
         </ol>
     </nav>
 @stop
@@ -15,10 +15,10 @@
         <div class="col-md-12">
             <div class="card card-outline card-primary">
                 <div class="card-header">
-                    <h3 class="card-title"><b>Usuarios registrados</b></h3>
+                    <h3 class="card-title"><b>Pasajeros registrados</b></h3>
 
                     <div class="card-tools">
-                        <a href="{{ url('/admin/usuarios/create') }}" class="btn btn-primary"
+                        <a href="{{ url('/admin/pasajeros/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
                 </div>
@@ -28,40 +28,35 @@
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
                                 <th style="width: 50px;">Nro.</th>
-                                <th style="width: 250px;">Nombre</th>
-                                <th style="width: 250px;">Rol</th>
+                                <th style="width: 250px;">Apellido y Nombre</th>
+                                <th style="width: 50px;">Tipo Doc.</th>
+                                <th style="width: 100px;">Documento</th>
+                                <th style="width: 100px;">Teléfono</th>
                                 <th style="width: 250px;">Email</th>
-                                <th style="width: 250px;">Teléfono</th>
-                                <th style="width: 130px">Activo?</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($usuarios as $usuario)
+                            @foreach ($pasajeros as $pasajero)
                                 <tr>
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
-                                    <td>{{ $usuario->name }}</td>
-                                    <td>{{ $usuario->roles->pluck('name')->join(', ') ?: 'Sin rol' }}</td>
-                                    <td>{{ $usuario->email }}</td>
-                                    <td>{{ $usuario->telefono }}</td>
-                                    <td class="text-center">
-                                        @if ($usuario->activo)
-                                            <span class="badge badge-success">Activo</span>
-                                        @else
-                                            <span class="badge badge-danger">Inactivo</span>
-                                        @endif
-                                    </td>
+                                    <td>{{ $pasajero->apelynombre }}</td>
+                                    <td>{{ $pasajero->tipo_documento }}</td>
+                                    <td>{{ $pasajero->documento }}</td>
+                                    <td>{{ $pasajero->telefono }}</td>
+                                    <td>{{ $pasajero->email }}</td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ route('usuarios.show', $usuario) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
-                                            <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
-                                            <a href="{{ url('/admin/usuarios/' . $usuario->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
+                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id . '/edit') }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
+                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
                                         </div>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+
                 </div>
             </div>
         </div>

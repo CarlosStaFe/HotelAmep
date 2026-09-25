@@ -34,14 +34,14 @@ class RubroController extends Controller
         $request->validate([
             'ctrocosto_id' => 'required|exists:ctrocostos,id',
             'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string|max:100',
+            'observacion' => 'nullable|string|max:100',
             'activo' => 'required|boolean',
         ]);
 
         $rubro = new Rubro();
         $rubro->ctrocosto_id = $request->input('ctrocosto_id');
         $rubro->nombre = $request->input('nombre');
-        $rubro->descripcion = $request->input('descripcion');
+        $rubro->observacion = $request->input('observacion');
         $rubro->activo = $request->boolean('activo');
         $rubro->fecha_creacion = now();
         $rubro->fecha_actualizacion = now();
@@ -91,14 +91,14 @@ class RubroController extends Controller
         $request->validate([
             'ctrocosto_id' => 'required|exists:ctrocostos,id',
             'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string|max:100',
+            'observacion' => 'nullable|string|max:100',
             'activo' => 'required|boolean',
         ]);
 
         $rubro = Rubro::findOrFail($id);
         $rubro->ctrocosto_id = $request->input('ctrocosto_id');
         $rubro->nombre = $request->input('nombre');
-        $rubro->descripcion = $request->input('descripcion');
+        $rubro->observacion = $request->input('observacion');
         $rubro->activo = $request->boolean('activo');
         $rubro->fecha_actualizacion = now();
         $rubro->save();

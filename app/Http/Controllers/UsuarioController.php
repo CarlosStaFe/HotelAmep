@@ -22,6 +22,20 @@ class UsuarioController extends Controller
         return view('admin.usuarios.create');
     }
 
+    public function show(int $id): View
+    {
+        $usuario = User::with('roles')->findOrFail($id);
+
+        return view('admin.usuarios.show', compact('usuario'));
+    }
+
+    public function edit(int $id): View
+    {
+        $usuario = User::with('roles')->findOrFail($id);
+
+        return view('admin.usuarios.edit', compact('usuario'));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -45,5 +59,34 @@ class UsuarioController extends Controller
 
         return redirect()->route('usuarios.index')
             ->with('mensaje', 'Usuario creado correctamente.');
+    }
+
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $usuario = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $usuario->id],
+            'telefono' => ['required', 'string', 'max:20'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'string', 'exists:roles,name'],
+            'activo' => ['required', 'boolean'],
+        ]);
+
+        $usuario->name = $validated['nombre'];
+        $usuario->email = $validated['email'];
+        $usuario->telefono = $validated['telefono'];
+        $usuario->activo = $validated['activo'];
+
+        if (!empty($validated['password'])) {
+            $usuario->password = Hash::make($validated['password']);
+        }
+
+        $usuario->save();
+        $usuario->syncRoles($validated['role']);
+
+        return redirect()->route('usuarios.index')
+            ->with('mensaje', 'Usuario actualizado correctamente.');
     }
 }
