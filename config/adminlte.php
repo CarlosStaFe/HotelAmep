@@ -395,12 +395,6 @@ return [
                             'classes' => 'bg-cyan text-white',
                         ],
                         [
-                            'text' => 'Ajustar Artículo',
-                            'url' => '/admin/articulos/ajustar',
-                            'icon' => 'bi bi-pencil',
-                            'classes' => 'bg-cyan text-white',
-                        ],
-                        [
                             'text' => 'Listado de Ajustes',
                             'url' => '/admin/articulos/listar-ajustes',
                             'icon' => 'bi bi-list-check',
@@ -432,7 +426,7 @@ return [
                             'classes' => 'bg-cyan text-white',
                         ],
                         [
-                            'text' => 'Compras',
+                            'text' => 'Cargar Compras',
                             'url' => '/admin/compras/create',
                             'icon' => 'bi bi-cart3',
                             'classes' => 'bg-cyan text-white',
@@ -447,6 +441,12 @@ return [
             'classes' => 'bg-navy text-white',
             'submenu' => [
                 [
+                    'text' => 'Listado de Pasajeros',
+                    'url' => '/admin/pasajeros/index',
+                    'icon' => 'bi bi-list-check',
+                    'classes' => 'bg-cyan text-white',
+                ],
+                [
                     'text' => 'Registrar Pasajero',
                     'url' => '/admin/pasajeros/create',
                     'icon' => 'bi bi-person-vcard',
@@ -455,13 +455,7 @@ return [
                 [
                     'text' => 'Asignar Habitación',
                     'url' => '/admin/pasajeros/asignar-habitacion',
-                    'icon' => 'bi bi-person-bounding-box',
-                    'classes' => 'bg-cyan text-white',
-                ],
-                [
-                    'text' => 'Listado de Pasajeros',
-                    'url' => '/admin/pasajeros/index',
-                    'icon' => 'bi bi-list-check',
+                    'icon' => 'bi bi-house-add',
                     'classes' => 'bg-cyan text-white',
                 ],
             ],
@@ -473,7 +467,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'Cargar Consumo',
-                    'url' => '/admin/comandas/create',
+                    'url' => '/admin/comandas/comanda',
                     'icon' => 'bi bi-pencil-square',
                     'classes' => 'bg-cyan text-white',
                 ],

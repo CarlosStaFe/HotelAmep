@@ -31,12 +31,9 @@
                         <textarea class="form-control" id="observacion" name="observacion" rows="2" readonly>{{ $ctrocosto->observacion }}</textarea>
                     </div>
                     <hr>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <a href="{{ url('/admin/ctrocostos/index') }}" class="btn btn-success">Volver</a>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url('/admin/ctrocostos/index') }}" class="btn btn-secondary">Volver</a>
+                        <a href="{{ route('ctrocostos.edit', $ctrocosto) }}" class="btn btn-success">Editar</a>
                     </div>
                 </div>
             </div>

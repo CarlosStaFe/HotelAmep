@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comanda;
 use Illuminate\Http\Request;
 
+
 class ComandaController extends Controller
 {
     /**
@@ -12,15 +13,15 @@ class ComandaController extends Controller
      */
     public function index()
     {
-        return redirect()->route('comandas.create');
+        return redirect()->route('comandas.comanda');
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function comanda()
     {
-        return view('admin.comandas.create');
+        return view('admin.comandas.comanda');
     }
 
     /**
@@ -62,4 +63,5 @@ class ComandaController extends Controller
     {
         //
     }
+
 }

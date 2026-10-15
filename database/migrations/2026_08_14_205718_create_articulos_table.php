@@ -15,11 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('rubro_id')->constrained('rubros');
             $table->string('nombre', 255);
-            $table->decimal('precio', 12, 2);
-            $table->decimal('stock', 12, 3)->default(0);
             $table->boolean('activo')->default(true);
             $table->boolean('comanda')->default(true);
-            $table->string('observacion', 100);
+            $table->boolean('vencimiento')->default(false);
+            $table->string('observacion', 100)->nullable();
             $table->dateTime('fecha_creacion');
             $table->dateTime('fecha_actualizacion');
         });

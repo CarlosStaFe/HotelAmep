@@ -28,8 +28,8 @@ class PasajeroController extends Controller
 
         $query = Pasajero::query()->where('habitacion_id', $habitacionModel->id);
 
-        if (Schema::hasColumn('pasajeros', 'apelynombre')) {
-            $query->orderBy('apelynombre');
+        if (Schema::hasColumn('pasajeros', 'apelyNombre')) {
+            $query->orderBy('apelyNombre');
         }
 
         $pasajeros = $query->get();
@@ -37,8 +37,8 @@ class PasajeroController extends Controller
         $data = $pasajeros->map(function ($pasajero) {
             $nombre = '';
 
-            if (isset($pasajero->apelynombre) && trim((string) $pasajero->apelynombre) !== '') {
-                $nombre = (string) $pasajero->apelynombre;
+            if (isset($pasajero->apelyNombre) && trim((string) $pasajero->apelyNombre) !== '') {
+                $nombre = (string) $pasajero->apelyNombre;
             } elseif (isset($pasajero->nombre) && trim((string) $pasajero->nombre) !== '') {
                 $nombre = (string) $pasajero->nombre;
             } elseif (isset($pasajero->apellido) || isset($pasajero->nombres)) {
@@ -81,22 +81,24 @@ class PasajeroController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'tipo_documento' => 'required|in:DNI,CI,PAS,LE',
+            'tipoDocumento' => 'required|in:DNI,CI,PAS,LE',
             'documento' => 'required|string|max:8',
-            'apelynombre' => 'required|string|max:100',
+            'apelyNombre' => 'required|string|max:100',
             'telefono' => 'required|string|max:50',
-            'domicilio' => 'required|string|max:100',
+            'direccion' => 'required|string|max:100',
             'cod_postal_id' => 'required|exists:localidades,id',
             'email' => 'required|email|max:100',
+            'usaComanda' => 'required|boolean',
         ]);
 
         Pasajero::create([
-            'tipo_documento' => $validated['tipo_documento'],
+            'tipoDocumento' => $validated['tipoDocumento'],
             'documento' => $validated['documento'],
-            'apelynombre' => $validated['apelynombre'],
+            'apelyNombre' => $validated['apelyNombre'],
             'telefono' => $validated['telefono'],
             'email' => $validated['email'],
             'direccion' => $validated['domicilio'],
+            'usaComanda' => $validated['usaComanda'],
             'cod_postal_id' => $validated['cod_postal_id'],
             'fecha_creacion' => now(),
             'fecha_actualizacion' => now(),
@@ -116,15 +118,14 @@ class PasajeroController extends Controller
     {
         $pasajero = Pasajero::with('localidad')->findOrFail($id);
         return view('admin.pasajeros.show', compact('pasajero'));
-
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Pasajero $pasajero)
+    public function edit($id)
     {
-        $pasajero = Pasajero::with('localidad')->findOrFail($pasajero->id);
+        $pasajero = Pasajero::with('localidad')->findOrFail($id);
         return view('admin.pasajeros.edit', compact('pasajero'));
     }
 

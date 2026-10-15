@@ -12,12 +12,13 @@ class Pasajero extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'tipo_documento',
+        'tipoDocumento',
         'documento',
-        'apelynombre',
-        'fecha_nacimiento',
+        'apelyNombre',
+        'fechaNacimiento',
         'telefono',
         'email',
+        'usaComanda',
         'direccion',
         'cod_postal_id',
         'habitacion_id',

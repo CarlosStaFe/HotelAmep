@@ -13,15 +13,17 @@ return new class extends Migration
     {
         Schema::create('pasajeros', function (Blueprint $table) {
             $table->id();
-            $table->string('tipo_documento', 3);
+            $table->string('tipoDocumento', 3);
             $table->string('documento', 8);
-            $table->string('apelynombre', 100);
-            $table->date('fecha_nacimiento')->nullable();
+            $table->string('apelyNombre', 100);
+            $table->date('fechaNacimiento')->nullable();
             $table->string('telefono', 50);
             $table->string('email', 100)->nullable();
             $table->string('direccion', 100);
             $table->foreignId('cod_postal_id')->constrained('localidades');
-            $table->foreignId('habitacion_id')->nullable();
+            $table->integer('habitacion_id')->nullable();
+            $table->boolean('usaComanda')->default(false);
+            $table->boolean('mailComanda')->default(false);
             $table->dateTime('fecha_creacion');
             $table->dateTime('fecha_actualizacion');
         });

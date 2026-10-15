@@ -32,7 +32,8 @@
                                 <th style="width: 50px;">Tipo Doc.</th>
                                 <th style="width: 100px;">Documento</th>
                                 <th style="width: 100px;">Teléfono</th>
-                                <th style="width: 250px;">Email</th>
+                                <th style="width: 200px;">Email</th>
+                                <th style="width: 50px;">Comanda</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
@@ -40,11 +41,18 @@
                             @foreach ($pasajeros as $pasajero)
                                 <tr>
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
-                                    <td>{{ $pasajero->apelynombre }}</td>
-                                    <td>{{ $pasajero->tipo_documento }}</td>
+                                    <td>{{ $pasajero->apelyNombre }}</td>
+                                    <td>{{ $pasajero->tipoDocumento }}</td>
                                     <td>{{ $pasajero->documento }}</td>
                                     <td>{{ $pasajero->telefono }}</td>
                                     <td>{{ $pasajero->email }}</td>
+                                    <td style="text-align: center;">
+                                        @if ($pasajero->usaComanda)
+                                            <span class="badge badge-success">Sí</span>
+                                        @else
+                                            <span class="badge badge-danger">No</span>
+                                        @endif
+                                    </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
                                             <a href="{{ url('/admin/pasajeros/' . $pasajero->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>

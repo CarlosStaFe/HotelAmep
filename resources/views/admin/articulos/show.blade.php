@@ -27,7 +27,7 @@
                         <input type="text" class="form-control" id="nombre" name="nombre" value="{{ $articulo->nombre }}" readonly>
                     </div>
                     <div class="row">
-                        <div class="col-md-2 mb-2">
+                        <div class="col-md-3 mb-3">
                             <label for="stock" class="form-label">Stock</label>
                             <input type="number" class="form-control" id="stock" name="stock" value="{{ $articulo->stock }}" readonly>
                         </div>
@@ -37,26 +37,27 @@
                         </div>
                         <div class="col-md-2 mb-2">
                             <label for="comanda" class="form-label">Comanda</label>
-                            <input type="text" class="form-control" id="comanda" name="comanda"
-                                value="{{ $articulo->comanda ? 'Sí' : 'No' }}" readonly>
+                            <input type="text" class="form-control" id="comanda" name="comanda" value="{{ $articulo->comanda ? 'Sí' : 'No' }}" readonly>
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            <label for="vencimiento" class="form-label">Vencimiento</label>
+                            <input type="text" class="form-control" id="vencimiento" name="vencimiento" value="{{ $articulo->vencimiento ? 'Sí' : 'No' }}" readonly>
                         </div>
                         <div class="col-md-2 mb-2">
                             <label for="activo" class="form-label">Estado</label>
-                            <input type="text" class="form-control" id="activo" name="activo"
-                                value="{{ $articulo->activo ? 'Activo' : 'Inactivo' }}" readonly>
+                            <input type="text" class="form-control" id="activo" name="activo" value="{{ $articulo->activo ? 'Activo' : 'Inactivo' }}" readonly>
                         </div>
+                    </div>
+                    <div>
                         <div class="mb-5">
                             <label for="observacion" class="form-label">Observación</label>
                             <textarea class="form-control" id="observacion" name="observacion" rows="2" readonly>{{ $articulo->observacion }}</textarea>
                         </div>
                     </div>
                     <hr>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <a href="{{ url('/admin/articulos/index') }}" class="btn btn-success">Volver</a>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url('/admin/articulos/index') }}" class="btn btn-secondary">Volver</a>
+                        <a href="{{ route('articulos.edit', $articulo) }}" class="btn btn-success">Editar</a>
                     </div>
                 </div>
             </div>

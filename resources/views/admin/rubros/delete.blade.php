@@ -16,9 +16,7 @@
             <div class="card card-danger">
                 <div class="card-header">
                     <h2 class="card-title"><b>Eliminar Rubro</b></h2>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <div class="mb-3">
                         <label for="ctrocosto_id" class="form-label">Centro de Costo <b style="color: red;">(*)</b></label>
@@ -55,7 +53,6 @@
                     </div>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

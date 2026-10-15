@@ -16,9 +16,7 @@
             <div class="card card-info">
                 <div class="card-header">
                     <h2 class="card-title"><b>Completar el formulario</b></h2>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <form action="{{ url('/admin/ctrocostos/' . $ctrocosto->id) }}" method="POST">
                         @method('PUT')
@@ -62,7 +60,6 @@
                     </form>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

@@ -13,9 +13,16 @@ return new class extends Migration
     {
         Schema::create('habitaciones', function (Blueprint $table) {
             $table->id();
-            $table->string('numero', 10)->unique();
-            $table->string('tipo', 50);
+            $table->string('numero', 2)->unique();
+            $table->string('tipo', 20);
             $table->string('estado', 20);
+            $table->integer('plazas')->unsigned();
+            $table->integer('matri')->unsigned();
+            $table->integer('simple')->unsigned();            
+            $table->string('piso', 10)->nullable();
+            $table->string('vista', 20)->nullable();   
+            $table->string('aire', 2)->nullable();
+            $table->string('cuna', 2)->nullable();
             $table->string('observacion', 100)->nullable();
             $table->dateTime('fecha_creacion')->nullable()->useCurrent();
             $table->dateTime('fecha_actualizacion')->nullable()->useCurrent();

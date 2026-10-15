@@ -16,9 +16,7 @@
             <div class="card card-primary">
                 <div class="card-header">
                     <h2 class="card-title"><b>Completar el formulario</b></h2>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <form action="{{ url('/admin/ctrocostos/create') }}" method="POST">
                         @csrf
@@ -35,8 +33,9 @@
                             <select class="form-control" id="tipo" name="tipo" required>
                                 <option value="">Seleccione un tipo</option>
                                 <option value="Administrativo" {{ old('tipo') == 'Administrativo' ? 'selected' : '' }}>Administrativo</option>
-                                <option value="Operativo" {{ old('tipo') == 'Operativo' ? 'selected' : '' }}>Operativo</option>
+                                <option value="Mantenimiento" {{ old('tipo') == 'Mantenimiento' ? 'selected' : '' }}>Mantenimiento</option>
                                 <option value="Producción" {{ old('tipo') == 'Producción' ? 'selected' : '' }}>Producción</option>
+                                <option value="Bienes/Muebles" {{ old('tipo') == 'Bienes/Muebles' ? 'selected' : '' }}>Bienes/Muebles</option>
                                 <option value="Varios" {{ old('tipo') == 'Varios' ? 'selected' : '' }}>Varios</option>
                             </select>
                         </div>
@@ -57,7 +56,6 @@
                     </form>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

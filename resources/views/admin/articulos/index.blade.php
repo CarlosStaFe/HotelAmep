@@ -16,16 +16,12 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title"><b>Artículos registrados</b></h3>
-
                     <div class="card-tools">
                         <a href="{{ url('/admin/articulos/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
-
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
@@ -34,8 +30,9 @@
                                 <th style="width: 250px;">Nombre</th>
                                 <th style="width: 50px;">Stock</th>
                                 <th style="width: 70px;">Precio</th>
-                                <th style="width: 50px;">Activo?</th>
                                 <th style="width: 50px;">Comanda?</th>
+                                <th style="width: 50px;">Vencimiento</th>
+                                <th style="width: 50px;">Activo?</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
@@ -47,23 +44,29 @@
                                     <td>{{ $articulo->nombre }}</td>
                                     <td>{{ $articulo->stock ?? 'N/A' }}</td>
                                     <td>{{ $articulo->precio ?? 'N/A' }}</td>
-                                    <td>{{ $articulo->activo ? 'Sí' : 'No' }}</td>
                                     <td>{{ $articulo->comanda ? 'Sí' : 'No' }}</td>
+                                    <td>{{ $articulo->vencimiento ? 'Sí' : 'No' }}</td>
+                                    <td class="text-center">
+                                        @if ($articulo->activo)
+                                            <span class="badge badge-success">Activo</span>
+                                        @else
+                                            <span class="badge badge-danger">Inactivo</span>
+                                        @endif
+                                    </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
                                             <a href="{{ url('/admin/articulos/' . $articulo->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
                                             <a href="{{ url('/admin/articulos/' . $articulo->id . '/edit') }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
                                             <a href="{{ url('/admin/articulos/' . $articulo->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/ajuste') }}" class="btn btn-warning"><i class="bi bi-wrench"></i></a>
                                         </div>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

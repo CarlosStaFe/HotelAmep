@@ -14,13 +14,18 @@ return new class extends Migration
         Schema::create('proveedores', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 100);
-            $table->string('razon_social', 100);
+            $table->string('razonSocial', 100);
             $table->string('cuit', 11);
-            $table->string('tipo_iva', 50);
+            $table->string('tipoIva', 50);
             $table->string('domicilio', 100)->nullable();
             $table->foreignId('cod_postal_id')->nullable()->constrained('localidades');
             $table->string('telefono', 50)->nullable();
             $table->string('email', 100)->nullable();
+            $table->boolean('echeck')->default(false);
+            $table->integer('cbu')->length(22)->nullable();
+            $table->integer('cvu')->length(22)->nullable();
+            $table->string('alias', 100)->nullable();
+            $table->string('dias', 100)->nullable();
             $table->boolean('activo')->default(true);
             $table->string('observacion', 100)->nullable();
             $table->dateTime('fecha_creacion');

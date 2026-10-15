@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\articulo;
+use App\Models\Articulo;
+use App\Models\Habitacion;
 use App\Models\Rubro;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ArticuloController extends Controller
 {
@@ -34,16 +37,18 @@ class ArticuloController extends Controller
         $request->validate([
             'rubro_id' => 'required|exists:rubros,id',
             'nombre' => 'required|string|max:255',
-            'observacion' => 'nullable|string|max:100',
+            'comanda' => 'required|boolean',
             'activo' => 'required|boolean',
+            'vencimiento' => 'required|boolean',
+            'observacion' => ['nullable', 'string', 'max:100', 'sometimes'],
         ]);
 
         $articulo = new articulo();
         $articulo->rubro_id = $request->input('rubro_id');
         $articulo->nombre = $request->input('nombre');
-        $articulo->stock = $request->input('stock');
-        $articulo->precio = $request->input('precio');
+        $articulo->comanda = $request->boolean('comanda');
         $articulo->activo = $request->boolean('activo');
+        $articulo->vencimiento = $request->boolean('vencimiento');
         $articulo->observacion = $request->input('observacion');
         $articulo->fecha_creacion = now();
         $articulo->fecha_actualizacion = now();
@@ -61,7 +66,7 @@ class ArticuloController extends Controller
      */
     public function show($id)
     {
-        $articulo = articulo::with('rubro.ctrocosto')->findOrFail($id);
+        $articulo = Articulo::with('rubro.ctrocosto')->findOrFail($id);
         return view('admin.articulos.show', compact('articulo'));
     }
      
@@ -92,16 +97,18 @@ class ArticuloController extends Controller
         $request->validate([
             'rubro_id' => 'required|exists:rubros,id',
             'nombre' => 'required|string|max:255',
-            'observacion' => 'nullable|string|max:100',
+            'comanda' => 'required|boolean',
             'activo' => 'required|boolean',
+            'vencimiento' => 'required|boolean',
+            'observacion' => ['nullable', 'string', 'max:100', 'sometimes'],
         ]);
 
         $articulo = articulo::findOrFail($id);
         $articulo->rubro_id = $request->input('rubro_id');
         $articulo->nombre = $request->input('nombre');
-        $articulo->stock = $request->input('stock');
-        $articulo->precio = $request->input('precio');
+        $articulo->comanda = $request->boolean('comanda');
         $articulo->activo = $request->boolean('activo');
+        $articulo->vencimiento = $request->boolean('vencimiento');
         $articulo->observacion = $request->input('observacion');
         $articulo->fecha_actualizacion = now();
         $articulo->save();
@@ -127,4 +134,104 @@ class ArticuloController extends Controller
             ->with('showConfirmButton', false)
             ->with('textoBoton', '');
     }
+
+    /**
+     * Ajuste the specified resource in storage.
+     */
+    public function ajuste($id)
+    {
+        $articulo = Articulo::with('rubro.ctrocosto')->findOrFail($id);
+        return view('admin.articulos.ajuste', compact('articulo'));
+    }
+
+    /**
+     * Grabar the specified resource in storage.
+     */
+    public function grabar(Request $request, $id)
+    {
+        $datos = $request->validate([
+            'tipo' => 'required|in:Entrada,Salida',
+            'cantidad' => 'required|numeric|gt:0',
+            'motivo' => 'required|in:Ajuste,Rotura,Perdida,Vencido,Desgaste,Baja',
+            'observacion' => 'required|string|max:255',
+        ]);
+
+        Articulo::findOrFail($id);
+
+        DB::transaction(function () use ($datos, $id) {
+            $stock = DB::table('stocks')
+                ->where('articulo_id', $id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$stock) {
+                DB::table('stocks')->insert([
+                    'articulo_id' => $id,
+                    'cantidad' => 0,
+                ]);
+                $cantidadActual = 0;
+            } else {
+                $cantidadActual = (float) $stock->cantidad;
+            }
+
+            $cantidad = (float) $datos['cantidad'];
+
+            if ($datos['tipo'] === 'Salida' && $cantidad > $cantidadActual) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cantidad' => 'No hay stock suficiente para registrar este egreso.',
+                ]);
+            }
+
+            $nuevoStock = $datos['tipo'] === 'Entrada'
+                ? $cantidadActual + $cantidad
+                : $cantidadActual - $cantidad;
+
+            DB::table('stocks')
+                ->where('articulo_id', $id)
+                ->update(['cantidad' => $nuevoStock]);
+
+            DB::table('movimientos')->insert([
+                'articulo_id' => $id,
+                'user_id' => Auth::id(),
+                'tipo' => $datos['tipo'],
+                'cantidad' => $cantidad,
+                'motivo' => $datos['motivo'],
+                'observacion' => $datos['observacion'],
+                'fecha' => now(),
+            ]);
+        });
+
+        return redirect()->route('articulos.index')
+            ->with('mensaje', 'Artículo ajustado exitosamente.')
+            ->with('icono', 'success')
+            ->with('showConfirmButton', false)
+            ->with('textoBoton', '');
+    }
+
+    /**
+     * LLama a la función de carga de comandas.
+     */
+    public function comanda()
+    {
+        return $this->cargarArticulos();
+    }
+
+    /**
+     * Cargar los articulos habilitados para las comandas.
+     */
+    public function cargarArticulos()
+    {
+        $habitaciones = Habitacion::orderBy('numero')
+            ->where('estado', 'Ocupada')
+            ->get();
+
+        $articulos = Articulo::where('activo', true)
+            ->where('comanda', true)
+            ->leftJoin('stocks', 'articulos.id', '=', 'stocks.articulo_id')
+            ->select('articulos.*', 'stocks.cantidad', 'stocks.precioVta')
+            ->orderBy('nombre')
+            ->get();
+        return view('admin.comandas.comanda', compact('articulos', 'habitaciones'));
+    }
+
 }

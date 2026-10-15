@@ -16,14 +16,11 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title"><b>Rubros registrados</b></h3>
-
                     <div class="card-tools">
                         <a href="{{ url('/admin/rubros/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
 
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
@@ -32,7 +29,7 @@
                                 <th style="width: 50px;">Nro.</th>
                                 <th style="width: 250px;">Nombre</th>
                                 <th>Centro de Costo</th>
-                                <th style="width: 130px;">Activo?</th>
+                                <th style="width: 130px;">Estado</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
@@ -42,7 +39,13 @@
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
                                     <td>{{ $rubro->nombre }}</td>
                                     <td>{{ $rubro->ctrocosto_id }} - {{ $rubro->ctrocosto->nombre ?? 'Sin centro de costo' }}</td>
-                                    <td>{{ $rubro->activo ? 'Sí' : 'No' }}</td>
+                                    <td class="text-center">
+                                        @if ($rubro->activo)
+                                            <span class="badge badge-success">Activo</span>
+                                        @else
+                                            <span class="badge badge-danger">Inactivo</span>
+                                        @endif
+                                    </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
                                             <a href="{{ url('/admin/rubros/' . $rubro->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
@@ -54,10 +57,8 @@
                             @endforeach
                         </tbody>
                     </table>
-
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

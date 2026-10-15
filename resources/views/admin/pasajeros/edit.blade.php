@@ -1,0 +1,165 @@
+@extends('adminlte::page')
+
+@section('content_header')
+    <nav aria-label="breadcrumb" style="font-size: 14pt">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url('/admin') }}">Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Pasajeros</li>
+            <li class="breadcrumb-item active" aria-current="page">Editar Pasajero</li>
+        </ol>
+    </nav>
+@stop
+
+@section('content')
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h2 class="card-title"><b>Completar el formulario</b></h2>
+                </div>
+                <div class="card-body" style="box-sizing: border-box; display: block;">
+                    <form action="{{ url('/admin/pasajeros/' . $pasajero->id) }}" method="POST">
+                        @method('PUT')
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-2 mb-3">
+                                <label for="tipoDocumento" class="form-label">Tipo de documento <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="tipoDocumento" name="tipoDocumento" required>
+                                    <option value="">Seleccione tipo de documento</option>
+                                    <option value="DNI" {{ old('tipoDocumento', $pasajero->tipoDocumento) === 'DNI' ? 'selected' : '' }}>DNI</option>
+                                    <option value="CI" {{ old('tipoDocumento', $pasajero->tipoDocumento) === 'CI' ? 'selected' : '' }}>CI</option>
+                                    <option value="PAS" {{ old('tipoDocumento', $pasajero->tipoDocumento) === 'PAS' ? 'selected' : '' }}>PAS</option>
+                                    <option value="LE" {{ old('tipoDocumento', $pasajero->tipoDocumento) === 'LE' ? 'selected' : '' }}>LE</option>
+                                </select>
+                                @error('tipoDocumento')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="documento" class="form-label">Documento <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="documento" name="documento"
+                                    placeholder="Ingrese documento del pasajero" value="{{ old('documento', $pasajero->documento) }}" required>
+                                @error('documento')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                <label for="apelyNombre" class="form-label">Apellido y Nombres <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="apelyNombre" name="apelyNombre"
+                                    placeholder="Ingrese apellido y nombre del pasajero" value="{{ old('apelyNombre', $pasajero->apelyNombre) }}" required>
+                                @error('apelyNombre')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="telefono" class="form-label">Teléfono <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="telefono" name="telefono"
+                                    placeholder="Ingrese teléfono del pasajero" value="{{ old('telefono', $pasajero->telefono) }}" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="direccion" class="form-label">Domicilio <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="direccion" name="direccion"
+                                    placeholder="Ingrese domicilio del proveedor" value="{{ old('direccion', $pasajero->direccion) }}" required>
+                                @error('direccion')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="provincia">Provincia <b style="color: red;">(*)</b></label>
+                                    <select type="text" class="form-control" value="{{strtoupper($pasajero->localidad->provincia ?? 'N/A')}}" id="provincia" name="provincia"       placeholder="Provincia">
+                                        <option value="{{$pasajero->localidad->id_prov}}">{{strtoupper($pasajero->localidad->provincia ?? 'N/A')}}</option>
+                                        <option value="6">BUENOS AIRES</option>
+                                        <option value="2">CABA</option>
+                                        <option value="10">CATAMARCA</option>
+                                        <option value="22">CHACO</option>
+                                        <option value="26">CHUBUT</option>
+                                        <option value="18">CORRIENTES</option>
+                                        <option value="14">CORDOBA</option>
+                                        <option value="30">ENTRE RIOS</option>
+                                        <option value="34">FORMOSA</option>
+                                        <option value="38">JUJUY</option>
+                                        <option value="42">LA PAMPA</option>
+                                        <option value="46">LA RIOJA</option>
+                                        <option value="50">MENDOZA</option>
+                                        <option value="54">MISIONES</option>
+                                        <option value="58">NEUQUEN</option>
+                                        <option value="62">RIO NEGRO</option>
+                                        <option value="70">SAN JUAN</option>
+                                        <option value="74">SAN LUIS</option>
+                                        <option value="66">SALTA</option>
+                                        <option value="78">SANTA CRUZ</option>
+                                        <option value="82">SANTA FE</option>
+                                        <option value="86">SANTIAGO DEL ESTERO</option>
+                                        <option value="94">TIERRA DEL FUEGO</option>
+                                        <option value="90">TUCUMAN</option>
+                                    </select>
+                                    @error('provincia')
+                                        <small style="color: red">{{$message}}</small>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label for="localidad">Localidad <b style="color: red;">(*)</b></label>
+                                    <select type="text" class="form-control" value="{{strtoupper($pasajero->localidad->localidad ?? 'N/A')}}" id="localidad" name="localidad"        placeholder="Localidad">
+                                        <option value="{{$pasajero->localidad->id_local}}">{{strtoupper($pasajero->localidad->localidad ?? 'N/A')}}</option>
+                                    </select>
+                                    @error('localidad')
+                                        <small style="color: red">{{$message}}</small>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-sm-2">
+                                <div class="form-group">
+                                    <label for="cod_postal">Cod.Postal <b style="color: red;">(*)</b></label>
+                                    <select type="text" class="form-control" value="{{$pasajero->localidad->cod_postal ?? 'N/A' }}" id="cod_postal" name="cod_postal" placeholder="Código">
+                                        <option value="{{$pasajero->localidad->id}}">{{strtoupper($pasajero->localidad->cod_postal ?? 'N/A')}}</option>
+                                    </select>
+                                    @error('cod_postal')
+                                        <small style="color: red">{{$message}}</small>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 col-sm-4">
+                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    placeholder="Ingrese email del pasajero" value="{{ old('email', $pasajero->email) }}" required>
+                            </div>
+                            <div class="col-md-2 col-sm-2">
+                                <label for="usaComanda" class="form-label">Usa Comanda <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="usaComanda" name="usaComanda" required>
+                                    <option value="">Seleccione una opción</option>
+                                    <option value="1" {{ (old('usaComanda', $pasajero->usaComanda) ?? 0) == 1 ? 'selected' : '' }}>Sí</option>
+                                    <option value="0" {{ (old('usaComanda', $pasajero->usaComanda) ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                                </select>
+                                @error('usaComanda')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <a href="{{ url('/admin/pasajeros/index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <button type="submit" class="btn btn-info">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@stop
+
+@section('css')
+@stop
+
+@section('js')
+@stop

@@ -144,7 +144,7 @@
                                 </div>
                             </div>
                             <div class="hero-buttons">
-                                <a href="{{url('login')}}" class="btn btn-primary">Reservar Ahora</a>
+                                <a href="#reserva-section" class="btn btn-primary">Reservar Ahora</a>
                                 <a href="#rooms-showcase" class="btn btn-outline">Habitaciones</a>
                             </div>
                         </div>
@@ -628,17 +628,17 @@
                                         <i class="bi bi-whatsapp"></i>
                                     </div>
                                     <div class="detail-content">
-                                        <h5>WhatsApp</h5>
+                                        <h5>Nuestros WhatsApps</h5>
                                         <p>+54 9 342 598-3527 de Lun. a Vie 8.00hs a 16.15hs</p>
                                         <a href="https://wa.me/5493425983527" target="_blank" class="whatsapp-btn">
                                             <i class="bi bi-whatsapp"></i>
-                                            Enviar WhatsApp
+                                            Enviar WhatsApp a Turismo
                                         </a>
-                                        <h6></h6>
+                                        <h6>________________________________</h6>
                                         <p>+54 9 3548 61-8197 las 24hs.</p>
                                         <a href="https://wa.me/5493548618197" target="_blank" class="whatsapp-btn">
                                             <i class="bi bi-whatsapp"></i>
-                                            Enviar WhatsApp
+                                            Enviar WhatsApp al Hotel
                                         </a>
                                     </div>
                                 </div>

@@ -21,21 +21,21 @@
                     <form action="{{ url('/admin/pasajeros/create') }}" method="POST">
                         @csrf
                         <div class="row">
-                            <div class="col-md-2 mb-2">
-                                <label for="tipo_documento" class="form-label">Tipo de documento <b style="color: red;">(*)</b></label>
-                                <select class="form-control" id="tipo_documento" name="tipo_documento" required>
+                            <div class="col-md-2 mb-3">
+                                <label for="tipoDocumento" class="form-label">Tipo de documento <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="tipoDocumento" name="tipoDocumento" required>
                                     <option value="">Seleccione tipo de documento</option>
-                                    <option value="DNI" {{ old('tipo_documento', 'DNI') === 'DNI' ? 'selected' : '' }}>DNI</option>
-                                    <option value="CI" {{ old('tipo_documento') === 'CI' ? 'selected' : '' }}>CI</option>
-                                    <option value="PAS" {{ old('tipo_documento') === 'PAS' ? 'selected' : '' }}>PAS</option>
-                                    <option value="LE" {{ old('tipo_documento') === 'LE' ? 'selected' : '' }}>LE</option>
+                                    <option value="DNI" {{ old('tipoDocumento', 'DNI') === 'DNI' ? 'selected' : '' }}>DNI</option>
+                                    <option value="CI" {{ old('tipoDocumento') === 'CI' ? 'selected' : '' }}>CI</option>
+                                    <option value="PAS" {{ old('tipoDocumento') === 'PAS' ? 'selected' : '' }}>PAS</option>
+                                    <option value="LE" {{ old('tipoDocumento') === 'LE' ? 'selected' : '' }}>LE</option>
                                 </select>
-                                @error('tipo_documento')
+                                @error('tipoDocumento')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
 
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-2 mb-3">
                                 <label for="documento" class="form-label">Documento <b style="color: red;">(*)</b></label>
                                 <input type="text" class="form-control" id="documento" name="documento"
                                     placeholder="Ingrese documento del pasajero" value="{{ old('documento') }}" required>
@@ -43,11 +43,11 @@
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-                            <div class="col-md-5 mb-5">
-                                <label for="apelynombre" class="form-label">Apellido y Nombres <b style="color: red;">(*)</b></label>
-                                <input type="text" class="form-control" id="apelynombre" name="apelynombre"
-                                    placeholder="Ingrese apellido y nombre del pasajero" value="{{ old('apelynombre') }}" required>
-                                @error('apelynombre')
+                            <div class="col-md-5 mb-3">
+                                <label for="apelyNombre" class="form-label">Apellido y Nombres <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="apelyNombre" name="apelyNombre"
+                                    placeholder="Ingrese apellido y nombre del pasajero" value="{{ old('apelyNombre') }}" required>
+                                @error('apelyNombre')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
@@ -58,7 +58,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-4 mb-4">
+                            <div class="col-md-4">
                                 <label for="domicilio" class="form-label">Domicilio <b style="color: red;">(*)</b></label>
                                 <input type="text" class="form-control" id="domicilio" name="domicilio"
                                     placeholder="Ingrese domicilio del proveedor" value="{{ old('domicilio') }}" required>
@@ -66,7 +66,7 @@
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="provincia">Provincia <b style="color: red;">(*)</b></label>
                                     <select class="form-control" id="provincia" name="provincia" required>
@@ -121,14 +121,25 @@
                                     @enderror
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-4 col-sm-4">
                                 <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
                                 <input type="email" class="form-control" id="email" name="email"
                                     placeholder="Ingrese email del pasajero" value="{{ old('email') }}" required>
                             </div>
+                            <div class="col-md-2 col-sm-2">
+                                <label for="usaComanda" class="form-label">Usa Comanda <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="usaComanda" name="usaComanda" required>
+                                    <option value="">Seleccione una opción</option>
+                                    <option value="1" {{ old('usaComanda') === '1' ? 'selected' : '' }}>Sí</option>
+                                    <option value="0" {{ old('usaComanda') === '0' ? 'selected' : '' }}>No</option>
+                                </select>
+                                @error('usaComanda')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
                         </div>
-                    <div class="row">
-                    </div>
                         <hr>
                         <div class="row">
                             <div class="col-md-6">

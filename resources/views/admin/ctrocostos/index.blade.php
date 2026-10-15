@@ -16,14 +16,11 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title"><b>Centro de Costos registrados</b></h3>
-
                     <div class="card-tools">
                         <a href="{{ url('/admin/ctrocostos/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
 
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
@@ -57,7 +54,6 @@
 
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

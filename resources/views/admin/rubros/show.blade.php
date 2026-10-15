@@ -16,9 +16,7 @@
             <div class="card card-success">
                 <div class="card-header">
                     <h2 class="card-title"><b>Ver Rubro</b></h2>
-                    <!-- /.card-tools -->
                 </div>
-                <!-- /.card-header -->
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <div class="mb-3">
                         <label for="ctrocosto_id" class="form-label">Centro de Costo <b style="color: red;">(*)</b></label>
@@ -30,10 +28,6 @@
                         <input type="text" class="form-control" id="nombre" name="nombre" value="{{ $rubro->nombre }}" readonly>
                     </div>
                     <div class="mb-3">
-                        <label for="descripcion" class="form-label">Descripción</label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="2" readonly>{{ $rubro->descripcion }}</textarea>
-                    </div>
-                    <div class="mb-3">
                         <label for="activo" class="form-label">Estado</label>
                         <input type="text" class="form-control" id="activo" name="activo"
                             value="{{ $rubro->activo ? 'Activo' : 'Inactivo' }}" readonly>
@@ -43,16 +37,12 @@
                         <textarea class="form-control" id="observacion" name="observacion" rows="2" readonly>{{ $rubro->observacion }}</textarea>
                     </div>
                     <hr>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <a href="{{ url('/admin/rubros/index') }}" class="btn btn-success">Volver</a>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url('/admin/rubros/index') }}" class="btn btn-secondary">Volver</a>
+                        <a href="{{ route('rubros.edit', $rubro) }}" class="btn btn-success">Editar</a>
                     </div>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

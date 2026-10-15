@@ -128,6 +128,12 @@ Route::put('/admin/articulos/{id}', [App\Http\Controllers\ArticuloController::cl
 Route::delete('/admin/articulos/{id}', [App\Http\Controllers\ArticuloController::class, 'destroy'])
 ->name('articulos.destroy')
 ->middleware('auth');
+Route::get('/admin/articulos/{id}/ajuste', [App\Http\Controllers\ArticuloController::class, 'ajuste'])
+->name('articulos.ajuste')
+->middleware('auth');
+Route::post('/admin/articulos/{id}/grabar-ajuste', [App\Http\Controllers\ArticuloController::class, 'grabar'])
+->name('articulos.grabar')
+->middleware('auth');
 
 //RUTA PARA PROVEEDORES
 Route::get('/admin/proveedores/index', [App\Http\Controllers\ProveedorController::class, 'index'])
@@ -180,18 +186,17 @@ Route::put('/admin/pasajeros/{id}', [App\Http\Controllers\PasajeroController::cl
 Route::delete('/admin/pasajeros/{id}', [App\Http\Controllers\PasajeroController::class, 'destroy'])
 ->name('pasajeros.destroy')
 ->middleware('auth');
-
-//RUTAS PARA COMANDAS
-Route::get('/admin/comandas/index', [App\Http\Controllers\ComandaController::class, 'index'])
-->name('comandas.index')
-->middleware('auth');
-Route::get('/admin/comandas/create', [App\Http\Controllers\ComandaController::class, 'create'])
-->name('comandas.create')
-->middleware('auth');
-
 //RUTAS PARA PASAJEROS (AJAX)
 Route::get('/admin/pasajeros/habitacion/{habitacion}', [App\Http\Controllers\PasajeroController::class, 'getByHabitacion'])
 ->name('pasajeros.habitacion')
+->middleware('auth');
+
+//RUTAS PARA COMANDAS
+Route::get('/admin/comandas/cargar', [App\Http\Controllers\ArticuloController::class, 'cargarArticulos'])
+->name('comandas.cargar')
+->middleware('auth');
+Route::get('/admin/comandas/comanda', [App\Http\Controllers\ArticuloController::class, 'comanda'])
+->name('comandas.comanda')
 ->middleware('auth');
 
 //RUTAS PARA LOCALIDADES (AJAX)

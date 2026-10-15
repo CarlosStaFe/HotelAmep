@@ -14,14 +14,15 @@ return new class extends Migration
         Schema::create('comandas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('articulo_id')->constrained('articulos');
-            $table->foreignId('pasajero_id');
+            $table->foreignId('pasajero_id')->constrained('pasajeros');
+            $table->foreignId('user_id')->constrained('users');
             $table->dateTime('fecha');
-            $table->string('vendedor', 20);
+            $table->string('puntoVenta', 20);
             $table->string('habitacion', 10);
             $table->decimal('cantidad', 12, 3);
+            $table->decimal('precio', 12, 2);
             $table->decimal('total', 12, 2);
             $table->string('observacion', 100)->nullable();
-            $table->string('usuario', 50);
             $table->dateTime('fecha_creacion');
             $table->dateTime('fecha_actualizacion');
         });
