@@ -102,7 +102,6 @@
                     </form>
                 </div>
             </div>
-            <!-- /.card -->
         </div>
     </div>
 @stop

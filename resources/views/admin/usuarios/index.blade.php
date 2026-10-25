@@ -55,7 +55,7 @@
                                         <div class="btn-group" role="group" aria-label="Basic example">
                                             <a href="{{ route('usuarios.show', $usuario) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
                                             <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
-                                            <a href="{{ url('/admin/usuarios/' . $usuario->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+{{--                                             <a href="{{ url('/admin/usuarios/' . $usuario->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a> --}}
                                         </div>
                                     </td>
                                 </tr>

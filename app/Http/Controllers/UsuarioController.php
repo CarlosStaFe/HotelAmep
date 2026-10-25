@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\UsuarioCreadoMail;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
@@ -57,8 +59,14 @@ class UsuarioController extends Controller
 
         $usuario->assignRole($validated['role']);
 
+        Mail::to($usuario->email)->send(new UsuarioCreadoMail(
+            $usuario,
+            $validated['password'],
+            route('login')
+        ));
+
         return redirect()->route('usuarios.index')
-            ->with('mensaje', 'Usuario creado correctamente.');
+            ->with('mensaje', 'Usuario creado correctamente y se envió el correo de acceso.');
     }
 
     public function update(Request $request, int $id): RedirectResponse
@@ -86,7 +94,17 @@ class UsuarioController extends Controller
         $usuario->save();
         $usuario->syncRoles($validated['role']);
 
+        if (!empty($validated['password'])) {
+            Mail::to($usuario->email)->send(new UsuarioCreadoMail(
+                $usuario,
+                $validated['password'],
+                route('login')
+            ));
+        }
+
         return redirect()->route('usuarios.index')
-            ->with('mensaje', 'Usuario actualizado correctamente.');
+            ->with('mensaje', !empty($validated['password'])
+                ? 'Usuario actualizado correctamente y se envió el correo con la nueva contraseña.'
+                : 'Usuario actualizado correctamente.');
     }
 }
