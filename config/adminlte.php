@@ -436,6 +436,31 @@ return [
             ],
         ],
         [
+            'text' => 'Disponibilidad',
+            'icon' => 'bi bi-calendar3-range-fill',
+            'classes' => 'bg-navy text-white',
+            'submenu' => [
+                [
+                    'text' => 'Calendario',
+                    'url' => '/admin/calendarios/index',
+                    'icon' => 'bi bi-calendar3',
+                    'classes' => 'bg-cyan text-white',
+                ],
+                [
+                    'text' => 'Generar Disponibilidad',
+                    'url' => '/admin/calendarios/disponibilidad',
+                    'icon' => 'bi bi-calendar2-range',
+                    'classes' => 'bg-cyan text-white',
+                ],
+                [
+                    'text' => 'Asignar Habitación',
+                    'url' => '/admin/pasajeros/asignar-habitacion',
+                    'icon' => 'bi bi-house-add',
+                    'classes' => 'bg-cyan text-white',
+                ],
+            ],
+        ],
+        [
             'text' => 'Pasajeros',
             'icon' => 'bi bi-luggage',
             'classes' => 'bg-navy text-white',

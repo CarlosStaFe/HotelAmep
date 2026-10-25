@@ -162,4 +162,104 @@
 @stop
 
 @section('js')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const provinciaSelect = document.getElementById('provincia');
+            const localidadSelect = document.getElementById('localidad');
+            const codPostalSelect = document.getElementById('cod_postal_id');
+
+            const oldProvincia = @json(old('provincia', optional($proveedor->localidad)->id_prov));
+            const oldLocalidad = @json(old('localidad', optional($proveedor->localidad)->id_local));
+            const oldCodPostal = @json(old('cod_postal_id', $proveedor->cod_postal_id));
+
+            const setDefaultOption = (select, text) => {
+                select.innerHTML = `<option value="">${text}</option>`;
+            };
+
+            const cargarLocalidades = async (idProv, localidadSeleccionada = '') => {
+                setDefaultOption(localidadSelect, 'Seleccione localidad');
+                setDefaultOption(codPostalSelect, 'Seleccione codigo postal');
+
+                if (!idProv) {
+                    return;
+                }
+
+                try {
+                    const endpoint = "{{ route('localidades.provincia', ['idProv' => '__ID__']) }}".replace('__ID__', encodeURIComponent(idProv));
+                    const response = await fetch(endpoint, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const localidades = await response.json();
+
+                    localidades.forEach((item) => {
+                        const option = document.createElement('option');
+                        option.value = item.id_local;
+                        option.textContent = item.localidad;
+
+                        if (localidadSeleccionada && String(localidadSeleccionada) === String(item.id_local)) {
+                            option.selected = true;
+                        }
+
+                        localidadSelect.appendChild(option);
+                    });
+
+                    if (localidadSelect.value) {
+                        await cargarCodigosPostales(localidadSelect.value, oldCodPostal);
+                    }
+                } catch (error) {
+                    console.error('Error al cargar localidades:', error);
+                }
+            };
+
+            const cargarCodigosPostales = async (idLocal, codPostalSeleccionado = '') => {
+                setDefaultOption(codPostalSelect, 'Seleccione codigo postal');
+
+                if (!idLocal) {
+                    return;
+                }
+
+                try {
+                    const endpoint = "{{ route('localidades.codigos_postales', ['idLocal' => '__ID__']) }}".replace('__ID__', encodeURIComponent(idLocal));
+                    const response = await fetch(endpoint, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const codigos = await response.json();
+
+                    codigos.forEach((item) => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = item.cod_postal;
+
+                        if (codPostalSeleccionado && String(codPostalSeleccionado) === String(item.id)) {
+                            option.selected = true;
+                        }
+
+                        codPostalSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error al cargar codigos postales:', error);
+                }
+            };
+
+            provinciaSelect.addEventListener('change', function() {
+                cargarLocalidades(this.value);
+            });
+
+            localidadSelect.addEventListener('change', function() {
+                cargarCodigosPostales(this.value);
+            });
+
+            if (oldProvincia) {
+                provinciaSelect.value = String(oldProvincia);
+                cargarLocalidades(String(oldProvincia), oldLocalidad);
+            } else {
+                setDefaultOption(localidadSelect, 'Seleccione localidad');
+                setDefaultOption(codPostalSelect, 'Seleccione codigo postal');
+            }
+        });
+    </script>
 @stop

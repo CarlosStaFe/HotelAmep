@@ -17,9 +17,10 @@ class RoleSeeder extends Seeder
         $auditor = Role::create(['name' => 'Auditor']);
         $barman = Role::create(['name' => 'Barman']);
         $cocinero = Role::create(['name' => 'Cocinero']);
-        $mucama = Role::create(['name' => 'Mucama']);
-        $moza = Role::create(['name' => 'Moza']);
+        $contador = Role::create(['name' => 'Contador']);
         $gerente = Role::create(['name' => 'Gerente']);
+        $moza = Role::create(['name' => 'Moza']);
+        $mucama = Role::create(['name' => 'Mucama']);
         $recepcion = Role::create(['name' => 'Recepcion']);
         $turismo = Role::create(['name' => 'Turismo']);
 

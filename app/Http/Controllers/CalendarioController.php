@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Calendario;
+use App\Models\Habitacion;
+use Illuminate\Http\Request;
+
+class CalendarioController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $calendario = Calendario::with('habitacion')->get();
+
+        return view('admin.calendarios.index', compact('calendario'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function disponibilidad()
+    {
+        $habitaciones = Habitacion::query()
+            ->where('venta', true)
+            ->orderBy('numero')
+            ->get();
+
+        return view('admin.calendarios.disponibilidad', compact('habitaciones'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $datos = $request->validate([
+            'habitacion_id' => 'required|exists:habitaciones,id',
+            'estado' => 'required|in:Disponible,No Disponible,Reservada,Ocupada',
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        ]);
+
+        $habitacion = Habitacion::findOrFail($datos['habitacion_id']);
+
+        Calendario::create([
+            'title' => "Habitación {$habitacion->numero} - PAX {$habitacion->plazas} - Matri {$habitacion->matri} - Simple {$habitacion->simple} - Piso {$habitacion->piso} - Piso {$habitacion->piso} - Vista {$habitacion->vista} - Aire {$habitacion->aire} - Cuna {$habitacion->cuna} - Baño {$habitacion->toilette}",
+            'description' => 'Disponibilidad generada automáticamente',
+            'start' => date('Y-m-d 00:00:00', strtotime($datos['fecha_inicio'])),
+            'end' => date('Y-m-d 23:59:59', strtotime($datos['fecha_fin'])),
+            'color' => $datos['estado'] === 'Disponible' ? '#0CB371' : '#dc3545',
+            'textColor' => '#000000',
+            'estado' => $datos['estado'],
+            'habitacion_id' => $habitacion->id,
+        ]);
+
+        return redirect()->route('calendarios.disponibilidad')
+            ->with('mensaje', 'Disponibilidad generada exitosamente.')
+            ->with('icono', 'success')
+            ->with('showConfirmButton', false)
+            ->with('textoBoton', '');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Calendario $calendario)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Calendario $calendario)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Calendario $calendario)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Calendario $calendario)
+    {
+        //
+    }
+}

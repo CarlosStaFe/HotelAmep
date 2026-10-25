@@ -161,6 +161,17 @@ Route::delete('/admin/proveedores/{id}', [App\Http\Controllers\ProveedorControll
 ->name('proveedores.destroy')
 ->middleware('auth');
 
+//RUTA PARA CALENDARIO
+Route::get('/admin/calendarios/index', [App\Http\Controllers\CalendarioController::class, 'index'])
+->name('calendarios.index')
+->middleware('auth');
+Route::get('/admin/calendarios/disponibilidad', [App\Http\Controllers\CalendarioController::class, 'disponibilidad'])
+->name('calendarios.disponibilidad')
+->middleware('auth');
+Route::post('/admin/calendarios/disponibilidad', [App\Http\Controllers\CalendarioController::class, 'store'])
+->name('calendarios.store')
+->middleware('auth');
+
 //RUTAS PARA PASAJEROS
 Route::get('/admin/pasajeros/index', [App\Http\Controllers\PasajeroController::class, 'index'])
 ->name('pasajeros.index')

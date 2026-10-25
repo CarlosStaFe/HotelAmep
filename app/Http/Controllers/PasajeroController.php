@@ -132,16 +132,59 @@ class PasajeroController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Pasajero $pasajero)
+    public function update(Request $request, $id)
     {
-        //
+        $pasajero = Pasajero::findOrFail($id);
+
+        $validated = $request->validate([
+            'tipoDocumento' => 'required|in:DNI,CI,PAS,LE',
+            'documento' => 'required|string|max:8',
+            'apelyNombre' => 'required|string|max:100',
+            'telefono' => 'required|string|max:50',
+            'direccion' => 'required|string|max:100',
+            'cod_postal_id' => 'required|exists:localidades,id',
+            'email' => 'required|email|max:100',
+            'usaComanda' => 'required|boolean',
+        ]);
+
+        $pasajero->update([
+            'tipoDocumento' => $validated['tipoDocumento'],
+            'documento' => $validated['documento'],
+            'apelyNombre' => $validated['apelyNombre'],
+            'telefono' => $validated['telefono'],
+            'email' => $validated['email'],
+            'direccion' => $validated['domicilio'],
+            'usaComanda' => $validated['usaComanda'],
+            'cod_postal_id' => $validated['cod_postal_id'],
+            'fecha_actualizacion' => now(),
+        ]);
+
+        return redirect()->route('pasajeros.index')
+            ->with('mensaje', 'Pasajero actualizado correctamente.')
+            ->with('icono', 'success')
+            ->with('showConfirmButton', false)
+            ->with('textoBoton', '');        
+    }
+
+    /**
+     * Show delete confirmation for the specified resource.
+     */
+    public function delete($id)
+    {
+        $pasajero = Pasajero::with('localidad')->findOrFail($id);
+
+        return view('admin.pasajeros.delete', compact('pasajero'));
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Pasajero $pasajero)
+    public function destroy($id)
     {
-        //
+        $pasajero = Pasajero::findOrFail($id);
+        $pasajero->delete();
+
+        return redirect()->route('pasajeros.index')
+            ->with('mensaje', 'Pasajero eliminado correctamente.');
     }
 }

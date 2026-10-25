@@ -64,23 +64,31 @@
 
         {{-- Login field --}}
         <div class="row">
-            <div class="col-7">
-                <div class="icheck-primary" title="{{ __('adminlte::adminlte.remember_me_hint') }}">
-                    <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-
-                    <label for="remember">
-                        Recuérdame
-                    </label>
-                </div>
+            <div class="col-5 mr-5">
+                <a href="{{ url('/') }}" class="btn btn-block btn-flat btn-secondary">
+                    <span class="fas fa-solid fa-door-open"></span>
+                     Volver
+                </a>
             </div>
-
-            <div class="col-5">
+            <div class="col-5 mb-3">
                 <button type=submit class="btn btn-block {{ config('adminlte.classes_auth_btn', 'btn-flat btn-primary') }}">
                     <span class="fas fa-sign-in-alt"></span>
                      Ingrese
                 </button>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-7">
+                <div class="icheck-primary" title="{{ __('adminlte::adminlte.remember_me_hint') }}">
+                    <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                    <label for="remember">
+                        Recuérdame
+                    </label>
+                </div>
+            </div>
+        </div>
+
     </form>
 @stop
 
@@ -89,6 +97,7 @@
     @if($passResetUrl)
         <p class="my-0">
             <a href="{{ $passResetUrl }}">
+                Olvidé mi contraseña
             </a>
         </p>
     @endif

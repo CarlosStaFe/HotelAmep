@@ -18,11 +18,13 @@ return new class extends Migration
             $table->string('estado', 20);
             $table->integer('plazas')->unsigned();
             $table->integer('matri')->unsigned();
-            $table->integer('simple')->unsigned();            
+            $table->integer('simple')->unsigned();           
             $table->string('piso', 10)->nullable();
             $table->string('vista', 20)->nullable();   
             $table->string('aire', 2)->nullable();
             $table->string('cuna', 2)->nullable();
+            $table->string('toilette', 1)->nullable();
+            $table->boolean('venta')->default(true);
             $table->string('observacion', 100)->nullable();
             $table->dateTime('fecha_creacion')->nullable()->useCurrent();
             $table->dateTime('fecha_actualizacion')->nullable()->useCurrent();

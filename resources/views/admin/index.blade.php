@@ -1,13 +1,12 @@
 @extends('adminlte::page')
 
-@section('title', 'Dashboard')
+@section('title', 'Sistema de Gestión Hotelera')
 
 @section('content_header')
-    <h1>Dashboard</h1>
+    <h1>Sistema de Gestión Hotelera.</h1>
 @stop
 
 @section('content')
-    <p>Sistema de Gestión Hotelera.</p>
 @stop
 
 @section('css')
@@ -16,5 +15,7 @@
 @stop
 
 @section('js')
-    <script> console.log("Hi, I'm using the Laravel-AdminLTE package!"); </script>
+    <script>
+        console.log("Hi, I'm using the Laravel-AdminLTE package!");
+    </script>
 @stop
