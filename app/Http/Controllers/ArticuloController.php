@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Articulo;
 use App\Models\Habitacion;
 use App\Models\Rubro;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -213,25 +214,39 @@ class ArticuloController extends Controller
      */
     public function comanda()
     {
-        return $this->cargarArticulos();
+        $habitaciones = Habitacion::query()
+            ->where('estado', 'Ocupada')
+            ->orderBy('numero')
+            ->get();
+
+        return view('admin.comandas.comanda', compact('habitaciones'));
     }
 
     /**
      * Cargar los articulos habilitados para las comandas.
      */
-    public function cargarArticulos()
+    public function cargarArticulos(): JsonResponse
     {
-        $habitaciones = Habitacion::orderBy('numero')
-            ->where('estado', 'Ocupada')
-            ->get();
-
-        $articulos = Articulo::where('activo', true)
-            ->where('comanda', true)
+        $articulos = Articulo::with('rubro')
+            ->where('articulos.activo', true)
+            ->where('articulos.comanda', true)
             ->leftJoin('stocks', 'articulos.id', '=', 'stocks.articulo_id')
-            ->select('articulos.*', 'stocks.cantidad', 'stocks.precioVta')
-            ->orderBy('nombre')
-            ->get();
-        return view('admin.comandas.comanda', compact('articulos', 'habitaciones'));
+            ->select(
+                'articulos.*',
+                'stocks.cantidad as stock',
+                'stocks.precioVta as precio'
+            )
+            ->orderBy('articulos.nombre')
+            ->get()
+            ->map(fn (Articulo $articulo) => [
+                'id' => $articulo->id,
+                'rubro' => $articulo->rubro?->nombre ?? 'Sin rubro',
+                'nombre' => $articulo->nombre,
+                'stock' => $articulo->stock ?? 'N/A',
+                'precio' => $articulo->precio ?? 'N/A',
+            ]);
+
+        return response()->json(['data' => $articulos]);
     }
 
 }

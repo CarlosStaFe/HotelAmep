@@ -12,7 +12,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-9">
             <div class="card card-info">
                 <div class="card-header">
                     <h2 class="card-title"><b>Completar el formulario</b></h2>

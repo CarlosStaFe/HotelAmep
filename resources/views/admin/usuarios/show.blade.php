@@ -12,7 +12,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-9">
             <div class="card card-success">
                 <div class="card-header">
                     <h3 class="card-title"><b>Detalle del usuario</b></h3>

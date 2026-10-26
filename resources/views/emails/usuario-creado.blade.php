@@ -12,6 +12,6 @@
     <p><strong>Contraseña:</strong> {{ $password }}</p>
 
     <p><a href="{{ config('app.url') }}">Ingresar al sistema</a></p>
-    <p>Por seguridad, no compartas esta contraseña y cambiala después de iniciar sesión.</p>
+    <p>Por seguridad, no compartas esta contraseña.</p>
 </body>
 </html>

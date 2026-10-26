@@ -18,7 +18,7 @@
                     <h2 class="card-title"><b>Completar el formulario</b></h2>
                 </div>
                 <div class="row">
-                    <div class="col-md-2">
+                    <div class="col-md-2 ml-1">
                         <label for="habitacion" class="form-label">Habitación <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="habitacion" name="habitacion" required>
                             <option value="">Seleccione</option>
@@ -30,7 +30,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <label for="pasajeros" class="form-label">Pasajeros <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="pasajeros" name="pasajeros" required>
                             <option value="">Seleccione Pasajero</option>
@@ -42,8 +42,8 @@
                             @endforeach --}}
                         </select>
                     </div>
-                    <div class="col-md-5">
-                        <label class="form-label">Punto de Venta <b style="color: red;">(*)</b></label>
+                    <div class="col-md-4">
+                        <label class="form-label">Puntos de Venta <b style="color: red;">(*)</b></label>
                         <div>
                             <div class="form-check form-check-inline mr-5">
                                 <input class="form-check-input" type="radio" id="punto_comedor" name="punto" value="Comedor" {{ old('punto') == 'Comedor' ? 'checked' : '' }} required>
@@ -72,22 +72,7 @@
                                 <th style="width: 10px;">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach ($articulos as $articulo)
-                                <tr>
-                                    <td style="text-align: right;">{{ $loop->iteration }}</td>
-                                    <td>{{ $articulo->rubro?->nombre ?? 'Sin rubro' }}</td>
-                                    <td>{{ $articulo->nombre }}</td>
-                                    <td>{{ $articulo->stock ?? 'N/A' }}</td>
-                                    <td>{{ $articulo->precio ?? 'N/A' }}</td>
-                                    <td style="text-align: center;">
-                                        <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ url('/admin/comandas/' . $articulo->id) }}" class="btn btn-success"><i class="bi bi-pencil"></i></a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -188,6 +173,46 @@
         $(function() {
             $("#example1").DataTable({
                 "pageLength": 10,
+                "ajax": {
+                    "url": @json(route('comandas.cargar')),
+                    "dataSrc": "data"
+                },
+                "columns": [
+                    {
+                        "data": null,
+                        "orderable": false,
+                        "searchable": false,
+                        "render": function(data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
+                    },
+                    {
+                        "data": "rubro",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "nombre",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "stock",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "precio",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "id",
+                        "orderable": false,
+                        "searchable": false,
+                        "render": function(id) {
+                            return '<div class="btn-group" role="group" aria-label="Acciones">' +
+                                '<a href="/admin/comandas/' + encodeURIComponent(id) +
+                                '" class="btn btn-success"><i class="bi bi-pencil"></i></a></div>';
+                        }
+                    }
+                ],
                 "language": {
                     "emptyTable": "No hay información",
                     "info": "Mostrando _START_ a _END_ de _TOTAL_ Registros",

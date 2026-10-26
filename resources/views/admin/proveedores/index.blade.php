@@ -41,7 +41,7 @@
                                 <tr>
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
                                     <td>{{ $proveedor->nombre }}</td>
-                                    <td>{{ $proveedor->razon_social }}</td>
+                                    <td>{{ $proveedor->razonSocial }}</td>
                                     <td>{{ $proveedor->cuit ?? 'N/A' }}</td>
                                     <td>{{ $proveedor->telefono ?? 'N/A' }}</td>
                                     <td>{{ $proveedor->activo ? 'Sí' : 'No' }}</td>

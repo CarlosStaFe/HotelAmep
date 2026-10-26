@@ -32,12 +32,12 @@
                                 @enderror
                             </div>
                             <div class="col-md-4 mb-4">
-                                <label for="razon_social" class="form-label">Razón Social <b
+                                <label for="razonSocial" class="form-label">Razón Social <b
                                         style="color: red;">(*)</b></label>
-                                <input type="text" class="form-control" id="razon_social" name="razon_social"
+                                <input type="text" class="form-control" id="razonSocial" name="razonSocial"
                                     placeholder="Ingrese razón social del proveedor"
-                                    value="{{ old('razon_social', $proveedor->razon_social) }}" required>
-                                @error('razon_social')
+                                    value="{{ old('razonSocial', $proveedor->razonSocial) }}" required>
+                                @error('razonSocial')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
@@ -52,16 +52,16 @@
                             </div>
                             <div class="col-md-2 mb-2">
                                 <div class="form-group">
-                                    <label for="tipo_iva">Tipo I.V.A. <b style="color: red;">(*)</b></label>
-                                    <select class="form-control" id="tipo_iva" name="tipo_iva" required>
+                                    <label for="tipoIva">Tipo I.V.A. <b style="color: red;">(*)</b></label>
+                                    <select class="form-control" id="tipoIva" name="tipoIva" required>
                                         <option value="">Elige una tipo de I.V.A...</option>
-                                        <option value="Consumidor Final" {{ old('tipo_iva', $proveedor->tipo_iva) == 'Consumidor Final' ? 'selected' : '' }}>Consumidor Final</option>
-                                        <option value="Exento" {{ old('tipo_iva', $proveedor->tipo_iva) == 'Exento' ? 'selected' : '' }}>Exento</option>
-                                        <option value="Monotributo" {{ old('tipo_iva', $proveedor->tipo_iva) == 'Monotributo' ? 'selected' : '' }}>Monotributo</option>
-                                        <option value="No Responsable" {{ old('tipo_iva', $proveedor->tipo_iva) == 'No Responsable' ? 'selected' : '' }}>No Responsable</option>
-                                        <option value="Resp. Inscripto" {{ old('tipo_iva', $proveedor->tipo_iva) == 'Resp. Inscripto' ? 'selected' : '' }}>Resp. Inscripto</option>
+                                        <option value="Consumidor Final" {{ old('tipoIva', $proveedor->tipoIva) == 'Consumidor Final' ? 'selected' : '' }}>Consumidor Final</option>
+                                        <option value="Exento" {{ old('tipoIva', $proveedor->tipoIva) == 'Exento' ? 'selected' : '' }}>Exento</option>
+                                        <option value="Monotributo" {{ old('tipoIva', $proveedor->tipoIva) == 'Monotributo' ? 'selected' : '' }}>Monotributo</option>
+                                        <option value="No Responsable" {{ old('tipoIva', $proveedor->tipoIva) == 'No Responsable' ? 'selected' : '' }}>No Responsable</option>
+                                        <option value="Resp. Inscripto" {{ old('tipoIva', $proveedor->tipoIva) == 'Resp. Inscripto' ? 'selected' : '' }}>Resp. Inscripto</option>
                                     </select>
-                                    @error('tipo_iva')
+                                    @error('tipoIva')
                                         <small style="color: red">{{ $message }}</small>
                                     @enderror
                                 </div>
@@ -141,6 +141,15 @@
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    placeholder="Ingrese email del proveedor"
+                                    value="{{ old('email', $proveedor->email) }}" required>
+                                @error('email')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
                             <div class="col-md-2 mb-2">
                                 <label for="activo" class="form-label">Estado <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="activo" name="activo" required>
@@ -152,6 +161,35 @@
                                 <label for="observacion" class="form-label">Observación</label>
                                 <textarea class="form-control" id="observacion" name="observacion" rows="2"
                                     placeholder="Ingrese observación del proveedor">{{ old('observacion', $proveedor->observacion) }}</textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2 mb-3">
+                                <label for="echeck" class="form-label">Echeck</label>
+                                <select class="form-control" id="echeck" name="echeck">
+                                    <option value="0" {{ old('echeck', $proveedor->echeck) == '0' ? 'selected' : '' }}>No</option>
+                                    <option value="1" {{ old('echeck', $proveedor->echeck) == '1' ? 'selected' : '' }}>Sí</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="cbu" class="form-label">CBU</label>
+                                <input type="text" class="form-control" id="cbu" name="cbu"
+                                    placeholder="Ingrese CBU del proveedor" value="{{ old('cbu', $proveedor->cbu) }}">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="cvu" class="form-label">CVU</label>
+                                <input type="text" class="form-control" id="cvu" name="cvu"
+                                    placeholder="Ingrese CVU del proveedor" value="{{ old('cvu', $proveedor->cvu) }}">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="alias" class="form-label">Alias</label>
+                                <input type="text" class="form-control" id="alias" name="alias"
+                                    placeholder="Ingrese alias del proveedor" value="{{ old('alias', $proveedor->alias) }}">
+                            </div>
+                            <div class="col-md-1 mb-3">
+                                <label for="dias" class="form-label">Días Pago <b style="color: red;">(*)</b></label>
+                                <input type="number" class="form-control" id="dias" name="dias" required
+                                    placeholder="Ingrese días del proveedor" value="{{ old('dias', $proveedor->dias) }}">
                             </div>
                         </div>
                         <hr>

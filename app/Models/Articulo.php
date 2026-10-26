@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class articulo extends Model
+class Articulo extends Model
 {
     protected $table = 'articulos';
 
@@ -13,6 +13,6 @@ class articulo extends Model
 
     public function rubro(): BelongsTo
     {
-        return $this->belongsTo(rubro::class, 'rubro_id');
+        return $this->belongsTo(Rubro::class, 'rubro_id');
     }
 }

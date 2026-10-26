@@ -162,8 +162,10 @@
                         <div class="row">
                             <div class="col-md-2 mb-3">
                                 <label for="echeck" class="form-label">Echeck</label>
-                                <input type="text" class="form-control" id="echeck" name="echeck"
-                                    placeholder="Ingrese echeck del proveedor" value="{{ old('echeck') }}">
+                                <select class="form-control" id="echeck" name="echeck">
+                                    <option value="0" {{ old('echeck', '0') === '0' ? 'selected' : '' }}>No</option>
+                                    <option value="1" {{ old('echeck') === '1' ? 'selected' : '' }}>Sí</option>
+                                </select>
                                 @error('echeck')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror

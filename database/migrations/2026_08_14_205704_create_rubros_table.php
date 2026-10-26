@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreignId('ctrocosto_id')->constrained('ctrocostos');
             $table->string('nombre', 255);
             $table->boolean('activo')->default(true);
-            $table->string('observacion', 100);
+            $table->string('observacion', 100)->nullable();
             $table->dateTime('fecha_creacion');
             $table->dateTime('fecha_actualizacion');
         });

@@ -33,9 +33,10 @@
                             <select class="form-control" id="tipo" name="tipo" required>
                                 <option value="">Seleccione un tipo</option>
                                 <option value="Administrativo" {{ old('tipo') == 'Administrativo' ? 'selected' : '' }}>Administrativo</option>
+                                <option value="Consumibles" {{ old('tipo') == 'Consumibles' ? 'selected' : '' }}>Consumibles</option>
+                                <option value="Bienes/Muebles" {{ old('tipo') == 'Bienes/Muebles' ? 'selected' : '' }}>Bienes/Muebles</option>
                                 <option value="Mantenimiento" {{ old('tipo') == 'Mantenimiento' ? 'selected' : '' }}>Mantenimiento</option>
                                 <option value="Producción" {{ old('tipo') == 'Producción' ? 'selected' : '' }}>Producción</option>
-                                <option value="Bienes/Muebles" {{ old('tipo') == 'Bienes/Muebles' ? 'selected' : '' }}>Bienes/Muebles</option>
                                 <option value="Varios" {{ old('tipo') == 'Varios' ? 'selected' : '' }}>Varios</option>
                             </select>
                         </div>

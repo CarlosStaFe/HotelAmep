@@ -25,7 +25,7 @@
                         </div>
                         <div class="col-md-4 mb-4">
                             <label for="razon_social" class="form-label">Razón Social</label>
-                            <input type="text" class="form-control" id="razon_social" value="{{ $proveedor->razon_social }}" readonly>
+                            <input type="text" class="form-control" id="razon_social" value="{{ $proveedor->razonSocial }}" readonly>
                         </div>
                         <div class="col-md-2 mb-2">
                             <label for="cuit" class="form-label">C.U.I.T.</label>

@@ -24,6 +24,11 @@ class Proveedor extends Model
         'observacion',
         'fecha_creacion',
         'fecha_actualizacion',
+        'echeck',
+        'cbu',
+        'cvu',
+        'alias',
+        'dias',
     ];
 
     public function localidad(): BelongsTo

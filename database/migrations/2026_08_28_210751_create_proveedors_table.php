@@ -22,8 +22,8 @@ return new class extends Migration
             $table->string('telefono', 50)->nullable();
             $table->string('email', 100)->nullable();
             $table->boolean('echeck')->default(false);
-            $table->integer('cbu')->length(22)->nullable();
-            $table->integer('cvu')->length(22)->nullable();
+            $table->string('cbu', 22)->nullable();
+            $table->string('cvu', 22)->nullable();
             $table->string('alias', 100)->nullable();
             $table->string('dias', 100)->nullable();
             $table->boolean('activo')->default(true);

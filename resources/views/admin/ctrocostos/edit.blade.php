@@ -34,7 +34,9 @@
                             <select class="form-control" id="tipo" name="tipo" required>
                                 <option value="">Seleccione un tipo</option>
                                 <option value="Administrativo" {{ old('tipo', $ctrocosto->tipo) == 'Administrativo' ? 'selected' : '' }}>Administrativo</option>
-                                <option value="Operativo" {{ old('tipo', $ctrocosto->tipo) == 'Operativo' ? 'selected' : '' }}>Operativo</option>
+                                <option value="Consumibles" {{ old('tipo', $ctrocosto->tipo) == 'Consumibles' ? 'selected' : '' }}>Consumibles</option>
+                                <option value="Bienes/Muebles" {{ old('tipo', $ctrocosto->tipo) == 'Bienes/Muebles' ? 'selected' : '' }}>Bienes/Muebles</option>
+                                <option value="Mantenimiento" {{ old('tipo', $ctrocosto->tipo) == 'Mantenimiento' ? 'selected' : '' }}>Mantenimiento</option>
                                 <option value="Producción" {{ old('tipo', $ctrocosto->tipo) == 'Producción' ? 'selected' : '' }}>Producción</option>
                                 <option value="Varios" {{ old('tipo', $ctrocosto->tipo) == 'Varios' ? 'selected' : '' }}>Varios</option>
                             </select>
