@@ -28,8 +28,8 @@
                             <tr style="background-color: #007bff; color: white; text-align: center;">
                                 <th style="width: 50px;">Nro.</th>
                                 <th style="width: 250px;">Nombre</th>
-                                <th>Centro de Costo</th>
-                                <th style="width: 130px;">Estado</th>
+                                <th style="width: 130px;">Tipo</th>
+                                <th>Observación</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
@@ -38,14 +38,8 @@
                                 <tr>
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
                                     <td>{{ $rubro->nombre }}</td>
-                                    <td>{{ $rubro->ctrocosto_id }} - {{ $rubro->ctrocosto->nombre ?? 'Sin centro de costo' }}</td>
-                                    <td class="text-center">
-                                        @if ($rubro->activo)
-                                            <span class="badge badge-success">Activo</span>
-                                        @else
-                                            <span class="badge badge-danger">Inactivo</span>
-                                        @endif
-                                    </td>
+                                    <td>{{ $rubro->tipo }}</td>
+                                    <td>{{ $rubro->observacion }}</td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
                                             <a href="{{ url('/admin/rubros/' . $rubro->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
@@ -57,6 +51,7 @@
                             @endforeach
                         </tbody>
                     </table>
+
                 </div>
             </div>
         </div>

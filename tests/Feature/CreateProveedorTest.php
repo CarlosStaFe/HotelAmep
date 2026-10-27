@@ -63,6 +63,33 @@ class CreateProveedorTest extends TestCase
         ]);
     }
 
+    public function test_provider_can_be_created_without_email_or_phone(): void
+    {
+        $user = User::factory()->create();
+        $localidadId = $this->createLocalidad();
+
+        $response = $this->actingAs($user)
+            ->post(route('proveedores.store'), [
+                'nombre' => 'Proveedor sin contacto',
+                'razonSocial' => 'Proveedor sin contacto S.A.',
+                'cuit' => '20123456789',
+                'tipoIva' => 'Resp. Inscripto',
+                'domicilio' => 'Calle 1 123',
+                'provincia' => '6',
+                'localidad' => '06001',
+                'cod_postal_id' => $localidadId,
+                'activo' => '1',
+                'dias' => '30',
+            ]);
+
+        $response->assertRedirect(route('proveedores.index'));
+        $this->assertDatabaseHas('proveedores', [
+            'nombre' => 'Proveedor sin contacto',
+            'telefono' => null,
+            'email' => null,
+        ]);
+    }
+
     public function test_provider_edit_saves_all_fields_submitted_by_edit_form(): void
     {
         $user = User::factory()->create();
@@ -98,8 +125,8 @@ class CreateProveedorTest extends TestCase
                 'provincia' => '6',
                 'localidad' => '06001',
                 'cod_postal_id' => $localidadId,
-                'telefono' => '2215551234',
-                'email' => 'actualizado@example.com',
+                'telefono' => '',
+                'email' => '',
                 'activo' => '1',
                 'echeck' => '1',
                 'cbu' => '1234567890123456789012',
@@ -118,8 +145,8 @@ class CreateProveedorTest extends TestCase
             'tipoIva' => 'Resp. Inscripto',
             'domicilio' => 'Calle actualizada 456',
             'cod_postal_id' => $localidadId,
-            'telefono' => '2215551234',
-            'email' => 'actualizado@example.com',
+            'telefono' => null,
+            'email' => null,
             'activo' => true,
             'echeck' => true,
             'cbu' => '1234567890123456789012',

@@ -313,39 +313,39 @@ return [
             'classes' => 'bg-navy text-white',
             'submenu' => [
                 [
-                    'text' => 'Centro de Costos',
+                    'text' => 'Rubros',
                     'icon' => 'bi bi-bullseye',
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
                         [
-                            'text' => 'Listado Centros',
-                            'url' => '/admin/ctrocostos/index',
+                            'text' => 'Listado de Rubros',
+                            'url' => '/admin/rubros/index',
                             'icon' => 'bi bi-card-list',
                             'classes' => 'bg-cyan text-white',
 
                         ],
                         [
-                            'text' => 'Registrar Centro',
-                            'url' => '/admin/ctrocostos/create',
+                            'text' => 'Registrar Rubro',
+                            'url' => '/admin/rubros/create',
                             'icon' => 'bi bi-inboxes',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],
                 ],
                 [
-                    'text' => 'Rubros',
+                    'text' => 'Subrubros',
                     'icon' => 'fas fa-layer-group',
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
                         [
-                            'text' => 'Listado de Rubros',
-                            'url' => '/admin/rubros/index',
+                            'text' => 'Listado de Subrubros',
+                            'url' => '/admin/subrubros/index',
                             'icon' => 'bi bi-list-check',
                             'classes' => 'bg-cyan text-white',
                         ],
                         [
-                            'text' => 'Registrar Rubro',
-                            'url' => '/admin/rubros/create',
+                            'text' => 'Registrar Subrubro',
+                            'url' => '/admin/subrubros/create',
                             'icon' => 'bi bi-inboxes',
                             'classes' => 'bg-cyan text-white',
                         ],

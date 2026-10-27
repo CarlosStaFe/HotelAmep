@@ -61,8 +61,7 @@ class UsuarioController extends Controller
 
         Mail::to($usuario->email)->send(new UsuarioCreadoMail(
             $usuario,
-            $validated['password'],
-            route('login')
+            $validated['password']
         ));
 
         return redirect()->route('usuarios.index')
@@ -97,8 +96,7 @@ class UsuarioController extends Controller
         if (!empty($validated['password'])) {
             Mail::to($usuario->email)->send(new UsuarioCreadoMail(
                 $usuario,
-                $validated['password'],
-                route('login')
+                $validated['password']
             ));
         }
 

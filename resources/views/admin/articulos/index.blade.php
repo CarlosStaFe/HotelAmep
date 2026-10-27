@@ -26,7 +26,7 @@
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
                                 <th style="width: 50px;">Nro.</th>
-                                <th style="width: 250px;">Rubro</th>
+                                <th style="width: 250px;">Subrubro</th>
                                 <th style="width: 250px;">Nombre</th>
                                 <th style="width: 50px;">Stock</th>
                                 <th style="width: 70px;">Precio</th>
@@ -40,7 +40,7 @@
                             @foreach ($articulos as $articulo)
                                 <tr>
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
-                                    <td>{{ $articulo->rubro?->nombre ?? 'Sin rubro' }}</td>
+                                    <td>{{ $articulo->subrubro?->nombre ?? 'Sin subrubro' }}</td>
                                     <td>{{ $articulo->nombre }}</td>
                                     <td>{{ $articulo->stock ?? 'N/A' }}</td>
                                     <td>{{ $articulo->precio ?? 'N/A' }}</td>

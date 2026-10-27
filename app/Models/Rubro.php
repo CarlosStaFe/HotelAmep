@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Rubro extends Model
 {
+    protected $table = 'rubros';
+
     public $timestamps = false;
 
-    public function ctrocosto(): BelongsTo
+    public function subrubros(): HasMany
     {
-        return $this->belongsTo(CtroCosto::class, 'ctrocosto_id');
+        return $this->hasMany(Subrubro::class, 'rubro_id');
     }
 }

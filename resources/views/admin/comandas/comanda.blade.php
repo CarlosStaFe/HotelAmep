@@ -65,7 +65,7 @@
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
                                 <th style="width: 30px;">Nro.</th>
-                                <th style="width: 100px;">Rubro</th>
+                                <th style="width: 100px;">Subrubro</th>
                                 <th style="width: 200px;">Nombre</th>
                                 <th style="width: 30px;">Stock</th>
                                 <th style="width: 50px;">Precio</th>
@@ -187,7 +187,7 @@
                         }
                     },
                     {
-                        "data": "rubro",
+                        "data": "subrubro",
                         "render": $.fn.dataTable.render.text()
                     },
                     {

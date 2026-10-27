@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Articulo;
 use App\Models\Habitacion;
-use App\Models\Rubro;
+use App\Models\Subrubro;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +17,7 @@ class ArticuloController extends Controller
      */
     public function index()
     {
-        $articulos = articulo::with('rubro.ctrocosto')->get();
+        $articulos = Articulo::with('subrubro.rubro')->get();
         return view('admin.articulos.index', compact('articulos'));
     }
 
@@ -26,8 +26,8 @@ class ArticuloController extends Controller
      */
     public function create()
     {
-        $rubros = Rubro::orderBy('nombre')->get();
-        return view('admin.articulos.create', compact('rubros'));
+        $subrubros = Subrubro::orderBy('nombre')->get();
+        return view('admin.articulos.create', compact('subrubros'));
     }
 
     /**
@@ -36,7 +36,7 @@ class ArticuloController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'rubro_id' => 'required|exists:rubros,id',
+            'subrubro_id' => 'required|exists:subrubros,id',
             'nombre' => 'required|string|max:255',
             'comanda' => 'required|boolean',
             'activo' => 'required|boolean',
@@ -44,8 +44,8 @@ class ArticuloController extends Controller
             'observacion' => ['nullable', 'string', 'max:100', 'sometimes'],
         ]);
 
-        $articulo = new articulo();
-        $articulo->rubro_id = $request->input('rubro_id');
+        $articulo = new Articulo();
+        $articulo->subrubro_id = $request->input('subrubro_id');
         $articulo->nombre = $request->input('nombre');
         $articulo->comanda = $request->boolean('comanda');
         $articulo->activo = $request->boolean('activo');
@@ -67,7 +67,7 @@ class ArticuloController extends Controller
      */
     public function show($id)
     {
-        $articulo = Articulo::with('rubro.ctrocosto')->findOrFail($id);
+        $articulo = Articulo::with('subrubro.rubro')->findOrFail($id);
         return view('admin.articulos.show', compact('articulo'));
     }
      
@@ -76,10 +76,10 @@ class ArticuloController extends Controller
      */
     public function edit($id)
     {
-        $articulo = articulo::findOrFail($id);
-        $rubros = Rubro::orderBy('nombre')->get();
+        $articulo = Articulo::findOrFail($id);
+        $subrubros = Subrubro::orderBy('nombre')->get();
 
-        return view('admin.articulos.edit', compact('articulo', 'rubros'));
+        return view('admin.articulos.edit', compact('articulo', 'subrubros'));
     }
 
     /**
@@ -87,7 +87,7 @@ class ArticuloController extends Controller
      */
     public function delete($id)
     {
-        $articulo = articulo::with('rubro.ctrocosto')->findOrFail($id);
+        $articulo = Articulo::with('subrubro.rubro')->findOrFail($id);
         return view('admin.articulos.delete', compact('articulo'));
     }
     /**
@@ -96,7 +96,7 @@ class ArticuloController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'rubro_id' => 'required|exists:rubros,id',
+            'subrubro_id' => 'required|exists:subrubros,id',
             'nombre' => 'required|string|max:255',
             'comanda' => 'required|boolean',
             'activo' => 'required|boolean',
@@ -104,8 +104,8 @@ class ArticuloController extends Controller
             'observacion' => ['nullable', 'string', 'max:100', 'sometimes'],
         ]);
 
-        $articulo = articulo::findOrFail($id);
-        $articulo->rubro_id = $request->input('rubro_id');
+        $articulo = Articulo::findOrFail($id);
+        $articulo->subrubro_id = $request->input('subrubro_id');
         $articulo->nombre = $request->input('nombre');
         $articulo->comanda = $request->boolean('comanda');
         $articulo->activo = $request->boolean('activo');
@@ -126,7 +126,7 @@ class ArticuloController extends Controller
      */
     public function destroy($id)
     {
-        $articulo = articulo::findOrFail($id);
+        $articulo = Articulo::findOrFail($id);
         $articulo->delete();
 
         return redirect()->route('articulos.index')
@@ -141,7 +141,7 @@ class ArticuloController extends Controller
      */
     public function ajuste($id)
     {
-        $articulo = Articulo::with('rubro.ctrocosto')->findOrFail($id);
+        $articulo = Articulo::with('subrubro.rubro')->findOrFail($id);
         return view('admin.articulos.ajuste', compact('articulo'));
     }
 
@@ -227,7 +227,7 @@ class ArticuloController extends Controller
      */
     public function cargarArticulos(): JsonResponse
     {
-        $articulos = Articulo::with('rubro')
+        $articulos = Articulo::with('subrubro')
             ->where('articulos.activo', true)
             ->where('articulos.comanda', true)
             ->leftJoin('stocks', 'articulos.id', '=', 'stocks.articulo_id')
@@ -240,7 +240,7 @@ class ArticuloController extends Controller
             ->get()
             ->map(fn (Articulo $articulo) => [
                 'id' => $articulo->id,
-                'rubro' => $articulo->rubro?->nombre ?? 'Sin rubro',
+                'subrubro' => $articulo->subrubro?->nombre ?? 'Sin subrubro',
                 'nombre' => $articulo->nombre,
                 'stock' => $articulo->stock ?? 'N/A',
                 'precio' => $articulo->precio ?? 'N/A',

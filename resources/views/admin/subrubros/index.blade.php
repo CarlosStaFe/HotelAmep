@@ -4,8 +4,8 @@
     <nav aria-label="breadcrumb" style="font-size: 14pt">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url('/admin') }}">Inicio</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Centro de Costos</li>
-            <li class="breadcrumb-item active" aria-current="page">Listado Centro de Costos</li>
+            <li class="breadcrumb-item active" aria-current="page">Subrubros</li>
+            <li class="breadcrumb-item active" aria-current="page">Listado de Subrubros</li>
         </ol>
     </nav>
 @stop
@@ -15,9 +15,9 @@
         <div class="col-md-12">
             <div class="card card-outline card-primary">
                 <div class="card-header">
-                    <h3 class="card-title"><b>Centro de Costos registrados</b></h3>
+                    <h3 class="card-title"><b>Subrubros registrados</b></h3>
                     <div class="card-tools">
-                        <a href="{{ url('/admin/ctrocostos/create') }}" class="btn btn-primary"
+                        <a href="{{ url('/admin/subrubros/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
                 </div>
@@ -28,30 +28,35 @@
                             <tr style="background-color: #007bff; color: white; text-align: center;">
                                 <th style="width: 50px;">Nro.</th>
                                 <th style="width: 250px;">Nombre</th>
-                                <th style="width: 130px;">Tipo</th>
-                                <th>Observación</th>
+                                <th>Rubro</th>
+                                <th style="width: 130px;">Estado</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($ctrocostos as $ctrocosto)
+                            @foreach ($subrubros as $subrubro)
                                 <tr>
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
-                                    <td>{{ $ctrocosto->nombre }}</td>
-                                    <td>{{ $ctrocosto->tipo }}</td>
-                                    <td>{{ $ctrocosto->observacion }}</td>
+                                    <td>{{ $subrubro->nombre }}</td>
+                                    <td>{{ $subrubro->rubro_id }} - {{ $subrubro->rubro->nombre ?? 'Sin rubro' }}</td>
+                                    <td class="text-center">
+                                        @if ($subrubro->activo)
+                                            <span class="badge badge-success">Activo</span>
+                                        @else
+                                            <span class="badge badge-danger">Inactivo</span>
+                                        @endif
+                                    </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ url('/admin/ctrocostos/' . $ctrocosto->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
-                                            <a href="{{ url('/admin/ctrocostos/' . $ctrocosto->id . '/edit') }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
-                                            <a href="{{ url('/admin/ctrocostos/' . $ctrocosto->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                                            <a href="{{ url('/admin/subrubros/' . $subrubro->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
+                                            <a href="{{ url('/admin/subrubros/' . $subrubro->id . '/edit') }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
+                                            <a href="{{ url('/admin/subrubros/' . $subrubro->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
                                         </div>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-
                 </div>
             </div>
         </div>

@@ -7,7 +7,7 @@ table Localidades {
   cod_postal varchar(10) [not null]
 }
 
-Table CtroCostos {
+Table Rubros {
   id int [pk, increment]
   nombre varchar(255) [not null]
   tipo varchar(100) [not null]
@@ -16,20 +16,20 @@ Table CtroCostos {
   fecha_actualizacion datetime
 }
 
-Table Rubros {
+Table Subrubros {
   id int [pk, increment]
-  ctrocosto_id int [not null]
+  rubro_id int [not null]
   nombre varchar(255) [not null]
   activo boolean [default: true]
   observacion varchar(100)
   fecha_creacion datetime
   fecha_actualizacion datetime
 }
-Ref: Rubros.ctrocosto_id > CtroCostos.id
+Ref: Subrubros.rubro_id > Rubros.id
 
 table Articulos {
   id int [pk, increment]
-  rubro_id int [not null]
+  subrubro_id int [not null]
   nombre varchar(255) [not null]
   precio decimal(12,2) [not null]
   stock decimal(12,3) [default: 0]
@@ -39,7 +39,7 @@ table Articulos {
   fecha_creacion datetime
   fecha_actualizacion datetime
 }
-Ref: Articulos.rubro_id > Rubros.id
+Ref: Articulos.subrubro_id > Subrubros.id
 
 table Proveedores {
   id int [pk, increment]

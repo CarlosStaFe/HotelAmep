@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CtroCosto;
 use App\Models\Rubro;
 use Illuminate\Http\Request;
 
@@ -13,7 +12,7 @@ class RubroController extends Controller
      */
     public function index()
     {
-        $rubros = Rubro::with('ctrocosto')->get();
+        $rubros = Rubro::all();
         return view('admin.rubros.index', compact('rubros'));
     }
 
@@ -22,8 +21,7 @@ class RubroController extends Controller
      */
     public function create()
     {
-        $ctrocostos = CtroCosto::orderBy('nombre')->get();
-        return view('admin.rubros.create', compact('ctrocostos'));
+        return view('admin.rubros.create');
     }
 
     /**
@@ -32,26 +30,24 @@ class RubroController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'ctrocosto_id' => 'required|exists:ctrocostos,id',
             'nombre' => 'required|string|max:255',
             'observacion' => 'nullable|string|max:100',
-            'activo' => 'required|boolean',
+            'tipo' => 'required|string|max:100',
         ]);
 
         $rubro = new Rubro();
-        $rubro->ctrocosto_id = $request->input('ctrocosto_id');
         $rubro->nombre = $request->input('nombre');
         $rubro->observacion = $request->input('observacion');
-        $rubro->activo = $request->boolean('activo');
+        $rubro->tipo = $request->input('tipo');
         $rubro->fecha_creacion = now();
         $rubro->fecha_actualizacion = now();
         $rubro->save();
 
         return redirect()->route('rubros.index')
-            ->with('mensaje', 'Rubro creado exitosamente.')
-            ->with('icono', 'success')
-            ->with('showConfirmButton', false)
-            ->with('textoBoton', '');
+        ->with('mensaje', 'Rubro creado exitosamente.')
+        ->with('icono', 'success')
+        ->with('showConfirmButton', false)
+        ->with('textoBoton', '');
     }
 
     /**
@@ -59,7 +55,7 @@ class RubroController extends Controller
      */
     public function show($id)
     {
-        $rubro = Rubro::with('ctrocosto')->findOrFail($id);
+        $rubro = Rubro::findOrFail($id);
         return view('admin.rubros.show', compact('rubro'));
     }
 
@@ -69,17 +65,15 @@ class RubroController extends Controller
     public function edit($id)
     {
         $rubro = Rubro::findOrFail($id);
-        $ctrocostos = CtroCosto::orderBy('nombre')->get();
-
-        return view('admin.rubros.edit', compact('rubro', 'ctrocostos'));
-    }   
+        return view('admin.rubros.edit', compact('rubro'));
+    }
 
     /**
      * Show delete confirmation form for the specified resource.
      */
     public function delete($id)
     {
-        $rubro = Rubro::with('ctrocosto')->findOrFail($id);
+        $rubro = Rubro::findOrFail($id);
         return view('admin.rubros.delete', compact('rubro'));
     }
 
@@ -89,25 +83,23 @@ class RubroController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'ctrocosto_id' => 'required|exists:ctrocostos,id',
             'nombre' => 'required|string|max:255',
             'observacion' => 'nullable|string|max:100',
-            'activo' => 'required|boolean',
+            'tipo' => 'required|string|max:100',
         ]);
 
         $rubro = Rubro::findOrFail($id);
-        $rubro->ctrocosto_id = $request->input('ctrocosto_id');
         $rubro->nombre = $request->input('nombre');
         $rubro->observacion = $request->input('observacion');
-        $rubro->activo = $request->boolean('activo');
+        $rubro->tipo = $request->input('tipo');
         $rubro->fecha_actualizacion = now();
         $rubro->save();
 
         return redirect()->route('rubros.index')
-            ->with('mensaje', 'Rubro actualizado exitosamente.')
-            ->with('icono', 'success')
-            ->with('showConfirmButton', false)
-            ->with('textoBoton', '');
+        ->with('mensaje', 'Rubro actualizado exitosamente.')
+        ->with('icono', 'success')
+        ->with('showConfirmButton', false)
+        ->with('textoBoton', '');
     }
 
     /**
@@ -119,9 +111,9 @@ class RubroController extends Controller
         $rubro->delete();
 
         return redirect()->route('rubros.index')
-            ->with('mensaje', 'Rubro eliminado exitosamente.')
-            ->with('icono', 'success')
-            ->with('showConfirmButton', false)
-            ->with('textoBoton', '');
+        ->with('mensaje', 'Rubro eliminado exitosamente.')
+        ->with('icono', 'success')
+        ->with('showConfirmButton', false)
+        ->with('textoBoton', '');
     }
 }

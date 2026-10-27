@@ -22,17 +22,6 @@
                         @method('PUT')
                         @csrf
                         <div class="mb-3">
-                            <label for="ctrocosto_id" class="form-label">Centro de Costo <b style="color: red;">(*)</b></label>
-                            <select class="form-control" id="ctrocosto_id" name="ctrocosto_id" required>
-                                <option value="">Seleccione Centro de Costo</option>
-                                @foreach ($ctrocostos as $ctrocosto)
-                                    <option value="{{ $ctrocosto->id }}" {{ old('ctrocosto_id', $rubro->ctrocosto_id) == $ctrocosto->id ? 'selected' : '' }}>
-                                        {{ $ctrocosto->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label for="nombre" class="form-label">Nombre <b style="color: red;">(*)</b></label>
                             <input type="text" class="form-control" id="nombre" name="nombre"
                                 placeholder="Ingrese nombre del rubro" value="{{ old('nombre', $rubro->nombre) }}" required>
@@ -41,10 +30,15 @@
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="activo" class="form-label">Estado <b style="color: red;">(*)</b></label>
-                            <select class="form-control" id="activo" name="activo" required>
-                                <option value="1" {{ old('activo', $rubro->activo) == '1' ? 'selected' : '' }}>Activo</option>
-                                <option value="0" {{ old('activo', $rubro->activo) == '0' ? 'selected' : '' }}>Inactivo</option>
+                            <label for="tipo" class="form-label">Tipo <b style="color: red;">(*)</b></label>
+                            <select class="form-control" id="tipo" name="tipo" required>
+                                <option value="">Seleccione un tipo</option>
+                                <option value="Administrativo" {{ old('tipo', $rubro->tipo) == 'Administrativo' ? 'selected' : '' }}>Administrativo</option>
+                                <option value="Consumibles" {{ old('tipo', $rubro->tipo) == 'Consumibles' ? 'selected' : '' }}>Consumibles</option>
+                                <option value="Bienes/Muebles" {{ old('tipo', $rubro->tipo) == 'Bienes/Muebles' ? 'selected' : '' }}>Bienes/Muebles</option>
+                                <option value="Mantenimiento" {{ old('tipo', $rubro->tipo) == 'Mantenimiento' ? 'selected' : '' }}>Mantenimiento</option>
+                                <option value="Producción" {{ old('tipo', $rubro->tipo) == 'Producción' ? 'selected' : '' }}>Producción</option>
+                                <option value="Varios" {{ old('tipo', $rubro->tipo) == 'Varios' ? 'selected' : '' }}>Varios</option>
                             </select>
                         </div>
                         <div class="mb-3">

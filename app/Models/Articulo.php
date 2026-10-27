@@ -11,8 +11,8 @@ class Articulo extends Model
 
     public $timestamps = false;
 
-    public function rubro(): BelongsTo
+    public function subrubro(): BelongsTo
     {
-        return $this->belongsTo(Rubro::class, 'rubro_id');
+        return $this->belongsTo(Subrubro::class, 'subrubro_id');
     }
 }

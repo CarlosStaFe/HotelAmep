@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -44,10 +45,18 @@ class UsuarioCreadoMailTest extends TestCase
 
             return $mail->hasTo($usuario->email)
                 && $mail->password === 'clave-segura-123'
-                && $mail->urlAcceso === route('login')
                 && str_contains($contenido, $mail->password)
-                && str_contains($contenido, $mail->urlAcceso);
+                && str_contains($contenido, config('app.url'));
         });
+
+        Auth::logout();
+
+        $this->post(route('login'), [
+            'email' => $usuario->email,
+            'password' => $password,
+        ])->assertRedirect('/home');
+
+        $this->assertAuthenticatedAs($usuario);
     }
 
     public function test_updated_password_is_emailed_to_users_current_email(): void
@@ -80,9 +89,11 @@ class UsuarioCreadoMailTest extends TestCase
         $this->assertTrue(Hash::check($password, $usuario->password));
 
         Mail::assertSent(UsuarioCreadoMail::class, function (UsuarioCreadoMail $mail) use ($usuario, $password) {
+            $contenido = $mail->render();
+
             return $mail->hasTo($usuario->email)
                 && $mail->password === $password
-                && $mail->urlAcceso === route('login');
+                && str_contains($contenido, config('app.url'));
         });
     }
 

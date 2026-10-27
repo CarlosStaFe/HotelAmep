@@ -23,16 +23,16 @@
                         @csrf
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="ctrocosto_id" class="form-label">Rubro <b style="color: red;">(*)</b></label>
-                                <select class="form-control" id="rubro_id" name="rubro_id" required>
-                                    <option value="">Seleccione Rubro</option>
-                                    @foreach ($rubros as $rubro)
-                                        <option value="{{ $rubro->id }}" {{ old('rubro_id', $articulo->rubro_id) == $rubro->id ? 'selected' : '' }}>
-                                            {{ $rubro->nombre }}
+                                <label for="subrubro_id" class="form-label">Subrubro <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="subrubro_id" name="subrubro_id" required>
+                                    <option value="">Seleccione Subrubro</option>
+                                    @foreach ($subrubros as $subrubro)
+                                        <option value="{{ $subrubro->id }}" {{ old('subrubro_id', $articulo->subrubro_id) == $subrubro->id ? 'selected' : '' }}>
+                                            {{ $subrubro->nombre }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('rubro_id')
+                                @error('subrubro_id')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>

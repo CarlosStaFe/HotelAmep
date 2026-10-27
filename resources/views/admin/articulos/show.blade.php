@@ -19,8 +19,8 @@
                 </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <div class="mb-6">
-                        <label for="ctrocosto_id" class="form-label">Rubro</label>
-                        <input type="text" class="form-control" id="rubro_id" name="rubro_id" value="{{ $articulo->rubro->nombre }}" readonly>
+                        <label for="subrubro_id" class="form-label">Subrubro</label>
+                        <input type="text" class="form-control" id="subrubro_id" name="subrubro_id" value="{{ $articulo->subrubro->nombre }}" readonly>
                     </div>
                     <div class="mb-6">
                         <label for="nombre" class="form-label">Nombre</label>

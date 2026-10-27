@@ -19,19 +19,13 @@
                 </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <div class="mb-3">
-                        <label for="ctrocosto_id" class="form-label">Centro de Costo <b style="color: red;">(*)</b></label>
-                        <input type="text" class="form-control" id="ctrocosto_id" name="ctrocosto_id"
-                            value="{{ $rubro->ctrocosto->nombre ?? 'Sin centro de costo' }}" readonly>
-                    </div>
-                    <div class="mb-3">
                         <label for="nombre" class="form-label">Nombre</label>
                         <input type="text" class="form-control" id="nombre" name="nombre" value="{{ $rubro->nombre }}" readonly>
                     </div>
                     <div class="mb-3">
-                        <label for="activo" class="form-label">Estado</label>
-                        <input type="text" class="form-control" id="activo" name="activo"
-                            value="{{ $rubro->activo ? 'Activo' : 'Inactivo' }}" readonly>
-                    </div>                    
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <input type="text" class="form-control" id="tipo" name="tipo" value="{{ $rubro->tipo }}" readonly>
+                    </div>
                     <div class="mb-3">
                         <label for="observacion" class="form-label">Observación</label>
                         <textarea class="form-control" id="observacion" name="observacion" rows="2" readonly>{{ $rubro->observacion }}</textarea>

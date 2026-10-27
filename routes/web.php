@@ -51,32 +51,6 @@ Route::put('/admin/usuarios/{id}', [App\Http\Controllers\UsuarioController::clas
 ->name('usuarios.update')
 ->middleware('auth');
 
-//RUTA PARA CENTRO DE COSTOS
-Route::get('/admin/ctrocostos/index', [App\Http\Controllers\CtroCostoController::class, 'index'])
-->name('ctrocostos.index')
-->middleware('auth');
-Route::get('/admin/ctrocostos/create', [App\Http\Controllers\CtroCostoController::class, 'create'])
-->name('ctrocostos.create')
-->middleware('auth');
-Route::post('/admin/ctrocostos/create', [App\Http\Controllers\CtroCostoController::class, 'store'])
-->name('ctrocostos.store')
-->middleware('auth');
-Route::get('/admin/ctrocostos/{id}', [App\Http\Controllers\CtroCostoController::class, 'show'])
-->name('ctrocostos.show')
-->middleware('auth');
-Route::get('/admin/ctrocostos/{id}/edit', [App\Http\Controllers\CtroCostoController::class, 'edit'])
-->name('ctrocostos.edit')
-->middleware('auth');
-Route::get('/admin/ctrocostos/{id}/delete', [App\Http\Controllers\CtroCostoController::class, 'delete'])
-->name('ctrocostos.delete')
-->middleware('auth');
-Route::put('/admin/ctrocostos/{id}', [App\Http\Controllers\CtroCostoController::class, 'update'])
-->name('ctrocostos.update')
-->middleware('auth');
-Route::delete('/admin/ctrocostos/{id}', [App\Http\Controllers\CtroCostoController::class, 'destroy'])
-->name('ctrocostos.destroy')
-->middleware('auth');
-
 //RUTAS PARA RUBROS
 Route::get('/admin/rubros/index', [App\Http\Controllers\RubroController::class, 'index'])
 ->name('rubros.index')
@@ -101,6 +75,32 @@ Route::put('/admin/rubros/{id}', [App\Http\Controllers\RubroController::class, '
 ->middleware('auth');
 Route::delete('/admin/rubros/{id}', [App\Http\Controllers\RubroController::class, 'destroy'])
 ->name('rubros.destroy')
+->middleware('auth');
+
+//RUTAS PARA SUBRUBROS
+Route::get('/admin/subrubros/index', [App\Http\Controllers\SubrubroController::class, 'index'])
+->name('subrubros.index')
+->middleware('auth');
+Route::get('/admin/subrubros/create', [App\Http\Controllers\SubrubroController::class, 'create'])
+->name('subrubros.create')
+->middleware('auth');
+Route::post('/admin/subrubros/create', [App\Http\Controllers\SubrubroController::class, 'store'])
+->name('subrubros.store')
+->middleware('auth');
+Route::get('/admin/subrubros/{id}', [App\Http\Controllers\SubrubroController::class, 'show'])
+->name('subrubros.show')
+->middleware('auth');
+Route::get('/admin/subrubros/{id}/edit', [App\Http\Controllers\SubrubroController::class, 'edit'])
+->name('subrubros.edit')
+->middleware('auth');
+Route::get('/admin/subrubros/{id}/delete', [App\Http\Controllers\SubrubroController::class, 'delete'])
+->name('subrubros.delete')
+->middleware('auth');
+Route::put('/admin/subrubros/{id}', [App\Http\Controllers\SubrubroController::class, 'update'])
+->name('subrubros.update')
+->middleware('auth');
+Route::delete('/admin/subrubros/{id}', [App\Http\Controllers\SubrubroController::class, 'destroy'])
+->name('subrubros.destroy')
 ->middleware('auth');
 
 //RUTA PARA ARTICULOS

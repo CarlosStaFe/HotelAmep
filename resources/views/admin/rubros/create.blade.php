@@ -21,41 +21,35 @@
                     <form action="{{ url('/admin/rubros/create') }}" method="POST">
                         @csrf
                         <div class="mb-3">
-                            <label for="ctrocosto_id" class="form-label">Centro de Costo <b style="color: red;">(*)</b></label>
-                            <select class="form-control" id="ctrocosto_id" name="ctrocosto_id" required>
-                                <option value="">Seleccione Centro de Costo</option>
-                                @foreach ($ctrocostos as $ctrocosto)
-                                    <option value="{{ $ctrocosto->id }}" {{ old('ctrocosto_id') == $ctrocosto->id ? 'selected' : '' }}>
-                                        {{ $ctrocosto->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label for="nombre" class="form-label">Nombre <b style="color: red;">(*)</b></label>
                             <input type="text" class="form-control" id="nombre" name="nombre"
-                                placeholder="Ingrese nombre del rubro" value="{{ old('nombre') }}" required>
+                                placeholder="Ingrese nombre del rubro" required>
                             @error('nombre')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="activo" class="form-label">Estado <b style="color: red;">(*)</b></label>
-                            <select class="form-control" id="activo" name="activo" required>
-                                <option value="1" {{ old('activo', '1') == '1' ? 'selected' : '' }}>Activo</option>
-                                <option value="0" {{ old('activo') === '0' ? 'selected' : '' }}>Inactivo</option>
+                            <label for="tipo" class="form-label">Tipo <b style="color: red;">(*)</b></label>
+                            <select class="form-control" id="tipo" name="tipo" required>
+                                <option value="">Seleccione un tipo</option>
+                                <option value="Administrativo" {{ old('tipo') == 'Administrativo' ? 'selected' : '' }}>Administrativo</option>
+                                <option value="Consumibles" {{ old('tipo') == 'Consumibles' ? 'selected' : '' }}>Consumibles</option>
+                                <option value="Bienes/Muebles" {{ old('tipo') == 'Bienes/Muebles' ? 'selected' : '' }}>Bienes/Muebles</option>
+                                <option value="Mantenimiento" {{ old('tipo') == 'Mantenimiento' ? 'selected' : '' }}>Mantenimiento</option>
+                                <option value="Producción" {{ old('tipo') == 'Producción' ? 'selected' : '' }}>Producción</option>
+                                <option value="Varios" {{ old('tipo') == 'Varios' ? 'selected' : '' }}>Varios</option>
                             </select>
-                        </div>                        
+                        </div>
                         <div class="mb-3">
                             <label for="observacion" class="form-label">Observación</label>
                             <textarea class="form-control" id="observacion" name="observacion" rows="2"
-                                placeholder="Ingrese observación del rubro">{{ old('observacion') }}</textarea>
+                                placeholder="Ingrese observación del rubro"></textarea>
                         </div>
                         <hr>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <a href="{{ url('/admin/rubros/index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ url('/admin') }}" class="btn btn-secondary">Cancelar</a>
                                     <button type="submit" class="btn btn-primary">Guardar</button>
                                 </div>
                             </div>

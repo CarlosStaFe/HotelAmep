@@ -142,10 +142,10 @@
                                 @enderror
                             </div>
                             <div class="col-md-4 mb-4">
-                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
+                                <label for="email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="email" name="email"
                                     placeholder="Ingrese email del proveedor"
-                                    value="{{ old('email', $proveedor->email) }}" required>
+                                    value="{{ old('email', $proveedor->email) }}">
                                 @error('email')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror

@@ -15,8 +15,7 @@ class UsuarioCreadoMail extends Mailable
 
     public function __construct(
         public User $usuario,
-        public string $password,
-        public string $urlAcceso
+        public string $password
     ) {}
 
     public function envelope(): Envelope

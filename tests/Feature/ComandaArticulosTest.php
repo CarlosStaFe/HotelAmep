@@ -15,14 +15,14 @@ class ComandaArticulosTest extends TestCase
     {
         $user = User::factory()->create();
         $now = now();
-        $ctrocostoId = DB::table('ctrocostos')->insertGetId([
+        $rubroId = DB::table('rubros')->insertGetId([
             'nombre' => 'Alimentos',
             'tipo' => 'Gasto',
             'fecha_creacion' => $now,
             'fecha_actualizacion' => $now,
         ]);
-        $rubroId = DB::table('rubros')->insertGetId([
-            'ctrocosto_id' => $ctrocostoId,
+        $subrubroId = DB::table('subrubros')->insertGetId([
+            'rubro_id' => $rubroId,
             'nombre' => 'Bebidas',
             'activo' => true,
             'observacion' => null,
@@ -30,7 +30,7 @@ class ComandaArticulosTest extends TestCase
             'fecha_actualizacion' => $now,
         ]);
         $articuloConComanda = DB::table('articulos')->insertGetId([
-            'rubro_id' => $rubroId,
+            'subrubro_id' => $subrubroId,
             'nombre' => 'Agua',
             'activo' => true,
             'comanda' => true,
@@ -39,7 +39,7 @@ class ComandaArticulosTest extends TestCase
             'fecha_actualizacion' => $now,
         ]);
         DB::table('articulos')->insert([
-            'rubro_id' => $rubroId,
+            'subrubro_id' => $subrubroId,
             'nombre' => 'Artículo sin comanda',
             'activo' => true,
             'comanda' => false,
@@ -48,7 +48,7 @@ class ComandaArticulosTest extends TestCase
             'fecha_actualizacion' => $now,
         ]);
         DB::table('articulos')->insert([
-            'rubro_id' => $rubroId,
+            'subrubro_id' => $subrubroId,
             'nombre' => 'Artículo inactivo',
             'activo' => false,
             'comanda' => true,
@@ -69,7 +69,7 @@ class ComandaArticulosTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.0.nombre', 'Agua')
-            ->assertJsonPath('data.0.rubro', 'Bebidas')
+            ->assertJsonPath('data.0.subrubro', 'Bebidas')
             ->assertJsonPath('data.0.stock', 5)
             ->assertJsonPath('data.0.precio', 100)
             ->assertJsonCount(1, 'data');
