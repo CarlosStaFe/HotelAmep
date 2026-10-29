@@ -59,10 +59,10 @@
                         </div>
                         <div class="row">
                             <div class="col-md-4">
-                                <label for="domicilio" class="form-label">Domicilio <b style="color: red;">(*)</b></label>
-                                <input type="text" class="form-control" id="domicilio" name="domicilio"
-                                    placeholder="Ingrese domicilio del proveedor" value="{{ old('domicilio') }}" required>
-                                @error('domicilio')
+                                <label for="direccion" class="form-label">Domicilio <b style="color: red;">(*)</b></label>
+                                <input type="text" class="form-control" id="direccion" name="direccion"
+                                    placeholder="Ingrese domicilio del pasajero" value="{{ old('direccion') }}" required>
+                                @error('direccion')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>

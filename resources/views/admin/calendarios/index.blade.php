@@ -60,7 +60,7 @@
                             <option value="9">9</option>
                         </select>
                     </div>
-                    <div class="col-md-1">
+{{--                     <div class="col-md-1">
                         <label for="doble">CAMA DOBLE <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="doble" name="doble" required>
                             <option value="0" selected>0</option>
@@ -115,7 +115,7 @@
                             <option value="N">Normal</option>
                         </select>
                     </div>
-                </div>
+                </div> --}}
                 <div class="row mb-1">
                     <div class="col-md-4 d-flex align-items-center mt-4">
                         <button type="button" class="btn btn-primary ml-3 mr-2" id="buscarTurnoBtn"
@@ -137,6 +137,57 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="ocupacionModal" tabindex="-1" role="dialog" aria-labelledby="ocupacionModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('calendarios.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="origen" value="calendario">
+                    <input type="hidden" name="estado" value="Ocupada">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ocupacionModalLabel">Cargar fechas de ocupación</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="ocupacion_habitacion_id">Habitación</label>
+                            <select class="form-control" id="ocupacion_habitacion_id" name="habitacion_id" required>
+                                <option value="">Seleccione una habitación</option>
+                            </select>
+                            @error('habitacion_id')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label for="ocupacion_fecha_inicio">Fecha de ingreso</label>
+                                <input type="date" class="form-control" id="ocupacion_fecha_inicio" name="fecha_inicio"
+                                    value="{{ old('fecha_inicio') }}" required>
+                                @error('fecha_inicio')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="ocupacion_fecha_fin">Fecha de egreso</label>
+                                <input type="date" class="form-control" id="ocupacion_fecha_fin" name="fecha_fin"
+                                    value="{{ old('fecha_fin') }}" required>
+                                @error('fecha_fin')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar ocupación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('css')
@@ -149,6 +200,7 @@
 
     <script>
         let calendario;
+        let habitacionesFiltradasActuales = [];
         const eventosCalendario = @json($calendario ?? []);
         const habitaciones = @json($habitaciones ?? []);
 
@@ -173,11 +225,91 @@
                 initialView: 'dayGridMonth',
                 locale: 'es',
                 height: 'auto',
-                displayEventTime: false
+                displayEventTime: false,
+                eventDisplay: 'block',
+                selectable: true,
+                selectMirror: true,
+                eventDidMount: function(info) {
+                    info.el.title = info.event.title;
+                },
+                eventContent: function(info) {
+                    const title = info.event.title;
+                    const match = title.match(/^(Habitación\s+\S+)(.*)$/);
+                    const content = document.createElement('span');
+                    content.style.display = 'block';
+                    content.style.whiteSpace = 'nowrap';
+                    content.style.overflow = 'hidden';
+                    content.style.textOverflow = 'ellipsis';
+
+                    if (!match) {
+                        content.textContent = title;
+                        return { domNodes: [content] };
+                    }
+
+                    const habitacion = document.createElement('strong');
+                    habitacion.textContent = match[1];
+                    content.appendChild(habitacion);
+                    content.appendChild(document.createTextNode(match[2]));
+
+                    return { domNodes: [content] };
+                },
+                dateClick: function(info) {
+                    abrirModalOcupacion(info.dateStr, info.dateStr);
+                },
+                select: function(info) {
+                    const fechaFin = new Date(info.endStr + 'T00:00:00');
+                    fechaFin.setDate(fechaFin.getDate() - 1);
+                    abrirModalOcupacion(info.startStr, formatoFechaLocal(fechaFin));
+                    calendario.unselect();
+                }
             });
         
             calendario.render();
+
+            @if ($errors->any())
+                abrirModalOcupacion(
+                    @json(old('fecha_inicio', '')),
+                    @json(old('fecha_fin', ''))
+                );
+            @endif
         });
+
+        function abrirModalOcupacion(fechaInicio, fechaFin) {
+            actualizarSelectHabitaciones();
+
+            const inicioInput = document.getElementById('ocupacion_fecha_inicio');
+            const finInput = document.getElementById('ocupacion_fecha_fin');
+
+            inicioInput.value = fechaInicio;
+            finInput.value = fechaFin;
+
+            if (window.jQuery && typeof jQuery.fn.modal === 'function') {
+                jQuery('#ocupacionModal').modal('show');
+            }
+        }
+
+        function actualizarSelectHabitaciones() {
+            const selectHabitacion = document.getElementById('ocupacion_habitacion_id');
+            const seleccionAnterior = selectHabitacion.value || @json(old('habitacion_id', ''));
+
+            selectHabitacion.replaceChildren(new Option('Seleccione una habitación', ''));
+            habitacionesFiltradasActuales.forEach(habitacion => {
+                const opcion = new Option(
+                    `${habitacion.numero ?? ''} - ${habitacion.tipo ?? ''}`,
+                    habitacion.id
+                );
+                opcion.selected = String(habitacion.id) === String(seleccionAnterior);
+                selectHabitacion.add(opcion);
+            });
+        }
+
+        function formatoFechaLocal(fecha) {
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+
+            return `${anio}-${mes}-${dia}`;
+        }
 
         function limpiarFiltros() {
             const hoy = new Date();
@@ -200,6 +332,8 @@
             mensaje.textContent = '';
             document.getElementById('habitacionesResultadosBody').replaceChildren();
             document.getElementById('habitacionesResultados').classList.add('d-none');
+            habitacionesFiltradasActuales = [];
+            actualizarSelectHabitaciones();
             
             if (!calendario) return;
             
@@ -221,47 +355,18 @@
 
             const estado = document.getElementById('estado').value;
             const pasajeros = Number(document.getElementById('pasajeros').value);
-            const doble = Number(document.getElementById('doble').value);
+/*             const doble = Number(document.getElementById('doble').value);
             const simple = Number(document.getElementById('simple').value);
             const cuna = document.getElementById('cuna').value;
             const vista = document.getElementById('vista').value;
             const aire = document.getElementById('aire').value;
-            const bano = document.getElementById('bano').value;
-
-            const habitacionesFiltradas = habitaciones.filter(habitacion => {
-                if (estado !== 'Todas' && normalizar(habitacion.estado) !== normalizar(estado)) {
-                    return false;
-                }
-
-                const tieneEventoNoDisponible = eventosCalendario.some(evento => {
-                    const idHabitacion = evento.habitacion_id || evento.habitacion?.id;
-                    const inicioEvento = obtenerFecha(evento.start);
-                    const finEvento = obtenerFecha(evento.end || evento.start);
-
-                    return String(idHabitacion) === String(habitacion.id)
-                        && normalizar(evento.estado) !== normalizar('Disponible')
-                        && inicioEvento <= fechaFin
-                        && finEvento >= fechaInicio;
-                });
-
-                if (estado === 'Disponible' && tieneEventoNoDisponible) return false;
-                if (pasajeros > 0 && Number(habitacion.plazas || 0) < pasajeros) return false;
-                if (doble > 0 && Number(habitacion.matri || 0) < doble) return false;
-                if (simple > 0 && Number(habitacion.simple || 0) < simple) return false;
-                if (cuna !== 'Todas' && normalizar(habitacion.cuna) !== normalizar(cuna)) return false;
-                if (vista !== 'Todas' && normalizar(habitacion.vista) !== normalizar(vista)) return false;
-                if (aire !== 'Todas' && normalizar(habitacion.aire) !== normalizar(aire)) return false;
-                if (bano !== 'Todas' && normalizar(habitacion.toilette) !== normalizar(bano)) return false;
-
-                return true;
-            });
+            const bano = document.getElementById('bano').value; */
 
             const eventosFiltrados = eventosCalendario.filter(evento => {
                 const habitacion = evento.habitacion || {};
                 const inicioEvento = obtenerFecha(evento.start);
                 const finEvento = obtenerFecha(evento.end || evento.start);
                 const estadoEvento = normalizar(evento.estado);
-                const estadoHabitacion = normalizar(habitacion.estado);
 
                 if (!inicioEvento || !finEvento || inicioEvento > fechaFin || finEvento < fechaInicio) {
                     return false;
@@ -271,20 +376,25 @@
                     return false;
                 }
 
-                if (estado === 'Disponible' && estadoHabitacion !== normalizar('Disponible')) {
-                    return false;
-                }
-
-                if (pasajeros > 0 && Number(habitacion.plazas || 0) < pasajeros) return false;
-                if (doble > 0 && Number(habitacion.matri || 0) < doble) return false;
+                if (Number(habitacion.plazas || 0) !== pasajeros) return false;
+/*                 if (doble > 0 && Number(habitacion.matri || 0) < doble) return false;
                 if (simple > 0 && Number(habitacion.simple || 0) < simple) return false;
                 if (cuna !== 'Todas' && normalizar(habitacion.cuna) !== normalizar(cuna)) return false;
                 if (vista !== 'Todas' && normalizar(habitacion.vista) !== normalizar(vista)) return false;
                 if (aire !== 'Todas' && normalizar(habitacion.aire) !== normalizar(aire)) return false;
-                if (bano !== 'Todas' && normalizar(habitacion.toilette) !== normalizar(bano)) return false;
+                if (bano !== 'Todas' && normalizar(habitacion.toilette) !== normalizar(bano)) return false; */
 
                 return true;
             });
+
+            const idsHabitacionesFiltradas = new Set(eventosFiltrados.map(evento => (
+                String(evento.habitacion_id || evento.habitacion?.id)
+            )));
+            habitacionesFiltradasActuales = habitaciones.filter(habitacion => (
+                idsHabitacionesFiltradas.has(String(habitacion.id))
+            ));
+
+            actualizarSelectHabitaciones();
 
             calendario.removeAllEvents();
             calendario.addEventSource(eventosFiltrados);
@@ -294,18 +404,18 @@
             const tablaResultados = document.getElementById('habitacionesResultados');
             cuerpoResultados.replaceChildren();
 
-            habitacionesFiltradas.forEach(habitacion => {
+            habitacionesFiltradasActuales.forEach(habitacion => {
                 const fila = document.createElement('tr');
                 [
                     habitacion.numero,
                     habitacion.tipo,
-                    habitacion.plazas,
-                    habitacion.matri,
+                    habitacion.plazas
+/*                     habitacion.matri,
                     habitacion.simple,
                     habitacion.vista,
                     habitacion.aire,
                     habitacion.cuna,
-                    habitacion.toilette === 'G' ? 'Grande' : habitacion.toilette === 'N' ? 'Normal' : habitacion.toilette
+                    habitacion.toilette === 'G' ? 'Grande' : habitacion.toilette === 'N' ? 'Normal' : habitacion.toilette */
                 ].forEach(valor => {
                     const celda = document.createElement('td');
                     celda.textContent = valor ?? '-';
@@ -314,9 +424,11 @@
                 cuerpoResultados.appendChild(fila);
             });
 
-            tablaResultados.classList.toggle('d-none', habitacionesFiltradas.length === 0);
-            mensaje.textContent = habitacionesFiltradas.length
-                ? `Se encontraron ${habitacionesFiltradas.length} habitación(es).`
+            actualizarSelectHabitaciones();
+
+            tablaResultados.classList.toggle('d-none', habitacionesFiltradasActuales.length === 0);
+            mensaje.textContent = habitacionesFiltradasActuales.length
+                ? `Se encontraron ${habitacionesFiltradasActuales.length} habitación(es).`
                 : 'No se encontraron habitaciones disponibles para los filtros seleccionados.';
             mensaje.classList.remove('d-none');
         }

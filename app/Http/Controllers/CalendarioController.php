@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Calendario;
 use App\Models\Habitacion;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CalendarioController extends Controller
 {
@@ -14,8 +16,12 @@ class CalendarioController extends Controller
     public function index()
     {
         $calendario = Calendario::with('habitacion')->get();
+        $habitaciones = Habitacion::query()
+            ->where('venta', true)
+            ->orderBy('numero')
+            ->get();
 
-        return view('admin.calendarios.index', compact('calendario'));
+        return view('admin.calendarios.index', compact('calendario', 'habitaciones'));
     }
 
     /**
@@ -41,22 +47,36 @@ class CalendarioController extends Controller
             'estado' => 'required|in:Disponible,No Disponible,Reservada,Ocupada',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+            'origen' => 'nullable|in:calendario',
         ]);
 
         $habitacion = Habitacion::findOrFail($datos['habitacion_id']);
 
-        Calendario::create([
-            'title' => "Habitación {$habitacion->numero} - PAX {$habitacion->plazas} - Matri {$habitacion->matri} - Simple {$habitacion->simple} - Piso {$habitacion->piso} - Piso {$habitacion->piso} - Vista {$habitacion->vista} - Aire {$habitacion->aire} - Cuna {$habitacion->cuna} - Baño {$habitacion->toilette}",
-            'description' => 'Disponibilidad generada automáticamente',
-            'start' => date('Y-m-d 00:00:00', strtotime($datos['fecha_inicio'])),
-            'end' => date('Y-m-d 23:59:59', strtotime($datos['fecha_fin'])),
-            'color' => $datos['estado'] === 'Disponible' ? '#0CB371' : '#dc3545',
-            'textColor' => '#000000',
-            'estado' => $datos['estado'],
-            'habitacion_id' => $habitacion->id,
-        ]);
+        DB::transaction(function () use ($datos, $habitacion) {
+            $fecha = Carbon::parse($datos['fecha_inicio'])->startOfDay();
+            $fechaFin = Carbon::parse($datos['fecha_fin'])->startOfDay();
 
-        return redirect()->route('calendarios.disponibilidad')
+            while ($fecha->lte($fechaFin)) {
+                Calendario::create([
+                    'title' => "Habitación {$habitacion->numero} - PAX {$habitacion->plazas} - Matri {$habitacion->matri} - Simple {$habitacion->simple} - Piso {$habitacion->piso} - Vista {$habitacion->vista} - Aire {$habitacion->aire} - Cuna {$habitacion->cuna} - Baño {$habitacion->toilette}",
+                    'description' => 'Disponibilidad generada automáticamente',
+                    'start' => $fecha->format('Y-m-d 00:00:00'),
+                    'end' => $fecha->format('Y-m-d 23:59:59'),
+                    'color' => $datos['estado'] === 'Disponible' ? '#0CB371' : '#0CB371',
+                    'textColor' => '#000000',
+                    'estado' => $datos['estado'],
+                    'habitacion_id' => $habitacion->id,
+                ]);
+
+                $fecha->addDay();
+            }
+        });
+
+        $ruta = ($datos['origen'] ?? null) === 'calendario'
+            ? 'calendarios.index'
+            : 'calendarios.disponibilidad';
+
+        return redirect()->route($ruta)
             ->with('mensaje', 'Disponibilidad generada exitosamente.')
             ->with('icono', 'success')
             ->with('showConfirmButton', false)

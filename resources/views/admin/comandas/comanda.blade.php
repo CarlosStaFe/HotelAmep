@@ -12,7 +12,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-md-12">
             <div class="card card-primary">
                 <div class="card-header">
                     <h2 class="card-title"><b>Completar el formulario</b></h2>
@@ -30,7 +30,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 ml-1">
                         <label for="pasajeros" class="form-label">Pasajeros <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="pasajeros" name="pasajeros" required>
                             <option value="">Seleccione Pasajero</option>
@@ -42,7 +42,7 @@
                             @endforeach --}}
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5 mr-5 ml-2">
                         <label class="form-label">Puntos de Venta <b style="color: red;">(*)</b></label>
                         <div>
                             <div class="form-check form-check-inline mr-5">
@@ -59,7 +59,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
                         <thead>

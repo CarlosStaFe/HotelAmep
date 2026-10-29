@@ -24,21 +24,25 @@ class CreatePasajeroTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post('/admin/pasajeros/create', [
-            'tipo_documento' => 'DNI',
+            'tipoDocumento' => 'DNI',
             'documento' => '12345678',
-            'apelynombre' => 'Perez Juan',
+            'apelyNombre' => 'Perez Juan',
             'telefono' => '2215551234',
-            'domicilio' => 'Calle 1 123',
+            'direccion' => 'Calle 1 123',
             'cod_postal_id' => $localidadId,
             'email' => 'juan.perez@example.com',
+            'usaComanda' => '1',
         ]);
 
         $response->assertRedirect('/admin/pasajeros/index');
         $this->assertDatabaseHas('pasajeros', [
-            'tipo_documento' => 'DNI',
+            'tipoDocumento' => 'DNI',
             'documento' => '12345678',
-            'apelynombre' => 'Perez Juan',
+            'apelyNombre' => 'Perez Juan',
+            'telefono' => '2215551234',
+            'email' => 'juan.perez@example.com',
             'direccion' => 'Calle 1 123',
+            'usaComanda' => true,
             'cod_postal_id' => $localidadId,
         ]);
     }
