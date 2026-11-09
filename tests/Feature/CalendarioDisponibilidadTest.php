@@ -72,7 +72,7 @@ class CalendarioDisponibilidadTest extends TestCase
             ->assertOk()
             ->assertSee('Cargar fechas de ocupación')
             ->assertSee('ocupacion_fecha_inicio')
-            ->assertSee('<option value="">Seleccione una habitación</option>', false)
+            ->assertSee("new Option('Seleccione una habitación', '')", false)
             ->assertSee('habitacionesFiltradasActuales.forEach(habitacion => {', false)
             ->assertSee('const idsHabitacionesFiltradas = new Set(eventosFiltrados.map(evento => (', false)
             ->assertSee('idsHabitacionesFiltradas.has(String(habitacion.id))', false)

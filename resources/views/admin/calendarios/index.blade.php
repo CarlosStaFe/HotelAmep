@@ -60,62 +60,6 @@
                             <option value="9">9</option>
                         </select>
                     </div>
-{{--                     <div class="col-md-1">
-                        <label for="doble">CAMA DOBLE <b style="color: red;">(*)</b></label>
-                        <select class="form-control" id="doble" name="doble" required>
-                            <option value="0" selected>0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
-                        <label for="simple">CAMA SIMPLE <b style="color: red;">(*)</b></label>
-                        <select class="form-control" id="simple" name="simple" required>
-                            <option value="0" selected>0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
-                        <label for="cuna">CUNA <b style="color: red;">(*)</b></label>
-                        <select class="form-control" id="cuna" name="cuna" required>
-                            <option value="Todas" selected>Todas</option>
-                            <option value="NO">NO</option>
-                            <option value="SI">SI</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
-                        <label for="vista">VISTA <b style="color: red;">(*)</b></label>
-                        <select class="form-control" id="vista" name="vista" required>
-                            <option value="Todas" selected>Todas</option>
-                            <option value="Calle">Calle</option>
-                            <option value="Cerro">Cerro</option>
-                            <option value="Jardín">Jardín</option>
-                            <option value="Patio">Patio</option>
-                            <option value="Pileta">Pileta</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
-                        <label for="aire">AIRE <b style="color: red;">(*)</b></label>
-                        <select class="form-control" id="aire" name="aire" required>
-                            <option value="Todas" selected>Todas</option>
-                            <option value="SI">SI</option>
-                            <option value="NO">NO</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
-                        <label for="bano">BAÑO <b style="color: red;">(*)</b></label>
-                        <select class="form-control" id="bano" name="bano" required>
-                            <option value="Todas" selected>Todas</option>
-                            <option value="G">Grande</option>
-                            <option value="N">Normal</option>
-                        </select>
-                    </div>
-                </div> --}}
                 <div class="row mb-1">
                     <div class="col-md-4 d-flex align-items-center mt-4">
                         <button type="button" class="btn btn-primary ml-3 mr-2" id="buscarTurnoBtn"
@@ -139,7 +83,7 @@
     </div>
 
     <div class="modal fade" id="ocupacionModal" tabindex="-1" role="dialog" aria-labelledby="ocupacionModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <form action="{{ route('calendarios.store') }}" method="POST">
                     @csrf
@@ -152,37 +96,86 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label for="ocupacion_habitacion_id">Habitación</label>
-                            <select class="form-control" id="ocupacion_habitacion_id" name="habitacion_id" required>
-                                <option value="">Seleccione una habitación</option>
-                            </select>
-                            @error('habitacion_id')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
                         <div class="row">
-                            <div class="form-group col-md-6">
-                                <label for="ocupacion_fecha_inicio">Fecha de ingreso</label>
+                            <div class="form-group col-md-4">
+                                <label for="ocupacion_habitacion_id">Habitación <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="ocupacion_habitacion_id" name="habitacion_id" onchange="cambiarHabitacionModal()" required>
+                                    <option value="">Seleccione</option>
+                                </select>
+                                @error('habitacion_id')
+                                    <small class="text-danger ocupacion-error">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="ocupacion_fecha_inicio">Check-In <b style="color: red;">(*)</b></label>
                                 <input type="date" class="form-control" id="ocupacion_fecha_inicio" name="fecha_inicio"
                                     value="{{ old('fecha_inicio') }}" required>
                                 @error('fecha_inicio')
-                                    <small class="text-danger">{{ $message }}</small>
+                                    <small class="text-danger ocupacion-error">{{ $message }}</small>
                                 @enderror
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="ocupacion_fecha_fin">Fecha de egreso</label>
+                            <div class="form-group col-md-4">
+                                <label for="ocupacion_fecha_fin">Check-Out <b style="color: red;">(*)</b></label>
                                 <input type="date" class="form-control" id="ocupacion_fecha_fin" name="fecha_fin"
                                     value="{{ old('fecha_fin') }}" required>
                                 @error('fecha_fin')
-                                    <small class="text-danger">{{ $message }}</small>
+                                    <small class="text-danger ocupacion-error">{{ $message }}</small>
                                 @enderror
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label for="ocupacion_pasajero_id">Pasajero <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="ocupacion_pasajero_id" name="pasajero_id" required>
+                                    <option value="">Seleccione un pasajero</option>
+                                    @foreach ($pasajeros ?? [] as $pasajero)
+                                        @php
+                                            $edadPasajero = $pasajero->fechaNacimiento
+                                                ? (int) floor(abs(\Carbon\Carbon::parse($pasajero->fechaNacimiento)->diffInYears(now())))
+                                                : null;
+                                        @endphp
+                                        <option value="{{ $pasajero->id }}" data-cuenta-pax="{{ is_numeric($edadPasajero) && $edadPasajero < 5 ? '0' : '1' }}"  {{ old('pasajero_id') == $pasajero->id ? 'selected' : '' }} {{ is_numeric($edadPasajero) && $edadPasajero < 5 ? 'style=color:red' : '' }}>
+                                            {{ $pasajero->apelyNombre }} - {{ $pasajero->documento }} - Edad: {{ $edadPasajero ?? 'N/D' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('pasajero_id')
+                                    <small class="text-danger ocupacion-error">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ocupacion_comanda">Comanda? <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="ocupacion_comanda" name="comanda" required>
+                                    <option value="">Elija</option>
+                                    <option value="SI" {{ old('comanda') == 'SI' ? 'selected' : '' }}>SI</option>
+                                    <option value="NO" {{ old('comanda') == 'NO' ? 'selected' : '' }}>NO</option>
+                                </select>
+                                @error('comanda')
+                                    <small class="text-danger ocupacion-error">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="form-group col-md-3 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary" onclick="agregarPasajeroModal()">Asignar</button>
+                            </div>
+                        </div>
+                        <div id="pasajerosModalMensaje" class="text-danger mb-2" role="alert"></div>
+{{--                         <p class="text-muted">La lista es temporal y no se guarda al reservar.</p> --}}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Pasajero</th>
+                                        <th>Comanda</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pasajerosModalBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar ocupación</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="limpiarFormularioOcupacion()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Reservar</button>
                     </div>
                 </form>
             </div>
@@ -201,6 +194,8 @@
     <script>
         let calendario;
         let habitacionesFiltradasActuales = [];
+        let habitacionAnterior = @json(old('habitacion_id', ''));
+        let habitacionSeleccionadaModal = '';
         const eventosCalendario = @json($calendario ?? []);
         const habitaciones = @json($habitaciones ?? []);
 
@@ -216,6 +211,107 @@
             const texto = String(valor).trim();
             return texto.length >= 10 ? texto.slice(0, 10) : texto;
         };
+
+        function agregarPasajeroModal() {
+            const habitacion = document.getElementById('ocupacion_habitacion_id');
+            const pasajero = document.getElementById('ocupacion_pasajero_id');
+            const comanda = document.getElementById('ocupacion_comanda');
+            const cuerpo = document.getElementById('pasajerosModalBody');
+            const mensaje = document.getElementById('pasajerosModalMensaje');
+            mensaje.textContent = '';
+
+            if (!habitacion.value) {
+                mensaje.textContent = 'Seleccione una habitación.';
+                habitacion.focus();
+                return;
+            }
+
+            if (!pasajero.value || !comanda.value) {
+                mensaje.textContent = 'Seleccione un pasajero y una opción de comanda.';
+                return;
+            }
+
+            if (Array.from(cuerpo.rows).some(fila => fila.dataset.pasajeroId === pasajero.value)) {
+                mensaje.textContent = 'El pasajero ya está en la lista.';
+                return;
+            }
+
+            const plazas = obtenerPlazasHabitacion(habitacion.value);
+            if (plazas === null) {
+                mensaje.textContent = 'No se pudo determinar la cantidad de plazas de la habitación.';
+                return;
+            }
+            const cuentaPax = pasajero.options[pasajero.selectedIndex].dataset.cuentaPax !== '0';
+            if (cuentaPax && contarPasajerosModal() >= plazas) {
+                mensaje.textContent = `La habitación tiene ${plazas} plaza(s); no se pueden agregar más pasajeros.`;
+                return;
+            }
+
+            const fila = document.createElement('tr');
+            fila.dataset.pasajeroId = pasajero.value;
+            fila.dataset.cuentaPax = cuentaPax ? '1' : '0';
+            const nombre = document.createElement('td');
+            nombre.textContent = pasajero.options[pasajero.selectedIndex].textContent.trim();
+            const etiquetaNombre = nombre.textContent;
+            if (!cuentaPax) nombre.textContent += ' (menor de 5 años, no cuenta como pasajero)';
+            const opcionComanda = document.createElement('td');
+            opcionComanda.textContent = comanda.value;
+            const acciones = document.createElement('td');
+            const quitar = document.createElement('button');
+            quitar.type = 'button';
+            quitar.className = 'btn btn-sm btn-outline-danger';
+            quitar.textContent = 'Quitar';
+            quitar.setAttribute('aria-label', `Quitar a ${etiquetaNombre}`);
+            quitar.addEventListener('click', () => {
+                fila.remove();
+                mensaje.textContent = '';
+            });
+            acciones.appendChild(quitar);
+            fila.appendChild(nombre);
+            fila.appendChild(opcionComanda);
+            fila.appendChild(acciones);
+            cuerpo.appendChild(fila);
+        }
+
+        function contarPasajerosModal() {
+            return Array.from(document.getElementById('pasajerosModalBody').rows)
+                .filter(fila => fila.dataset.cuentaPax !== '0').length;
+        }
+
+        function obtenerPlazasHabitacion(id) {
+            const habitacion = habitaciones.find(item => String(item.id) === String(id));
+            if (!habitacion || habitacion.plazas === null || habitacion.plazas === '') return null;
+            const plazas = Number(habitacion.plazas);
+            return Number.isInteger(plazas) && plazas >= 0 ? plazas : null;
+        }
+
+        function cambiarHabitacionModal() {
+            const select = document.getElementById('ocupacion_habitacion_id');
+            const cantidad = contarPasajerosModal();
+            const mensaje = document.getElementById('pasajerosModalMensaje');
+            const plazas = obtenerPlazasHabitacion(select.value);
+            mensaje.textContent = '';
+
+            if (cantidad > 0 && (plazas === null || cantidad > plazas)) {
+                select.value = habitacionSeleccionadaModal;
+                mensaje.textContent = 'No se puede cambiar de habitación: quite pasajeros o elija una habitación con suficientes plazas.';
+                return;
+            }
+
+            habitacionSeleccionadaModal = select.value;
+        }
+
+        function limpiarFormularioOcupacion() {
+            document.getElementById('pasajerosModalBody').replaceChildren();
+            document.getElementById('pasajerosModalMensaje').textContent = '';
+            ['ocupacion_habitacion_id', 'ocupacion_fecha_inicio', 'ocupacion_fecha_fin',
+                'ocupacion_pasajero_id', 'ocupacion_comanda'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.querySelectorAll('#ocupacionModal .ocupacion-error').forEach(error => error.remove());
+            habitacionAnterior = '';
+            habitacionSeleccionadaModal = '';
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
@@ -290,7 +386,7 @@
 
         function actualizarSelectHabitaciones() {
             const selectHabitacion = document.getElementById('ocupacion_habitacion_id');
-            const seleccionAnterior = selectHabitacion.value || @json(old('habitacion_id', ''));
+            const seleccionAnterior = selectHabitacion.value || habitacionAnterior;
 
             selectHabitacion.replaceChildren(new Option('Seleccione una habitación', ''));
             habitacionesFiltradasActuales.forEach(habitacion => {
@@ -301,6 +397,12 @@
                 opcion.selected = String(habitacion.id) === String(seleccionAnterior);
                 selectHabitacion.add(opcion);
             });
+            if (!selectHabitacion.value && document.getElementById('pasajerosModalBody').rows.length > 0) {
+                document.getElementById('pasajerosModalBody').replaceChildren();
+                document.getElementById('pasajerosModalMensaje').textContent =
+                    'La habitación seleccionada ya no está en los resultados; se limpió la lista temporal.';
+            }
+            habitacionSeleccionadaModal = selectHabitacion.value;
         }
 
         function formatoFechaLocal(fecha) {
@@ -355,12 +457,6 @@
 
             const estado = document.getElementById('estado').value;
             const pasajeros = Number(document.getElementById('pasajeros').value);
-/*             const doble = Number(document.getElementById('doble').value);
-            const simple = Number(document.getElementById('simple').value);
-            const cuna = document.getElementById('cuna').value;
-            const vista = document.getElementById('vista').value;
-            const aire = document.getElementById('aire').value;
-            const bano = document.getElementById('bano').value; */
 
             const eventosFiltrados = eventosCalendario.filter(evento => {
                 const habitacion = evento.habitacion || {};
@@ -377,12 +473,6 @@
                 }
 
                 if (Number(habitacion.plazas || 0) !== pasajeros) return false;
-/*                 if (doble > 0 && Number(habitacion.matri || 0) < doble) return false;
-                if (simple > 0 && Number(habitacion.simple || 0) < simple) return false;
-                if (cuna !== 'Todas' && normalizar(habitacion.cuna) !== normalizar(cuna)) return false;
-                if (vista !== 'Todas' && normalizar(habitacion.vista) !== normalizar(vista)) return false;
-                if (aire !== 'Todas' && normalizar(habitacion.aire) !== normalizar(aire)) return false;
-                if (bano !== 'Todas' && normalizar(habitacion.toilette) !== normalizar(bano)) return false; */
 
                 return true;
             });
@@ -410,12 +500,6 @@
                     habitacion.numero,
                     habitacion.tipo,
                     habitacion.plazas
-/*                     habitacion.matri,
-                    habitacion.simple,
-                    habitacion.vista,
-                    habitacion.aire,
-                    habitacion.cuna,
-                    habitacion.toilette === 'G' ? 'Grande' : habitacion.toilette === 'N' ? 'Normal' : habitacion.toilette */
                 ].forEach(valor => {
                     const celda = document.createElement('td');
                     celda.textContent = valor ?? '-';

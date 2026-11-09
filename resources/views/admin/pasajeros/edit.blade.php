@@ -57,6 +57,35 @@
                                     placeholder="Ingrese teléfono del pasajero" value="{{ old('telefono', $pasajero->telefono) }}" required>
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-md-2 col-sm-2">
+                                <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento <b style="color: red;">(*)</b></label>
+                                <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento"
+                                    placeholder="Ingrese fecha de nacimiento del pasajero" value="{{ old('fechaNacimiento', $pasajero->fechaNacimiento) }}" required>
+                                @error('fechaNacimiento')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-4 col-sm-4">
+                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    placeholder="Ingrese email del pasajero" value="{{ old('email', $pasajero->email) }}" required>
+                                @error('email')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-2 col-sm-2">
+                                <label for="usaComanda" class="form-label">Usa Comanda <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="usaComanda" name="usaComanda" required>
+                                    <option value="">Seleccione una opción</option>
+                                    <option value="1" {{ (old('usaComanda', $pasajero->usaComanda) ?? 0) == 1 ? 'selected' : '' }}>Sí</option>
+                                    <option value="0" {{ (old('usaComanda', $pasajero->usaComanda) ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                                </select>
+                                @error('usaComanda')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-4">
                                 <label for="direccion" class="form-label">Domicilio <b style="color: red;">(*)</b></label>
@@ -114,32 +143,14 @@
                             </div>
                             <div class="col-md-2 col-sm-2">
                                 <div class="form-group">
-                                    <label for="cod_postal">Cod.Postal <b style="color: red;">(*)</b></label>
-                                    <select type="text" class="form-control" value="{{$pasajero->localidad->cod_postal ?? 'N/A' }}" id="cod_postal" name="cod_postal" placeholder="Código">
+                                    <label for="cod_postal_id">Cod.Postal <b style="color: red;">(*)</b></label>
+                                    <select type="text" class="form-control" value="{{$pasajero->localidad->cod_postal ?? 'N/A' }}" id="cod_postal_id" name="cod_postal_id" placeholder="Código">
                                         <option value="{{$pasajero->localidad->id}}">{{strtoupper($pasajero->localidad->cod_postal ?? 'N/A')}}</option>
                                     </select>
-                                    @error('cod_postal')
+                                    @error('cod_postal_id')
                                         <small style="color: red">{{$message}}</small>
                                     @enderror
                                 </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 col-sm-4">
-                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
-                                <input type="email" class="form-control" id="email" name="email"
-                                    placeholder="Ingrese email del pasajero" value="{{ old('email', $pasajero->email) }}" required>
-                            </div>
-                            <div class="col-md-2 col-sm-2">
-                                <label for="usaComanda" class="form-label">Usa Comanda <b style="color: red;">(*)</b></label>
-                                <select class="form-control" id="usaComanda" name="usaComanda" required>
-                                    <option value="">Seleccione una opción</option>
-                                    <option value="1" {{ (old('usaComanda', $pasajero->usaComanda) ?? 0) == 1 ? 'selected' : '' }}>Sí</option>
-                                    <option value="0" {{ (old('usaComanda', $pasajero->usaComanda) ?? 0) == 0 ? 'selected' : '' }}>No</option>
-                                </select>
-                                @error('usaComanda')
-                                    <small class="text-danger">{{ $message }}</small>
-                                @enderror
                             </div>
                         </div>
                         <hr>
@@ -168,9 +179,9 @@
             const localidadSelect = document.getElementById('localidad');
             const codPostalSelect = document.getElementById('cod_postal_id');
 
-            const oldProvincia = @json(old('provincia', optional($proveedor->localidad)->id_prov));
-            const oldLocalidad = @json(old('localidad', optional($proveedor->localidad)->id_local));
-            const oldCodPostal = @json(old('cod_postal_id', $proveedor->cod_postal_id));
+            const oldProvincia = @json(old('provincia', optional($pasajero->localidad)->id_prov));
+            const oldLocalidad = @json(old('localidad', optional($pasajero->localidad)->id_local));
+            const oldCodPostal = @json(old('cod_postal_id', $pasajero->cod_postal_id));
 
             const setDefaultOption = (select, text) => {
                 select.innerHTML = `<option value="">${text}</option>`;

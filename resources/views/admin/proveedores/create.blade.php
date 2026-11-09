@@ -196,7 +196,7 @@
                             </div>
                             <div class="col-md-1 mb-3">
                                 <label for="dias" class="form-label">Días Pago <b style="color: red;">(*)</b></label>
-                                <input type="number" class="form-control" id="dias" name="dias" required
+                                <input type="number" class="form-control" id="dias" name="dias" min="0" step="1" required
                                     placeholder="Ingrese días del proveedor" value="{{ old('dias') }}">
                                 @error('dias')
                                     <small class="text-danger">{{ $message }}</small>

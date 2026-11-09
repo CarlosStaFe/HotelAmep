@@ -57,6 +57,35 @@
                                     placeholder="Ingrese teléfono del pasajero" value="{{ old('telefono') }}" required>
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-md-2 col-sm-2">
+                                <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento <b style="color: red;">(*)</b></label>
+                                <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento"
+                                    placeholder="Ingrese fecha de nacimiento del pasajero" value="{{ old('fechaNacimiento') }}" required>
+                                @error('fechaNacimiento')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-4 col-sm-4">
+                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    placeholder="Ingrese email del pasajero" value="{{ old('email') }}" required>
+                                @error('email')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-2 col-sm-2">
+                                <label for="usaComanda" class="form-label">Usa Comanda <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="usaComanda" name="usaComanda" required>
+                                    <option value="">Seleccione una opción</option>
+                                    <option value="1" {{ old('usaComanda') === '1' ? 'selected' : '' }}>Sí</option>
+                                    <option value="0" {{ old('usaComanda') === '0' ? 'selected' : '' }}>No</option>
+                                </select>
+                                @error('usaComanda')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-md-4">
                                 <label for="direccion" class="form-label">Domicilio <b style="color: red;">(*)</b></label>
@@ -122,29 +151,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-4 col-sm-4">
-                                <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
-                                <input type="email" class="form-control" id="email" name="email"
-                                    placeholder="Ingrese email del pasajero" value="{{ old('email') }}" required>
-                            </div>
-                            <div class="col-md-2 col-sm-2">
-                                <label for="usaComanda" class="form-label">Usa Comanda <b style="color: red;">(*)</b></label>
-                                <select class="form-control" id="usaComanda" name="usaComanda" required>
-                                    <option value="">Seleccione una opción</option>
-                                    <option value="1" {{ old('usaComanda') === '1' ? 'selected' : '' }}>Sí</option>
-                                    <option value="0" {{ old('usaComanda') === '0' ? 'selected' : '' }}>No</option>
-                                </select>
-                                @error('usaComanda')
-                                    <small class="text-danger">{{ $message }}</small>
-                                @enderror
-                            </div>
-                        </div>
                         <hr>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <a href="{{ url('/admin/articulos/index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ url('/admin/pasajeros/index') }}" class="btn btn-secondary">Cancelar</a>
                                     <button type="submit" class="btn btn-primary">Guardar</button>
                                 </div>
                             </div>

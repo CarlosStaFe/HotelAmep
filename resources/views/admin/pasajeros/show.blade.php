@@ -36,6 +36,20 @@
                             <input type="text" class="form-control" id="telefono" name="telefono" value="{{ $pasajero->telefono }}" readonly>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                        <div class="col-md-2 mb-3">
+                            <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento" value="{{ $pasajero->fechaNacimiento }}" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ $pasajero->email }}" readonly>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="usaComanda" class="form-label">Usa Comanda</label>
+                            <input type="text" class="form-control" id="usaComanda" value="{{ $pasajero->usaComanda ? 'Sí' : 'No' }}" readonly>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="direccion" class="form-label">Domicilio</label>
@@ -52,14 +66,6 @@
                         <div class="col-md-2 mb-3">
                             <label for="cod_postal" class="form-label">Cod.Postal</label>
                             <input type="text" class="form-control" id="cod_postal" value="{{ $pasajero->localidad->cod_postal ?? 'N/A' }}" readonly>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" value="{{ $pasajero->email }}" readonly>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label for="usaComanda" class="form-label">Usa Comanda</label>
-                            <input type="text" class="form-control" id="usaComanda" value="{{ $pasajero->usaComanda ? 'Sí' : 'No' }}" readonly>
                         </div>
                     </div>
                     <hr>

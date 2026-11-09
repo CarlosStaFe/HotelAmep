@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Calendario;
 use App\Models\Habitacion;
+use App\Models\Pasajero;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,12 +17,13 @@ class CalendarioController extends Controller
     public function index()
     {
         $calendario = Calendario::with('habitacion')->get();
+        $pasajeros = Pasajero::orderBy('apelyNombre')->get();
         $habitaciones = Habitacion::query()
             ->where('venta', true)
             ->orderBy('numero')
             ->get();
 
-        return view('admin.calendarios.index', compact('calendario', 'habitaciones'));
+        return view('admin.calendarios.index', compact('calendario', 'habitaciones', 'pasajeros'));
     }
 
     /**
