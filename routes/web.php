@@ -217,3 +217,23 @@ Route::get('/admin/localidades/provincia/{idProv}', [App\Http\Controllers\Locali
 Route::get('/admin/localidades/codigos-postales/{idLocal}', [App\Http\Controllers\LocalidadController::class, 'getCodigosPostales'])
 ->name('localidades.codigos_postales')
 ->middleware('auth');
+
+//RUTAS PARA COPIAS DE SEGURIDAD
+Route::get('/admin/copias/index', [App\Http\Controllers\CopiaSeguridadController::class, 'index'])
+->name('copias.index')
+->middleware('auth');
+Route::post('/admin/copias/crear', [App\Http\Controllers\CopiaSeguridadController::class, 'store'])
+->name('copias.store')
+->middleware('auth');
+Route::get('/admin/copias/restaurar', [App\Http\Controllers\CopiaSeguridadController::class, 'restaurarForm'])
+->name('copias.restaurar')
+->middleware('auth');
+Route::post('/admin/copias/restaurar', [App\Http\Controllers\CopiaSeguridadController::class, 'restaurar'])
+->name('copias.restaurar.post')
+->middleware('auth');
+Route::get('/admin/copias/descargar/{nombre}', [App\Http\Controllers\CopiaSeguridadController::class, 'descargar'])
+->name('copias.descargar')
+->middleware('auth');
+Route::delete('/admin/copias/{nombre}', [App\Http\Controllers\CopiaSeguridadController::class, 'destroy'])
+->name('copias.destroy')
+->middleware('auth');

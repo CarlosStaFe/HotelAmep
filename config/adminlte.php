@@ -370,6 +370,25 @@ return [
                         ],
                     ],
                 ],
+                [
+                    'text' => 'Seguridad',
+                    'icon' => 'fas fa-layer-group',
+                    'classes' => 'bg-blue text-white',
+                    'submenu' => [
+                        [
+                            'text' => 'Copia de Seguridad',
+                            'url' => '/admin/copias/index',
+                            'icon' => 'bi bi-download',
+                            'classes' => 'bg-cyan text-white',
+                        ],
+                        [
+                            'text' => 'Restaurar Copias',
+                            'url' => '/admin/copias/restaurar',
+                            'icon' => 'bi bi-upload',
+                            'classes' => 'bg-cyan text-white',
+                        ],
+                    ],
+                ],
             ],
         ],
         [

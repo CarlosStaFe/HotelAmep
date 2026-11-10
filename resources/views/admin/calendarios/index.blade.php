@@ -429,11 +429,6 @@
                     if (select) select.selectedIndex = 0;
                 });
 
-            const mensaje = document.getElementById('resultadoBusqueda');
-            mensaje.classList.add('d-none');
-            mensaje.textContent = '';
-            document.getElementById('habitacionesResultadosBody').replaceChildren();
-            document.getElementById('habitacionesResultados').classList.add('d-none');
             habitacionesFiltradasActuales = [];
             actualizarSelectHabitaciones();
             
