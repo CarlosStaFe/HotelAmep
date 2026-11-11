@@ -68,8 +68,9 @@ class CalendarioDisponibilidadTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('calendarios.index'))
+            ->get(route('calendarios.calendario'))
             ->assertOk()
+            ->assertViewIs('admin.calendarios.calendario')
             ->assertSee('Cargar fechas de ocupación')
             ->assertSee('ocupacion_fecha_inicio')
             ->assertSee("new Option('Seleccione una habitación', '')", false)
@@ -87,7 +88,7 @@ class CalendarioDisponibilidadTest extends TestCase
                 'fecha_inicio' => '2026-11-05',
                 'fecha_fin' => '2026-11-08',
             ])
-            ->assertRedirect(route('calendarios.index'));
+            ->assertRedirect(route('calendarios.calendario'));
 
         $this->assertDatabaseCount('calendarios', 4);
         $this->assertDatabaseHas('calendarios', [

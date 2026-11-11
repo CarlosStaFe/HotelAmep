@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('precio', 12, 2);
             $table->decimal('total', 12, 2);
             $table->string('observacion', 100)->nullable();
+            $table->string('estado', 20)->default('Abierta');
             $table->dateTime('fecha_creacion');
             $table->dateTime('fecha_actualizacion');
         });

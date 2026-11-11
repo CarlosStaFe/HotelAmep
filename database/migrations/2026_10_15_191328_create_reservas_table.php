@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('reservas', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('habitacion_id')->constrained('habitaciones');
+            $table->foreignId('pasajero_id')->constrained('pasajeros');
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin');
+            $table->string('detalle', 255);
+            $table->string('estado', 20);
             $table->timestamps();
         });
     }

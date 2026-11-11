@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const vista = readFileSync(new URL('../../resources/views/admin/calendarios/index.blade.php', import.meta.url), 'utf8');
+const vista = readFileSync(new URL('../../resources/views/admin/calendarios/calendario.blade.php', import.meta.url), 'utf8');
 const inicio = vista.indexOf('        function actualizarSelectHabitaciones() {');
 const fin = vista.indexOf('        function filtrarCalendario() {', inicio);
 assert.ok(inicio !== -1 && fin !== -1);

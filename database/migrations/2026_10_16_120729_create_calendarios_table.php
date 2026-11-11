@@ -17,9 +17,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->dateTime('start');
             $table->dateTime('end');
-            $table->string('color')->nullable()->default('#0CB371');
-            $table->string('textColor')->nullable()->default('#000000');
-            $table->string('estado')->default('Disponible');
+            $table->string('color', 50)->nullable()->default('#0CB371');
+            $table->string('textColor', 50)->nullable()->default('#000000');
+            $table->string('estado', 50)->default('Disponible');
             $table->foreignId('habitacion_id')->constrained('habitaciones');
             $table->foreignId('pasajero_id')->nullable()->constrained('pasajeros');
             $table->timestamps();

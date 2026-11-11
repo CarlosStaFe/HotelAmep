@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const vista = readFileSync(new URL('../../resources/views/admin/calendarios/index.blade.php', import.meta.url), 'utf8');
+const vista = readFileSync(new URL('../../resources/views/admin/calendarios/calendario.blade.php', import.meta.url), 'utf8');
 const inicio = vista.indexOf('        function agregarPasajeroModal() {');
 const fin = vista.indexOf("        document.addEventListener('DOMContentLoaded'", inicio);
 assert.ok(inicio !== -1 && fin !== -1);
@@ -87,6 +87,10 @@ test('agrega pasajeros con su comanda, impide duplicados y permite quitarlos', (
     assert.equal(cuerpo.rows.length, 1);
     assert.equal(cuerpo.rows[0].children[0].textContent, 'Ana - 123');
     assert.equal(cuerpo.rows[0].children[1].textContent, 'SI');
+    assert.equal(cuerpo.rows[0].children[1].children[0].name, 'pasajeros[p1][id]');
+    assert.equal(cuerpo.rows[0].children[1].children[0].value, '1');
+    assert.equal(cuerpo.rows[0].children[1].children[1].name, 'pasajeros[p1][comanda]');
+    assert.equal(cuerpo.rows[0].children[1].children[1].value, 'SI');
 
     agregar();
     assert.match(mensaje.textContent, /ya está/);
@@ -102,6 +106,19 @@ test('agrega pasajeros con su comanda, impide duplicados y permite quitarlos', (
     cuerpo.rows[0].children[2].children[0].click();
     assert.equal(cuerpo.rows.length, 1);
     assert.equal(cuerpo.rows[0].dataset.pasajeroId, '2');
+});
+
+test('Reservar exige al menos un pasajero asignado', () => {
+    const { contexto, pasajero, comanda, habitacion, mensaje, agregar, cuerpo } = crearEntorno();
+    assert.equal(contexto.validarReservaModal(), false);
+    assert.match(mensaje.textContent, /al menos un pasajero/);
+    habitacion.value = '10';
+    pasajero.value = '1';
+    comanda.value = 'SI';
+    agregar();
+    assert.equal(contexto.validarReservaModal(), true);
+    cuerpo.rows[0].children[2].children[0].click();
+    assert.equal(contexto.validarReservaModal(), false);
 });
 
 test('Cancelar limpia el formulario, la lista temporal y los mensajes', () => {
