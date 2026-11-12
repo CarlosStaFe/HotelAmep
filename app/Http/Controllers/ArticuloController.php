@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Articulo;
 use App\Models\Habitacion;
+use App\Models\Reserva;
 use App\Models\Subrubro;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -215,7 +216,7 @@ class ArticuloController extends Controller
     public function comanda()
     {
         $habitaciones = Habitacion::query()
-            ->where('estado', 'Ocupada')
+            ->whereIn('id', Reserva::query()->select('habitacion_id')->where('estado', 'Ocupada'))
             ->orderBy('numero')
             ->get();
 

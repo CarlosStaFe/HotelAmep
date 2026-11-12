@@ -38,11 +38,13 @@
                     <div class="col-md-1">
                         <label for="estado">ESTADO <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="estado" name="estado" required>
-                            <option value="Disponible" selected>Disponible</option>
-                            <option value="Todas">Todas</option>
+                            <option value="Todas" selected>Todas</option>
+                            <option value="Disponible">Disponible</option>
                             <option value="No Disponible">No Disponible</option>
                             <option value="Reservada">Reservada</option>
+                            <option value="Confirmada">Confirmada</option>
                             <option value="Ocupada">Ocupada</option>
+                            <option value="Liberada">Liberada</option>
                         </select>
                     </div>
                     <div class="col-md-1">
@@ -60,6 +62,7 @@
                             <option value="9">9</option>
                         </select>
                     </div>
+                    
                 <div class="row mb-1">
                     <div class="col-md-4 d-flex align-items-center mt-4">
                         <button type="button" class="btn btn-primary ml-3 mr-2" id="buscarTurnoBtn"
@@ -72,7 +75,17 @@
                         </button>
                     </div>
                 </div>
+                <div class="col-12 d-flex flex-wrap align-items-center mb-3" aria-label="Referencias de estados">
+                    <span class="mr-3 ml-3"><span class="badge mr-1" style="background-color: #0CB371;" aria-hidden="true">&nbsp;</span>Disponible</span>
+                    <span class="mr-3"><span class="badge mr-1" style="background-color: {{ \App\Models\Calendario::COLOR_NO_DISPONIBLE }};" aria-hidden="true">&nbsp;</span>No Disponible</span>
+                    <span class="mr-3"><span class="badge mr-1" style="background-color: #D2E014;" aria-hidden="true">&nbsp;</span>Reservada</span>
+                    <span class="mr-3"><span class="badge mr-1" style="background-color: #F29727;" aria-hidden="true">&nbsp;</span>Confirmada</span>
+                    <span class="mr-3"><span class="badge mr-1" style="background-color: #B82E27;" aria-hidden="true">&nbsp;</span>Ocupada</span>
+                    <span class="mr-3"><span class="badge mr-1" style="background-color: #A69F9F;" aria-hidden="true">&nbsp;</span>Liberada</span>
+                    <span class="mr-3"><span class="badge mr-1" style="background-color: #E687DA;" aria-hidden="true">&nbsp;</span>No Disponible</span>
+                </div>
 
+                <div id="resultadoBusqueda" class="d-none ml-3" role="status"></div>
                 <div class="card">
                     <div class="card-body">
                         <div id="calendar"></div>
@@ -493,14 +506,8 @@
                 const habitacion = evento.habitacion || {};
                 const inicioEvento = obtenerFecha(evento.start);
                 const finEvento = obtenerFecha(evento.end || evento.start);
-                const estadoEvento = normalizar(evento.estado);
 
                 if (!inicioEvento || !finEvento || inicioEvento > fechaFin || finEvento < fechaInicio) {
-                    return false;
-                }
-
-                if (estado !== 'Todas' && estadoEvento !== normalizar(estado)
-                    && !(estado === 'Reservada' && estadoEvento === 'reservada')) {
                     return false;
                 }
 
@@ -518,34 +525,42 @@
 
             actualizarSelectHabitaciones();
 
+            calendario.getEventSources().forEach(fuente => fuente.remove());
             calendario.removeAllEvents();
-            calendario.addEventSource(eventosFiltrados);
+            const eventosParaMostrar = eventosFiltrados.map(evento => {
+                if (estado === 'Todas' || normalizar(evento.estado) === normalizar(estado)) {
+                    return evento;
+                }
+
+                return { ...evento, color: '#FFFFFF', backgroundColor: '#FFFFFF', borderColor: '#FFFFFF', textColor: '#FFFFFF' };
+            });
+            calendario.addEventSource(eventosParaMostrar);
             calendario.gotoDate(fechaInicio);
 
             const cuerpoResultados = document.getElementById('habitacionesResultadosBody');
             const tablaResultados = document.getElementById('habitacionesResultados');
-            cuerpoResultados.replaceChildren();
+            if (cuerpoResultados && tablaResultados) {
+                cuerpoResultados.replaceChildren();
 
-            habitacionesFiltradasActuales.forEach(habitacion => {
-                const fila = document.createElement('tr');
-                [
-                    habitacion.numero,
-                    habitacion.tipo,
-                    habitacion.plazas
-                ].forEach(valor => {
-                    const celda = document.createElement('td');
-                    celda.textContent = valor ?? '-';
-                    fila.appendChild(celda);
+                habitacionesFiltradasActuales.forEach(habitacion => {
+                    const fila = document.createElement('tr');
+                    [
+                        habitacion.numero,
+                        habitacion.tipo,
+                        habitacion.plazas
+                    ].forEach(valor => {
+                        const celda = document.createElement('td');
+                        celda.textContent = valor ?? '-';
+                        fila.appendChild(celda);
+                    });
+                    cuerpoResultados.appendChild(fila);
                 });
-                cuerpoResultados.appendChild(fila);
-            });
 
-            actualizarSelectHabitaciones();
-
-            tablaResultados.classList.toggle('d-none', habitacionesFiltradasActuales.length === 0);
+                tablaResultados.classList.toggle('d-none', habitacionesFiltradasActuales.length === 0);
+            }
             mensaje.textContent = habitacionesFiltradasActuales.length
                 ? `Se encontraron ${habitacionesFiltradasActuales.length} habitación(es).`
-                : 'No se encontraron habitaciones disponibles para los filtros seleccionados.';
+                : 'No se encontraron habitaciones para los filtros seleccionados.';
             mensaje.classList.remove('d-none');
         }
     </script>

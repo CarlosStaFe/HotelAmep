@@ -64,6 +64,14 @@
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
+                        <div class="col-md-3" id="descripcion-grupo" @if(old('estado', 'Disponible') !== 'No Disponible') hidden @endif>
+                            <label for="descripcion">DESCRIPCIÓN <b style="color: red;">(*)</b></label>
+                            <textarea name="descripcion" id="descripcion" class="form-control"
+                                      @if(old('estado', 'Disponible') === 'No Disponible') required @else disabled @endif>{{ old('descripcion') }}</textarea>
+                            @error('descripcion')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
                     </div>
                     <hr>
                     <div class="row">
@@ -84,4 +92,19 @@
 @stop
 
 @section('js')
+    <script>
+        const estado = document.getElementById('estado');
+        const descripcion = document.getElementById('descripcion');
+        const descripcionGrupo = document.getElementById('descripcion-grupo');
+
+        function actualizarDescripcion() {
+            const noDisponible = estado.value === 'No Disponible';
+            descripcionGrupo.hidden = !noDisponible;
+            descripcion.required = noDisponible;
+            descripcion.disabled = !noDisponible;
+        }
+
+        estado.addEventListener('change', actualizarDescripcion);
+        actualizarDescripcion();
+    </script>
 @stop

@@ -18,7 +18,7 @@
                     <h2 class="card-title"><b>Completar el formulario</b></h2>
                 </div>
                 <div class="row">
-                    <div class="col-md-2 ml-1">
+                    <div class="col-md-1 ml-1">
                         <label for="habitacion" class="form-label">Habitación <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="habitacion" name="habitacion" required>
                             <option value="">Seleccione</option>

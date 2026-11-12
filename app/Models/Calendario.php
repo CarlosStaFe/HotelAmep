@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Calendario extends Model
 {
     use HasFactory;
+
+    public const COLOR_NO_DISPONIBLE = '#E687DA';
+
     protected $table = 'calendarios';
 
     protected $fillable = [

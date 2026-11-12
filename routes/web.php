@@ -177,6 +177,9 @@ Route::post('/admin/calendarios/disponibilidad', [App\Http\Controllers\Calendari
 Route::post('/admin/calendarios/reservar', [App\Http\Controllers\CalendarioController::class, 'reservar'])
 ->name('calendarios.reservar')
 ->middleware('auth');
+Route::patch('/admin/reservas/{reserva}/estado', [App\Http\Controllers\ReservaController::class, 'cambiarEstado'])
+->name('reservas.cambiar-estado')
+->middleware('auth');
 
 //RUTAS PARA PASAJEROS
 Route::get('/admin/pasajeros/index', [App\Http\Controllers\PasajeroController::class, 'index'])

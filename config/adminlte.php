@@ -506,7 +506,7 @@ return [
                 [
                     'text' => 'Cargar Consumo',
                     'url' => '/admin/comandas/comanda',
-                    'icon' => 'bi bi-pencil-square',
+                    'icon' => 'bi bi-cup-straw',
                     'classes' => 'bg-cyan text-white',
                 ],
                 [
@@ -542,6 +542,12 @@ return [
                     ],
                 ],
             ],
+        ],
+        [
+            'text' => 'Log Out',
+            'url' => '/admin/exit',
+            'icon' => 'bi bi-power',
+            'classes' => 'bg-red text-white',
         ],
     ],
 

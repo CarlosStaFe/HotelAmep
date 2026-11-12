@@ -31,6 +31,11 @@ class CalendarioController extends Controller
     public function calendario()
     {
         $calendario = Calendario::with('habitacion')->get();
+        $calendario->each(function (Calendario $evento) {
+            if ($evento->estado === 'No Disponible') {
+                $evento->color = Calendario::COLOR_NO_DISPONIBLE;
+            }
+        });
         $pasajeros = Pasajero::orderBy('apelyNombre')->get();
         $habitaciones = Habitacion::query()
             ->where('venta', true)
@@ -109,7 +114,7 @@ class CalendarioController extends Controller
             Calendario::whereKey($eventos->modelKeys())->update([
                 'description' => $descripcion,
                 'estado' => 'Reservada',
-                'color' => '#CCCC18',
+                'color' => '#D2E014',
                 'habitacion_id' => $habitacion->id,
                 'pasajero_id' => $primerPasajeroId,
             ]);
@@ -139,6 +144,7 @@ class CalendarioController extends Controller
         $datos = $request->validate([
             'habitacion_id' => 'required|exists:habitaciones,id',
             'estado' => 'required|in:Disponible,No Disponible,Reservada,Ocupada',
+            'descripcion' => 'required_if:estado,No Disponible|nullable|string',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
             'origen' => 'nullable|in:calendario',
@@ -153,10 +159,10 @@ class CalendarioController extends Controller
             while ($fecha->lte($fechaFin)) {
                 Calendario::create([
                     'title' => "Habitación {$habitacion->numero} - PAX {$habitacion->plazas} - Matri {$habitacion->matri} - Simple {$habitacion->simple} - Piso {$habitacion->piso} - Vista {$habitacion->vista} - Aire {$habitacion->aire} - Cuna {$habitacion->cuna} - Baño {$habitacion->toilette}",
-                    'description' => '',
+                    'description' => $datos['estado'] === 'No Disponible' ? $datos['descripcion'] : '',
                     'start' => $fecha->format('Y-m-d 00:00:00'),
                     'end' => $fecha->format('Y-m-d 23:59:59'),
-                    'color' => $datos['estado'] === 'Disponible' ? '#0CB371' : '#0CB371',
+                    'color' => $datos['estado'] === 'No Disponible' ? Calendario::COLOR_NO_DISPONIBLE : '#0CB371',
                     'textColor' => '#000000',
                     'estado' => $datos['estado'],
                     'habitacion_id' => $habitacion->id,

@@ -13,6 +13,16 @@
 @section('content')
     <div class="row">
         <div class="col-md-12">
+            @if (session('success'))
+                <div class="alert alert-success" role="status">{{ session('success') }}</div>
+            @endif
+            @if ($errors->any())
+                <div class="alert alert-danger" role="alert">
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title"><b>Reservas registradas</b></h3>
@@ -47,9 +57,10 @@
                                     <td>
                                         @php
                                             $estadoColor = match ($reserva->estado) {
-                                                'Reservada' => '#CCCC18',
-                                                'Confirmada' => '#D19021',
+                                                'Reservada' => '#D2E014',
+                                                'Confirmada' => '#F29727',
                                                 'Ocupada' => '#B82E27',
+                                                'Liberada' => '#A69F9F',
                                                 default => '#0CB371',
                                             };
                                         @endphp
@@ -58,10 +69,31 @@
                                         </span>
                                     </td>
                                     <td style="text-align: center;">
-                                        <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ url('/admin/reservas/' . $reserva->id) }}" class="btn btn-success"><i class="bi bi-currency-dollar"></i></a>
-                                            <a href="{{ url('/admin/reservas/' . $reserva->id . '/edit') }}" class="btn btn-info"><i class="bi bi-person-square"></i></a>
-                                            <a href="{{ url('/admin/reservas/' . $reserva->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                                        <div class="btn-group" role="group" aria-label="Acciones de la reserva">
+                                            <form action="{{ route('reservas.cambiar-estado', $reserva) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="estado" value="Confirmada">
+                                                <button type="submit" class="btn btn-success" title="Marcar confirmada" aria-label="Marcar reserva como confirmada" @disabled($reserva->estado !== 'Reservada')><i class="bi bi-currency-dollar"></i></button>
+                                            </form>
+                                            <form action="{{ route('reservas.cambiar-estado', $reserva) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="estado" value="Ocupada">
+                                                <button type="submit" class="btn btn-info" title="Marcar ocupada" aria-label="Marcar reserva como ocupada" @disabled($reserva->estado !== 'Confirmada')><i class="bi bi-person-square"></i></button>
+                                            </form>
+                                            <form action="{{ route('reservas.cambiar-estado', $reserva) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="estado" value="Liberada">
+                                                <button type="submit" class="btn" style="background-color: #A69F9F; color: #fff;" title="Marcar liberada" aria-label="Marcar reserva como liberada" @disabled($reserva->estado !== 'Ocupada')><i class="bi bi-person-walking"></i></button>
+                                            </form>
+                                            <form action="{{ route('reservas.cambiar-estado', $reserva) }}" method="POST" onsubmit="return confirm('Se liberarán las fechas y se eliminará la reserva. ¿Continuar?');">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="estado" value="Disponible">
+                                                <button type="submit" class="btn btn-danger" title="Liberar y eliminar reserva" aria-label="Liberar fechas y eliminar reserva" @disabled(!in_array($reserva->estado, ['Reservada', 'Confirmada', 'Ocupada', 'Liberada'], true))><i class="bi bi-trash"></i></button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
