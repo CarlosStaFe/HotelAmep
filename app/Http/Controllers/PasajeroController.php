@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asignada;
 use App\Models\Habitacion;
 use App\Models\Pasajero;
 use Illuminate\Http\JsonResponse;
@@ -10,52 +11,23 @@ use Illuminate\Support\Facades\Schema;
 
 class PasajeroController extends Controller
 {
-    public function getByHabitacion(string $habitacion): JsonResponse
+    public function getByHabitacion(Habitacion $habitacion): JsonResponse
     {
-        if (!Schema::hasTable('pasajeros') || !Schema::hasTable('habitaciones')) {
-            return response()->json([]);
-        }
-
-        if (!Schema::hasColumn('pasajeros', 'habitacion_id')) {
-            return response()->json([]);
-        }
-
-        $habitacionModel = Habitacion::where('numero', $habitacion)->first();
-
-        if (!$habitacionModel) {
-            return response()->json([]);
-        }
-
-        $query = Pasajero::query()->where('habitacion_id', $habitacionModel->id);
-
-        if (Schema::hasColumn('pasajeros', 'apelyNombre')) {
-            $query->orderBy('apelyNombre');
-        }
-
-        $pasajeros = $query->get();
-
-        $data = $pasajeros->map(function ($pasajero) {
-            $nombre = '';
-
-            if (isset($pasajero->apelyNombre) && trim((string) $pasajero->apelyNombre) !== '') {
-                $nombre = (string) $pasajero->apelyNombre;
-            } elseif (isset($pasajero->nombre) && trim((string) $pasajero->nombre) !== '') {
-                $nombre = (string) $pasajero->nombre;
-            } elseif (isset($pasajero->apellido) || isset($pasajero->nombres)) {
-                $nombre = trim(((string) ($pasajero->apellido ?? '')) . ' ' . ((string) ($pasajero->nombres ?? '')));
-            }
-
-            if ($nombre === '') {
-                $nombre = 'Pasajero #' . $pasajero->id;
-            }
-
-            return [
+        $pasajeros = Pasajero::query()
+            ->whereIn('id', Asignada::query()
+                ->select('pasajero_id')
+                ->where('habitacion_id', $habitacion->id)
+                ->where('estado', 'Ocupada'))
+            ->orderBy('apelyNombre')
+            ->orderBy('id')
+            ->get(['id', 'apelyNombre', 'documento'])
+            ->map(fn (Pasajero $pasajero) => [
                 'id' => $pasajero->id,
-                'nombre' => $nombre,
-            ];
-        })->values();
+                'nombre' => $pasajero->apelyNombre,
+                'documento' => $pasajero->documento,
+            ]);
 
-        return response()->json($data);
+        return response()->json($pasajeros);
     }
 
     /**

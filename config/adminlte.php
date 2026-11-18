@@ -416,7 +416,7 @@ return [
                         [
                             'text' => 'Listado de Ajustes',
                             'url' => '/admin/articulos/listar-ajustes',
-                            'icon' => 'bi bi-list-check',
+                            'icon' => 'bi bi-clipboard-pulse',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],
@@ -475,6 +475,12 @@ return [
                     'text' => 'Lista de Reservas',
                     'url' => '/admin/calendarios/index',
                     'icon' => 'bi bi-list-check',
+                    'classes' => 'bg-cyan text-white',
+                ],
+                [
+                    'text' => 'Asignar Habitaciones',
+                    'url' => '/admin/calendarios/asignar',
+                    'icon' => 'bi bi-clipboard-check',
                     'classes' => 'bg-cyan text-white',
                 ],
             ],
@@ -544,8 +550,9 @@ return [
             ],
         ],
         [
+            'id' => 'sidebar-logout',
             'text' => 'Log Out',
-            'url' => '/admin/exit',
+            'route' => 'logout',
             'icon' => 'bi bi-power',
             'classes' => 'bg-red text-white',
         ],

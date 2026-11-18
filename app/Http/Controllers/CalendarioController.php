@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asignada;
 use App\Models\Calendario;
 use App\Models\Habitacion;
 use App\Models\Pasajero;
@@ -58,6 +59,108 @@ class CalendarioController extends Controller
         return view('admin.calendarios.disponibilidad', compact('habitaciones'));
     }
 
+    public function asignadas()
+    {
+        $asignadas = Asignada::with(['habitacion', 'pasajero', 'reserva'])
+            ->orderBy('checkin')
+            ->get();
+        $reservas = Reserva::with('habitacion')
+            ->whereIn('estado', ['Reservada', 'Confirmada'])
+            ->orderBy('fecha_inicio')
+            ->get();
+        $pasajeros = Pasajero::orderBy('apelyNombre')->get();
+        $plazasOcupadas = $asignadas->groupBy('reserva_id')->map(
+            fn ($grupo) => $grupo->unique('pasajero_id')
+                ->filter(fn ($asignada) => $this->cuentaParaPlazas($asignada->pasajero))
+                ->count()
+        );
+
+        return view('admin.calendarios.asignadas', compact('asignadas', 'reservas', 'pasajeros', 'plazasOcupadas'));
+    }
+
+    public function agregarAsignadas(Request $request)
+    {
+        $datos = $request->validate([
+            'reserva_id' => 'required|integer|exists:reservas,id',
+            'pasajeros' => 'required|array|min:1',
+            'pasajeros.*.id' => 'required|integer|distinct|exists:pasajeros,id',
+            'pasajeros.*.comanda' => 'required|in:SI,NO',
+        ], [
+            'pasajeros.required' => 'Asigne al menos un pasajero.',
+            'pasajeros.min' => 'Asigne al menos un pasajero.',
+        ]);
+
+        DB::transaction(function () use ($datos) {
+            $reservaInicial = Reserva::findOrFail($datos['reserva_id']);
+            $habitacion = Habitacion::whereKey($reservaInicial->habitacion_id)->lockForUpdate()->firstOrFail();
+            $reserva = Reserva::whereKey($datos['reserva_id'])->lockForUpdate()->firstOrFail();
+
+            if ($reserva->habitacion_id != $habitacion->id || ! in_array($reserva->estado, ['Reservada', 'Confirmada'], true)) {
+                throw ValidationException::withMessages([
+                    'reserva_id' => 'La reserva ya no está disponible para agregar pasajeros.',
+                ]);
+            }
+
+            $existentes = Asignada::where('reserva_id', $reserva->id)
+                ->lockForUpdate()
+                ->get();
+            $nuevosIds = collect($datos['pasajeros'])->pluck('id');
+            if ($existentes->pluck('pasajero_id')->intersect($nuevosIds)->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'pasajeros' => 'Hay pasajeros que ya están asignados a esta reserva.',
+                ]);
+            }
+
+            $pasajeros = Pasajero::whereIn('id', $existentes->pluck('pasajero_id')->merge($nuevosIds))
+                ->lockForUpdate()
+                ->get();
+            $cantidad = $pasajeros->filter(fn ($pasajero) => $this->cuentaParaPlazas($pasajero))->count();
+            if ($habitacion->plazas === null || $cantidad > $habitacion->plazas) {
+                throw ValidationException::withMessages([
+                    'pasajeros' => 'La cantidad de pasajeros supera las plazas de la habitación o su capacidad no está definida.',
+                ]);
+            }
+
+            $ahora = now();
+            $asignaciones = [];
+            foreach ($datos['pasajeros'] as $asignacion) {
+                Pasajero::whereKey($asignacion['id'])->update(['usaComanda' => $asignacion['comanda'] === 'SI']);
+                $asignaciones[] = [
+                    'habitacion_id' => $habitacion->id,
+                    'pasajero_id' => $asignacion['id'],
+                    'reserva_id' => $reserva->id,
+                    'estado' => $reserva->estado,
+                    'checkin' => $reserva->fecha_inicio,
+                    'checkout' => $reserva->fecha_fin,
+                    'created_at' => $ahora,
+                    'updated_at' => $ahora,
+                ];
+            }
+            DB::table('asignadas')->insert($asignaciones);
+        });
+
+        return redirect()->route('calendarios.asignadas')
+            ->with('success', 'Pasajeros asignados correctamente.');
+    }
+
+    private function cuentaParaPlazas(Pasajero $pasajero): bool
+    {
+        if (! $pasajero->fechaNacimiento) {
+            return true;
+        }
+
+        $nacimiento = Carbon::parse($pasajero->fechaNacimiento)->startOfDay();
+        return $nacimiento->isFuture() || $nacimiento->diffInYears(today()) >= 5;
+    }
+
+    public function eliminarAsignada(Asignada $asignada)
+    {
+        $asignada->delete();
+
+        return redirect()->route('calendarios.asignadas')
+            ->with('success', 'Pasajero eliminado de la habitación.');
+    }
+
     public function reservar(Request $request)
     {
         $datos = $request->validate([
@@ -75,14 +178,7 @@ class CalendarioController extends Controller
         DB::transaction(function () use ($datos) {
             $habitacion = Habitacion::whereKey($datos['habitacion_id'])->lockForUpdate()->firstOrFail();
             $pasajeros = Pasajero::whereIn('id', collect($datos['pasajeros'])->pluck('id'))->get()->keyBy('id');
-            $cantidad = $pasajeros->filter(function ($pasajero) {
-                if (! $pasajero->fechaNacimiento) {
-                    return true;
-                }
-
-                $nacimiento = Carbon::parse($pasajero->fechaNacimiento)->startOfDay();
-                return $nacimiento->isFuture() || $nacimiento->diffInYears(today()) >= 5;
-            })->count();
+            $cantidad = $pasajeros->filter(fn ($pasajero) => $this->cuentaParaPlazas($pasajero))->count();
 
             if ($habitacion->plazas === null || $cantidad > $habitacion->plazas) {
                 throw ValidationException::withMessages([
@@ -110,6 +206,8 @@ class CalendarioController extends Controller
                 return $pasajeros[$asignacion['id']]->apelyNombre . ' (Comanda: ' . $asignacion['comanda'] . ')';
             })->implode(', ');
             $primerPasajeroId = reset($datos['pasajeros'])['id'];
+            $primerPasajero = $pasajeros[$primerPasajeroId];
+            $detalle = $primerPasajero->apelyNombre . ' - ' . $primerPasajero->documento;
 
             Calendario::whereKey($eventos->modelKeys())->update([
                 'description' => $descripcion,
@@ -119,14 +217,30 @@ class CalendarioController extends Controller
                 'pasajero_id' => $primerPasajeroId,
             ]);
 
-            Reserva::create([
+            $reserva = Reserva::create([
                 'habitacion_id' => $habitacion->id,
                 'pasajero_id' => $primerPasajeroId,
                 'fecha_inicio' => $datos['fecha_inicio'],
                 'fecha_fin' => $datos['fecha_fin'],
-                'detalle' => $descripcion,
+                'detalle' => $detalle,
                 'estado' => 'Reservada',
             ]);
+
+            $ahora = now();
+            $asignaciones = collect($datos['pasajeros'])->map(function ($asignacion) use ($datos, $habitacion, $reserva, $ahora) {
+                return [
+                    'habitacion_id' => $habitacion->id,
+                    'pasajero_id' => $asignacion['id'],
+                    'reserva_id' => $reserva->id,
+                    'estado' => $reserva->estado,
+                    'checkin' => $datos['fecha_inicio'],
+                    'checkout' => $datos['fecha_fin'],
+                    'created_at' => $ahora,
+                    'updated_at' => $ahora,
+                ];
+            })->all();
+
+            DB::table('asignadas')->insert($asignaciones);
         });
 
         return redirect()->route('calendarios.calendario')

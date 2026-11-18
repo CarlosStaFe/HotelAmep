@@ -28,7 +28,7 @@
                     <h3 class="card-title"><b>Reservas registradas</b></h3>
                     <div class="card-tools">
                         <a href="{{ route('calendarios.calendario') }}" class="btn btn-primary"
-                            aria-label="Crear Nuevo">Crear Nuevo</a>
+                            aria-label="Calendario">Calendario</a>
                     </div>
                 </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
@@ -55,18 +55,7 @@
                                     <td>{{ $reserva->pasajero->apelyNombre ?? 'N/A' }}</td>
                                     <td>{{ $reserva->detalle ?? 'N/A' }}</td>
                                     <td>
-                                        @php
-                                            $estadoColor = match ($reserva->estado) {
-                                                'Reservada' => '#D2E014',
-                                                'Confirmada' => '#F29727',
-                                                'Ocupada' => '#B82E27',
-                                                'Liberada' => '#A69F9F',
-                                                default => '#0CB371',
-                                            };
-                                        @endphp
-                                        <span class="badge" style="background-color: {{ $estadoColor }}; color: {{ $reserva->estado === 'Reservada' ? '#212529' : '#fff' }};">
-                                            {{ $reserva->estado ?? 'N/A' }}
-                                        </span>
+                                        @include('admin.calendarios._estado', ['estado' => $reserva->estado])
                                     </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Acciones de la reserva">
@@ -80,7 +69,7 @@
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="estado" value="Ocupada">
-                                                <button type="submit" class="btn btn-info" title="Marcar ocupada" aria-label="Marcar reserva como ocupada" @disabled($reserva->estado !== 'Confirmada')><i class="bi bi-person-square"></i></button>
+                                                <button type="submit" class="btn btn-info" title="Marcar ocupada" aria-label="Marcar reserva como ocupada" @disabled($reserva->estado !== 'Confirmada')><i class="bi bi-key-fill"></i></button>
                                             </form>
                                             <form action="{{ route('reservas.cambiar-estado', $reserva) }}" method="POST">
                                                 @csrf

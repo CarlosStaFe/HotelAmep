@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asignada;
 use App\Models\Calendario;
 use App\Models\Habitacion;
 use App\Models\Reserva;
@@ -53,7 +54,6 @@ class ReservaController extends Controller
             if ($solapada || $fechas->count() !== $dias || $eventos->contains(
                 fn ($evento) => $evento->estado !== $reserva->estado
                     || (string) $evento->pasajero_id !== (string) $reserva->pasajero_id
-                    || $evento->description !== $reserva->detalle
             )) {
                 throw ValidationException::withMessages([
                     'estado' => 'No se pudo actualizar: las fechas del calendario no coinciden con la reserva o se superponen con otra reserva.',
@@ -78,6 +78,7 @@ class ReservaController extends Controller
             if ($estado === 'Disponible') {
                 $reserva->delete();
             } else {
+                Asignada::where('reserva_id', $reserva->id)->update(['estado' => $estado]);
                 $reserva->update(['estado' => $estado]);
             }
         });

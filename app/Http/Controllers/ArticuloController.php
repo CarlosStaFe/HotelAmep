@@ -18,7 +18,12 @@ class ArticuloController extends Controller
      */
     public function index()
     {
-        $articulos = Articulo::with('subrubro.rubro')->get();
+        $articulos = Articulo::with(['subrubro.rubro', 'primerStock'])
+            ->withSum(['stocks as stock_deposito' => fn ($query) => $query->where('punto', 'Depósito')], 'cantidad')
+            ->withSum(['stocks as stock_comedor' => fn ($query) => $query->where('punto', 'Comedor')], 'cantidad')
+            ->withSum(['stocks as stock_bar' => fn ($query) => $query->where('punto', 'Bar')], 'cantidad')
+            ->withSum(['stocks as stock_recepcion' => fn ($query) => $query->where('punto', 'Recepción')], 'cantidad')
+            ->get();
         return view('admin.articulos.index', compact('articulos'));
     }
 
@@ -146,6 +151,42 @@ class ArticuloController extends Controller
         return view('admin.articulos.ajuste', compact('articulo'));
     }
 
+    public function precio($id)
+    {
+        $articulo = Articulo::with(['subrubro', 'primerStock'])->findOrFail($id);
+
+        return view('admin.articulos.precio', compact('articulo'));
+    }
+
+    public function grabarPrecio(Request $request, $id)
+    {
+        $datos = $request->validate([
+            'precio' => 'required|numeric|gt:0|decimal:0,2|max:9999999999.99',
+        ]);
+
+        DB::transaction(function () use ($id, $datos) {
+            $articulo = Articulo::whereKey($id)->lockForUpdate()->firstOrFail();
+            $stocks = DB::table('stocks')->where('articulo_id', $articulo->id);
+
+            if ($stocks->exists()) {
+                $stocks->update(['precioVta' => $datos['precio'], 'updated_at' => now()]);
+            } else {
+                DB::table('stocks')->insert([
+                    'articulo_id' => $articulo->id,
+                    'precioVta' => $datos['precio'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+
+        return redirect()->route('articulos.index')
+            ->with('mensaje', 'Precio actualizado exitosamente.')
+            ->with('icono', 'success')
+            ->with('showConfirmButton', false)
+            ->with('textoBoton', '');
+    }
+
     /**
      * Grabar the specified resource in storage.
      */
@@ -154,28 +195,21 @@ class ArticuloController extends Controller
         $datos = $request->validate([
             'tipo' => 'required|in:Entrada,Salida',
             'cantidad' => 'required|numeric|gt:0',
+            'punto' => 'required|in:Depósito,Comedor,Bar,Recepción',
             'motivo' => 'required|in:Ajuste,Rotura,Perdida,Vencido,Desgaste,Baja',
             'observacion' => 'required|string|max:255',
         ]);
 
-        Articulo::findOrFail($id);
-
         DB::transaction(function () use ($datos, $id) {
+            Articulo::whereKey($id)->lockForUpdate()->firstOrFail();
             $stock = DB::table('stocks')
                 ->where('articulo_id', $id)
+                ->where('punto', $datos['punto'])
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->first();
 
-            if (!$stock) {
-                DB::table('stocks')->insert([
-                    'articulo_id' => $id,
-                    'cantidad' => 0,
-                ]);
-                $cantidadActual = 0;
-            } else {
-                $cantidadActual = (float) $stock->cantidad;
-            }
-
+            $cantidadActual = $stock ? (float) $stock->cantidad : 0;
             $cantidad = (float) $datos['cantidad'];
 
             if ($datos['tipo'] === 'Salida' && $cantidad > $cantidadActual) {
@@ -188,9 +222,26 @@ class ArticuloController extends Controller
                 ? $cantidadActual + $cantidad
                 : $cantidadActual - $cantidad;
 
-            DB::table('stocks')
-                ->where('articulo_id', $id)
-                ->update(['cantidad' => $nuevoStock]);
+            if ($stock) {
+                DB::table('stocks')->where('id', $stock->id)
+                    ->update(['cantidad' => $nuevoStock, 'updated_at' => now()]);
+            } else {
+                $precioExistente = DB::table('stocks')
+                    ->where('articulo_id', $id)
+                    ->orderBy('id')
+                    ->first(['precioVta']);
+                $nuevoRegistro = [
+                    'articulo_id' => $id,
+                    'punto' => $datos['punto'],
+                    'cantidad' => $nuevoStock,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                if ($precioExistente) {
+                    $nuevoRegistro['precioVta'] = $precioExistente->precioVta;
+                }
+                DB::table('stocks')->insert($nuevoRegistro);
+            }
 
             DB::table('movimientos')->insert([
                 'articulo_id' => $id,

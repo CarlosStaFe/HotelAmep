@@ -31,7 +31,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-2 mb-2">
+                            <div class="col-md-3 mb-2">
                                 <label for="tipo" class="form-label">Tipo de Movimiento <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="tipo" name="tipo" required>
                                     <option value="">Seleccione tipo</option>
@@ -44,6 +44,17 @@
                                 <label for="cantidad" class="form-label">Cantidad <b style="color: red;">(*)</b></label>
                                 <input class="form-control" type="number" id="cantidad" name="cantidad" min="0.001" step="0.001" value="{{ old('cantidad') }}" required>
                                 @error('cantidad') <small class="text-danger">{{ $message }}</small> @enderror
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label for="punto" class="form-label">Punto <b style="color: red;">(*)</b></label>
+                                <select class="form-control" id="punto" name="punto" required>
+                                    <option value="">Seleccione punto</option>
+                                    <option value="Depósito" {{ old('punto', 'Depósito') === 'Depósito' ? 'selected' : '' }}>Depósito</option>
+                                    <option value="Comedor" {{ old('punto', 'Depósito') === 'Comedor' ? 'selected' : '' }}>Comedor</option>
+                                    <option value="Bar" {{ old('punto', 'Depósito') === 'Bar' ? 'selected' : '' }}>Bar</option>
+                                    <option value="Recepción" {{ old('punto', 'Depósito') === 'Recepción' ? 'selected' : '' }}>Recepción</option>
+                                </select>
+                                @error('punto') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
                             <div class="col-md-2 mb-2">
                                 <label for="motivo" class="form-label">Motivo <b style="color: red;">(*)</b></label>

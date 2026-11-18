@@ -34,13 +34,8 @@
                         <label for="pasajeros" class="form-label">Pasajeros <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="pasajeros" name="pasajeros" required>
                             <option value="">Seleccione Pasajero</option>
-{{--                             @foreach ($pasajeros as $pasajero)
-                                <option value="{{ $pasajero->id }}"
-                                    {{ old('pasajero') == $pasajero->id ? 'selected' : '' }}>
-                                    {{ $pasajero->nombre }}
-                                </option>
-                            @endforeach --}}
                         </select>
+                        <small id="pasajerosMensaje" class="text-danger" role="status"></small>
                     </div>
                     <div class="col-md-5 mr-5 ml-2">
                         <label class="form-label">Puntos de Venta <b style="color: red;">(*)</b></label>
@@ -88,6 +83,7 @@
                             <th style="width: 5%;">Cant.</th>
                             <th style="width: 12%;">Importe</th>
                             <th style="width: 30%;">Pasajero</th>
+                            <th style="width: 30%;">Moza</th>
                             <th style="width: 10%;">Acciones</th>
                         </tr>
                     </thead>
@@ -97,6 +93,42 @@
                 </table>
             </div>
 
+        </div>
+    </div>
+    <div class="modal fade" id="consumoModal" tabindex="-1" role="dialog" aria-labelledby="consumoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="formConsumo" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="consumoModalLabel">Cargar consumo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="consumoProducto">Producto</label>
+                            <input type="text" class="form-control" id="consumoProducto" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="consumoPrecio">Precio</label>
+                            <input type="text" class="form-control" id="consumoPrecio" readonly>
+                            <small id="consumoPrecioAviso" class="text-danger" role="status"></small>
+                        </div>
+                        <div class="form-group">
+                            <label for="consumoCantidad">Cantidad <b style="color: red;">(*)</b></label>
+                            <input type="number" class="form-control" id="consumoCantidad" min="0.001" max="999999999.999" step="0.001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="consumoMoza">Número de moza <b style="color: red;">(*)</b></label>
+                            <input type="number" class="form-control" id="consumoMoza" min="1" step="1" required>
+                        </div>
+                        <div id="consumoMensaje" class="text-danger" role="alert"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Cargar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 @stop
@@ -170,8 +202,8 @@
 @section('js')
     <script>
         $(function() {
-            $("#example1").DataTable({
-                "pageLength": 10,
+            const tablaArticulos = $("#example1").DataTable({
+                "pageLength": 5,
                 "ajax": {
                     "url": @json(route('comandas.cargar')),
                     "dataSrc": "data"
@@ -205,10 +237,9 @@
                         "data": "id",
                         "orderable": false,
                         "searchable": false,
-                        "render": function(id) {
+                        "render": function() {
                             return '<div class="btn-group" role="group" aria-label="Acciones">' +
-                                '<a href="/admin/comandas/' + encodeURIComponent(id) +
-                                '" class="btn btn-success"><i class="bi bi-pencil"></i></a></div>';
+                                '<button type="button" class="btn btn-success cargar-consumo" title="Cargar consumo" aria-label="Cargar consumo"><i class="bi bi-pencil"></i></button></div>';
                         }
                     }
                 ],
@@ -232,23 +263,122 @@
                 "responsive": true,
                 "lengthChange": true,
                 "autoWidth": false,
-            }).buttons().container().appendTo('#example1_wrapper .row:eq(0)');
+            });
+            tablaArticulos.buttons().container().appendTo('#example1_wrapper .row:eq(0)');
+            $('#example1 tbody').on('click', '.cargar-consumo', function() {
+                const fila = $(this).closest('tr');
+                const articulo = tablaArticulos.row(fila.hasClass('child') ? fila.prev() : fila).data();
+                abrirModalConsumo(articulo);
+            });
+            $('#formConsumo').on('submit', cargarConsumo);
         });
+    </script>
+
+    <script>
+        let articuloConsumo = null;
+
+        function abrirModalConsumo(articulo) {
+            articuloConsumo = articulo;
+            document.getElementById('formConsumo').reset();
+            document.getElementById('consumoProducto').value = articulo.nombre;
+            const sinPrecio = articulo.precio == null || articulo.precio === '' || articulo.precio === 'N/A';
+            document.getElementById('consumoPrecio').value = sinPrecio ? '0.00' : articulo.precio;
+            document.getElementById('consumoPrecioAviso').textContent = sinPrecio
+                ? 'Precio no registrado; no se puede cargar el consumo.'
+                : '';
+            document.getElementById('consumoMensaje').textContent = '';
+            $('#consumoModal').modal('show');
+        }
+
+        function cargarConsumo(evento) {
+            evento.preventDefault();
+            const mensaje = document.getElementById('consumoMensaje');
+            const cantidad = document.getElementById('consumoCantidad').value;
+            const moza = document.getElementById('consumoMoza').value;
+            const pasajero = document.getElementById('pasajeros');
+            mensaje.textContent = '';
+
+            if (!pasajero.value || pasajero.disabled) {
+                mensaje.textContent = 'Seleccione un pasajero antes de cargar el consumo.';
+                return;
+            }
+            if (!/^\d{1,9}(\.\d{1,3})?$/.test(cantidad) || Number(cantidad) <= 0) {
+                mensaje.textContent = 'Ingrese una cantidad mayor a cero, con hasta tres decimales.';
+                return;
+            }
+            if (!/^\d+$/.test(moza) || !Number.isSafeInteger(Number(moza)) || Number(moza) < 1) {
+                mensaje.textContent = 'Ingrese un número de moza entero mayor a cero.';
+                return;
+            }
+            const precio = String(articuloConsumo.precio);
+            if (!/^\d{1,10}(\.\d{1,2})?$/.test(precio)) {
+                mensaje.textContent = 'El producto no tiene un precio válido.';
+                return;
+            }
+            const [precioEntero, precioDecimal = ''] = precio.split('.');
+            const [cantidadEntera, cantidadDecimal = ''] = cantidad.split('.');
+            const centavos = BigInt(precioEntero) * 100n + BigInt(precioDecimal.padEnd(2, '0'));
+            const milesimas = BigInt(cantidadEntera) * 1000n + BigInt(cantidadDecimal.padEnd(3, '0'));
+            const importe = (centavos * milesimas + 500n) / 1000n;
+            if (importe > 999999999999n) {
+                mensaje.textContent = 'El importe supera el máximo permitido.';
+                return;
+            }
+            const formatearImporte = valor => `${valor / 100n}.${String(valor % 100n).padStart(2, '0')}`;
+            const cuerpo = document.getElementById('tablaConsumos');
+            const fila = document.createElement('tr');
+            fila.dataset.articuloId = articuloConsumo.id;
+            fila.dataset.pasajeroId = pasajero.value;
+            fila.dataset.cantidad = cantidad;
+            fila.dataset.precio = formatearImporte(centavos);
+            fila.dataset.moza = moza;
+            const valores = [
+                String(cuerpo.rows.length + 1), String(articuloConsumo.id), articuloConsumo.nombre,
+                formatearImporte(centavos), cantidad, formatearImporte(importe),
+                pasajero.options[pasajero.selectedIndex].textContent, moza,
+            ];
+            valores.forEach((valor, indice) => {
+                const celda = document.createElement('td');
+                if (indice === 1) celda.className = 'd-none';
+                celda.textContent = valor;
+                fila.appendChild(celda);
+            });
+            const acciones = document.createElement('td');
+            const quitar = document.createElement('button');
+            quitar.type = 'button';
+            quitar.className = 'btn btn-danger btn-sm';
+            quitar.textContent = 'Quitar';
+            quitar.setAttribute('aria-label', `Quitar ${articuloConsumo.nombre} de la lista`);
+            quitar.addEventListener('click', () => {
+                fila.remove();
+                Array.from(cuerpo.rows).forEach((item, indice) => { item.cells[0].textContent = String(indice + 1); });
+            });
+            acciones.appendChild(quitar);
+            fila.appendChild(acciones);
+            cuerpo.appendChild(fila);
+            $('#consumoModal').modal('hide');
+        }
+
     </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const habitacionInput = document.getElementById('habitacion');
-            const pasajeroSelect = document.getElementById('pasajero_id');
+            const pasajeroSelect = document.getElementById('pasajeros');
+            const mensaje = document.getElementById('pasajerosMensaje');
             const oldHabitacion = @json(old('habitacion'));
-            const oldPasajero = @json(old('pasajero_id'));
+            const oldPasajero = @json(old('pasajeros'));
+            let solicitudActual = 0;
 
             const setDefault = () => {
                 pasajeroSelect.innerHTML = '<option value="">Seleccione pasajero</option>';
             };
 
             const cargarPasajeros = async (habitacion, pasajeroSeleccionado = '') => {
+                const solicitud = ++solicitudActual;
                 setDefault();
+                mensaje.textContent = '';
+                pasajeroSelect.disabled = true;
 
                 if (!habitacion) {
                     return;
@@ -261,12 +391,16 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     });
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP ${response.status}`);
+                    }
                     const pasajeros = await response.json();
+                    if (solicitud !== solicitudActual) return;
 
                     pasajeros.forEach((pasajero) => {
                         const option = document.createElement('option');
                         option.value = pasajero.id;
-                        option.textContent = pasajero.nombre;
+                        option.textContent = `${pasajero.nombre} - ${pasajero.documento}`;
 
                         if (pasajeroSeleccionado && String(pasajeroSeleccionado) === String(pasajero.id)) {
                             option.selected = true;
@@ -274,7 +408,13 @@
 
                         pasajeroSelect.appendChild(option);
                     });
+                    if (pasajeros.length === 0) {
+                        mensaje.textContent = 'No hay pasajeros ocupando esta habitación.';
+                    }
+                    pasajeroSelect.disabled = false;
                 } catch (error) {
+                    if (solicitud !== solicitudActual) return;
+                    mensaje.textContent = 'No se pudieron cargar los pasajeros. Vuelva a seleccionar la habitación.';
                     console.error('Error al cargar pasajeros por habitacion:', error);
                 }
             };
@@ -283,15 +423,11 @@
                 cargarPasajeros(this.value);
             });
 
-            habitacionInput.addEventListener('blur', function() {
-                if (this.value) {
-                    cargarPasajeros(this.value);
-                }
-            });
-
             if (oldHabitacion) {
                 habitacionInput.value = oldHabitacion;
                 cargarPasajeros(oldHabitacion, oldPasajero);
+            } else {
+                pasajeroSelect.disabled = true;
             }
         });
     </script>

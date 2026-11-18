@@ -28,10 +28,13 @@
                                 <th style="width: 50px;">Nro.</th>
                                 <th style="width: 250px;">Subrubro</th>
                                 <th style="width: 250px;">Nombre</th>
-                                <th style="width: 50px;">Stock</th>
-                                <th style="width: 70px;">Precio</th>
-                                <th style="width: 50px;">Comanda?</th>
-                                <th style="width: 50px;">Vencimiento</th>
+                                <th style="width: 50px; text-align: right;">Depósito</th>
+                                <th style="width: 50px; text-align: right;">Comedor</th>
+                                <th style="width: 50px; text-align: right;">Bar</th>
+                                <th style="width: 50px; text-align: right;">Recepción</th>
+                                <th style="width: 70px; text-align: right;">Precio</th>
+                                <th style="width: 50px; text-align: right;">Comanda?</th>
+                                <th style="width: 50px;">Vto.</th>
                                 <th style="width: 50px;">Activo?</th>
                                 <th style="width: 140px;">Acciones</th>
                             </tr>
@@ -42,10 +45,13 @@
                                     <td style="text-align: right;">{{ $loop->iteration }}</td>
                                     <td>{{ $articulo->subrubro?->nombre ?? 'Sin subrubro' }}</td>
                                     <td>{{ $articulo->nombre }}</td>
-                                    <td>{{ $articulo->stock ?? 'N/A' }}</td>
-                                    <td>{{ $articulo->precio ?? 'N/A' }}</td>
-                                    <td>{{ $articulo->comanda ? 'Sí' : 'No' }}</td>
-                                    <td>{{ $articulo->vencimiento ? 'Sí' : 'No' }}</td>
+                                    <td style="text-align: right;">{{ $articulo->stock_deposito ?? 0 }}</td>
+                                    <td style="text-align: right;">{{ $articulo->stock_comedor ?? 0 }}</td>
+                                    <td style="text-align: right;">{{ $articulo->stock_bar ?? 0 }}</td>
+                                    <td style="text-align: right;">{{ $articulo->stock_recepcion ?? 0 }}</td>
+                                    <td style="text-align: right;">{{ $articulo->primerStock?->precioVta ?? 0 }}</td>
+                                    <td class="text-center">{{ $articulo->comanda ? 'Sí' : 'No' }}</td>
+                                    <td class="text-center">{{ $articulo->vencimiento ? 'Sí' : 'No' }}</td>
                                     <td class="text-center">
                                         @if ($articulo->activo)
                                             <span class="badge badge-success">Activo</span>
@@ -55,10 +61,11 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ url('/admin/articulos/' . $articulo->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
-                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/edit') }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
-                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a>
-                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/ajuste') }}" class="btn btn-warning"><i class="bi bi-wrench"></i></a>
+                                            <a href="{{ url('/admin/articulos/' . $articulo->id) }}" title="Ver" class="btn btn-success"><i class="bi bi-eye"></i></a>
+                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/edit') }}" title="Editar" class="btn btn-info"><i class="bi bi-pencil"></i></a>
+                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/delete') }}" title="Eliminar" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/ajuste') }}" title="Ajuste" class="btn btn-warning"><i class="bi bi-wrench"></i></a>
+                                            <a href="{{ route('articulos.precio', $articulo->id) }}" title="Modificar precio" aria-label="Modificar precio" class="btn btn-primary"><i class="bi bi-currency-dollar"></i></a>
                                         </div>
                                     </td>
                                 </tr>

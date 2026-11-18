@@ -134,6 +134,12 @@ Route::get('/admin/articulos/{id}/ajuste', [App\Http\Controllers\ArticuloControl
 Route::post('/admin/articulos/{id}/grabar-ajuste', [App\Http\Controllers\ArticuloController::class, 'grabar'])
 ->name('articulos.grabar')
 ->middleware('auth');
+Route::get('/admin/articulos/{id}/modificar-precios', [App\Http\Controllers\ArticuloController::class, 'precio'])
+->name('articulos.precio')
+->middleware('auth');
+Route::post('/admin/articulos/{id}/grabar-precio', [App\Http\Controllers\ArticuloController::class, 'grabarPrecio'])
+->name('articulos.grabar-precio')
+->middleware('auth');
 
 //RUTA PARA PROVEEDORES
 Route::get('/admin/proveedores/index', [App\Http\Controllers\ProveedorController::class, 'index'])
@@ -170,6 +176,15 @@ Route::get('/admin/calendarios/index', [App\Http\Controllers\CalendarioControlle
 ->middleware('auth');
 Route::get('/admin/calendarios/disponibilidad', [App\Http\Controllers\CalendarioController::class, 'disponibilidad'])
 ->name('calendarios.disponibilidad')
+->middleware('auth');
+Route::get('/admin/calendarios/asignar', [App\Http\Controllers\CalendarioController::class, 'asignadas'])
+->name('calendarios.asignadas')
+->middleware('auth');
+Route::post('/admin/calendarios/asignadas', [App\Http\Controllers\CalendarioController::class, 'agregarAsignadas'])
+->name('calendarios.asignadas.store')
+->middleware('auth');
+Route::delete('/admin/calendarios/asignadas/{asignada}', [App\Http\Controllers\CalendarioController::class, 'eliminarAsignada'])
+->name('calendarios.asignadas.destroy')
 ->middleware('auth');
 Route::post('/admin/calendarios/disponibilidad', [App\Http\Controllers\CalendarioController::class, 'store'])
 ->name('calendarios.store')

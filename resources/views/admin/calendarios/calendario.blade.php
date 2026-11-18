@@ -77,7 +77,6 @@
                 </div>
                 <div class="col-12 d-flex flex-wrap align-items-center mb-3" aria-label="Referencias de estados">
                     <span class="mr-3 ml-3"><span class="badge mr-1" style="background-color: #0CB371;" aria-hidden="true">&nbsp;</span>Disponible</span>
-                    <span class="mr-3"><span class="badge mr-1" style="background-color: {{ \App\Models\Calendario::COLOR_NO_DISPONIBLE }};" aria-hidden="true">&nbsp;</span>No Disponible</span>
                     <span class="mr-3"><span class="badge mr-1" style="background-color: #D2E014;" aria-hidden="true">&nbsp;</span>Reservada</span>
                     <span class="mr-3"><span class="badge mr-1" style="background-color: #F29727;" aria-hidden="true">&nbsp;</span>Confirmada</span>
                     <span class="mr-3"><span class="badge mr-1" style="background-color: #B82E27;" aria-hidden="true">&nbsp;</span>Ocupada</span>
@@ -177,7 +176,7 @@
                                 @enderror
                             </div>
                             <div class="form-group col-md-3 d-flex align-items-end">
-                                <button type="button" class="btn btn-primary" onclick="agregarPasajeroModal()">Asignar</button>
+                                <button type="button" class="btn btn-primary" onclick="agregarPasajeroModal()">Cargar</button>
                             </div>
                         </div>
                         <div id="pasajerosModalMensaje" class="text-danger mb-2" role="alert"></div>
@@ -210,7 +209,6 @@
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
-
 
     <script>
         let calendario;

@@ -27,4 +27,22 @@ class LoginInactiveUserTest extends TestCase
         $response->assertSessionHasErrors('email');
         $this->assertGuest();
     }
+
+    public function test_sidebar_logout_submits_post_and_ends_the_session(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)
+            ->get(route('admin.index'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'id="sidebar-logout"',
+                '<form action="'.route('logout').'" method="POST">',
+                'name="_token"',
+                'type="submit"',
+                'Log Out',
+            ], false);
+        $this->post(route('logout'))->assertRedirect('/');
+        $this->assertGuest();
+        $this->get(route('admin.index'))->assertRedirect(route('login'));
+    }
 }

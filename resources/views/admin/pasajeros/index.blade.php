@@ -55,9 +55,8 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
-                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id . '/edit') }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
-{{--                                             <a href="{{ url('/admin/pasajeros/' . $pasajero->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a> --}}
+                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id) }}" title="Ver pasajero" class="btn btn-success"><i class="bi bi-eye"></i></a>
+                                            <a href="{{ url('/admin/pasajeros/' . $pasajero->id . '/edit') }}" title="Editar pasajero" class="btn btn-info"><i class="bi bi-pencil"></i></a>
                                         </div>
                                     </td>
                                 </tr>
