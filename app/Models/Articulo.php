@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,5 +27,14 @@ class Articulo extends Model
     public function stocks(): HasMany
     {
         return $this->hasMany(Stock::class);
+    }
+
+    public function scopeConStocksPorPunto(Builder $query): void
+    {
+        $query
+            ->withSum(['stocks as stock_deposito' => fn ($stock) => $stock->where('punto', 'Depósito')], 'cantidad')
+            ->withSum(['stocks as stock_comedor' => fn ($stock) => $stock->where('punto', 'Comedor')], 'cantidad')
+            ->withSum(['stocks as stock_bar' => fn ($stock) => $stock->where('punto', 'Bar')], 'cantidad')
+            ->withSum(['stocks as stock_recepcion' => fn ($stock) => $stock->where('punto', 'Recepción')], 'cantidad');
     }
 }

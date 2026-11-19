@@ -63,7 +63,14 @@ function entorno() {
 
 test('abre el modal del producto y carga un consumo temporal con pasajero y moza', () => {
     const { campos, modal, config, abrir, cargar } = entorno();
-    assert.match(config.columns[5].render(), /class="btn btn-success cargar-consumo"/);
+    assert.deepEqual(Array.from(config.columns, column => column.data), [
+        null, 'subrubro', 'nombre', 'stock_deposito', 'stock_comedor', 'stock_bar', 'stock_recepcion', 'precio', 'id',
+    ]);
+    let claseNumero;
+    config.columnDefs[0].createdCell({ classList: { add(clase) { claseNumero = clase; } } });
+    assert.equal(claseNumero, 'text-right');
+    assert.match(vista, /<th style="width: 30px; text-align: center;">Nro\.<\/th>/);
+    assert.match(config.columns[8].render(), /class="btn btn-success cargar-consumo"/);
     abrir({ id: 8, nombre: '<Agua>', precio: '2.35' });
     assert.equal(campos.consumoProducto.value, '<Agua>');
     assert.equal(campos.consumoPrecio.value, '2.35');
@@ -77,6 +84,9 @@ test('abre el modal del producto y carga un consumo temporal con pasajero y moza
     assert.equal(fila.dataset.moza, '12');
     assert.deepEqual(fila.cells.slice(0, 8).map(celda => celda.textContent), [
         '1', '8', '<Agua>', '2.35', '0.1', '0.24', 'Ana - 123', '12',
+    ]);
+    assert.deepEqual(fila.cells.slice(0, 8).map(celda => celda.className || ''), [
+        'text-right', 'd-none', '', 'text-right', 'text-right', 'text-right', '', '',
     ]);
     assert.deepEqual(modal, ['show', 'hide']);
     abrir({ id: 9, nombre: 'Café', precio: 10 });
@@ -112,4 +122,18 @@ test('no carga datos inválidos ni productos sin precio', () => {
     abrir({ id: 2, nombre: 'Café', precio: 0 });
     assert.equal(campos.consumoPrecio.value, 0);
     assert.equal(campos.consumoPrecioAviso.textContent, '');
+});
+
+test('muestra cero para precios no informados y alinea importes y stocks a la derecha', () => {
+    const { config } = entorno();
+    const precio = config.columns[7].render;
+    assert.equal(precio('N/A'), 0);
+    assert.equal(precio(null), 0);
+    assert.equal(precio(''), 0);
+    assert.equal(precio('25.50'), '25.50');
+    assert.equal(precio(0), 0);
+    assert.deepEqual(Array.from(config.columnDefs[0].targets), [0, 3, 4, 5, 6, 7]);
+    for (const titulo of ['Depósito', 'Comedor', 'Bar', 'Recepción', 'Precio']) {
+        assert.match(vista, new RegExp(`<th style="width: \\d+px; text-align: center;">${titulo}</th>`));
+    }
 });

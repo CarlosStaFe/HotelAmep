@@ -58,11 +58,14 @@
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
                         <thead>
                             <tr style="background-color: #007bff; color: white; text-align: center;">
-                                <th style="width: 30px;">Nro.</th>
+                                <th style="width: 30px; text-align: center;">Nro.</th>
                                 <th style="width: 100px;">Subrubro</th>
                                 <th style="width: 200px;">Nombre</th>
-                                <th style="width: 30px;">Stock</th>
-                                <th style="width: 50px;">Precio</th>
+                                <th style="width: 50px; text-align: center;">Depósito</th>
+                                <th style="width: 50px; text-align: center;">Comedor</th>
+                                <th style="width: 50px; text-align: center;">Bar</th>
+                                <th style="width: 50px; text-align: center;">Recepción</th>
+                                <th style="width: 50px; text-align: center;">Precio</th>
                                 <th style="width: 10px;">Acciones</th>
                             </tr>
                         </thead>
@@ -226,12 +229,26 @@
                         "render": $.fn.dataTable.render.text()
                     },
                     {
-                        "data": "stock",
+                        "data": "stock_deposito",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "stock_comedor",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "stock_bar",
+                        "render": $.fn.dataTable.render.text()
+                    },
+                    {
+                        "data": "stock_recepcion",
                         "render": $.fn.dataTable.render.text()
                     },
                     {
                         "data": "precio",
-                        "render": $.fn.dataTable.render.text()
+                        "render": function(precio) {
+                            return precio == null || precio === '' || precio === 'N/A' ? 0 : precio;
+                        }
                     },
                     {
                         "data": "id",
@@ -243,6 +260,12 @@
                         }
                     }
                 ],
+                "columnDefs": [{
+                    "targets": [0, 3, 4, 5, 6, 7],
+                    "createdCell": function(celda) {
+                        celda.classList.add('text-right');
+                    }
+                }],
                 "language": {
                     "emptyTable": "No hay información",
                     "info": "Mostrando _START_ a _END_ de _TOTAL_ Registros",
@@ -340,6 +363,7 @@
             valores.forEach((valor, indice) => {
                 const celda = document.createElement('td');
                 if (indice === 1) celda.className = 'd-none';
+                if ([0, 3, 4, 5].includes(indice)) celda.className = 'text-right';
                 celda.textContent = valor;
                 fila.appendChild(celda);
             });

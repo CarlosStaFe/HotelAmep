@@ -23,6 +23,86 @@ class CreateProveedorTest extends TestCase
         ]);
     }
 
+    public function test_formulario_de_compras_lista_proveedores_activos_por_nombre_y_cuit(): void
+    {
+        $ahora = now();
+        $crear = fn (string $nombre, string $cuit, bool $activo) => DB::table('proveedores')->insertGetId([
+            'nombre' => $nombre, 'razonSocial' => 'Razón social', 'cuit' => $cuit,
+            'tipoIva' => 'Exento', 'activo' => $activo, 'fecha_creacion' => $ahora, 'fecha_actualizacion' => $ahora,
+        ]);
+        $zeta = $crear('Zeta', '20999999999', true);
+        $alfa = $crear('Alfa <Uno>', '00123456789', true);
+        $crear('Proveedor oculto', '20111111111', false);
+
+        $this->get(route('compras.create'))->assertRedirect(route('login'));
+        $respuesta = $this->actingAs(User::factory()->create())
+            ->withSession(['_old_input' => ['proveedor_id' => (string) $zeta]])
+            ->get(route('compras.create'))
+            ->assertOk()
+            ->assertSee('name="proveedor_id"', false)
+            ->assertSee('Alfa &lt;Uno&gt; - 00123456789', false)
+            ->assertSee('Zeta - 20999999999')
+            ->assertDontSee('Proveedor oculto')
+            ->assertSeeInOrder(['Alfa &lt;Uno&gt; - 00123456789', 'Zeta - 20999999999'], false);
+
+        $this->assertMatchesRegularExpression('~<option value="'.$zeta.'"\\s+selected>\\s*Zeta - 20999999999\\s*</option>~', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<option value="'.$alfa.'"[^>]*>\\s*Alfa &lt;Uno&gt; - 00123456789\\s*</option>~', $respuesta->getContent());
+    }
+
+    public function test_formulario_de_compras_sin_proveedores_activos(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('compras.create'))
+            ->assertOk()
+            ->assertSee('Seleccione proveedor')
+            ->assertViewHas('proveedores', fn ($proveedores) => $proveedores->isEmpty());
+    }
+
+    public function test_formulario_de_compras_carga_rubros_subrubros_y_articulos_y_restaura_su_seleccion(): void
+    {
+        $fecha = now();
+        $rubroA = DB::table('rubros')->insertGetId([
+            'nombre' => 'Alimentos', 'tipo' => 'Gasto', 'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+        ]);
+        $rubroB = DB::table('rubros')->insertGetId([
+            'nombre' => 'Limpieza', 'tipo' => 'Gasto', 'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+        ]);
+        $subrubroA = DB::table('subrubros')->insertGetId([
+            'rubro_id' => $rubroA, 'nombre' => 'Bebidas', 'activo' => false,
+            'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+        ]);
+        $subrubroB = DB::table('subrubros')->insertGetId([
+            'rubro_id' => $rubroB, 'nombre' => 'Higiene', 'activo' => true,
+            'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+        ]);
+        $articuloA = DB::table('articulos')->insertGetId([
+            'subrubro_id' => $subrubroA, 'nombre' => 'Agua', 'activo' => false,
+            'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+        ]);
+        $articuloB = DB::table('articulos')->insertGetId([
+            'subrubro_id' => $subrubroB, 'nombre' => 'Jabón', 'activo' => true,
+            'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+        ]);
+
+        $this->actingAs(User::factory()->create());
+        $respuesta = $this->withSession(['_old_input' => [
+            'rubro_id' => (string) $rubroA, 'subrubro_id' => (string) $subrubroA, 'articulo_id' => (string) $articuloA,
+        ]])->get(route('compras.create'))
+            ->assertOk()
+            ->assertViewHas('rubros', fn ($rubros) => $rubros->pluck('id')->all() === [$rubroA, $rubroB])
+            ->assertViewHas('subrubros', fn ($subrubros) => $subrubros->pluck('id')->all() === [$subrubroA, $subrubroB])
+            ->assertViewHas('articulos', fn ($articulos) => $articulos->pluck('id')->all() === [$articuloA, $articuloB]);
+
+        $this->assertMatchesRegularExpression('~<option value="'.$rubroA.'"\\s+selected>Alimentos</option>~', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<option value="'.$subrubroA.'"\\s+selected>Bebidas</option>~', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<option value="'.$articuloA.'"\\s+selected>Agua</option>~', $respuesta->getContent());
+
+        $invalida = $this->withSession(['_old_input' => [
+            'rubro_id' => (string) $rubroA, 'subrubro_id' => (string) $subrubroB, 'articulo_id' => (string) $articuloB,
+        ]])->get(route('compras.create'))->assertOk();
+        $this->assertMatchesRegularExpression('~<select[^>]*id="articulo_id"[^>]*disabled[^>]*>\\s*<option value="">Seleccione artículo</option>\\s*</select>~', $invalida->getContent());
+    }
+
     public function test_provider_is_created_from_create_form_field_names(): void
     {
         $user = User::factory()->create();

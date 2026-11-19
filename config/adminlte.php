@@ -524,32 +524,6 @@ return [
             ],
         ],
         [
-            'text' => 'Caja',
-            'icon' => 'bi bi-cash-coin',
-            'classes' => 'bg-navy text-white',
-            'submenu' => [
-                [
-                    'text' => '',
-                    'icon' => 'bi bi-luggage',
-                    'classes' => 'bg-blue text-white',
-                    'submenu' => [
-                        [
-                            'text' => '',
-                            'url' => '',
-                            'icon' => 'bi bi-database-gear',
-                            'classes' => 'bg-cyan text-white',
-                        ],
-                        [
-                            'text' => '',
-                            'url' => '',
-                            'icon' => 'bi bi-door-open',
-                            'classes' => 'bg-cyan text-white',
-                        ],
-                    ],
-                ],
-            ],
-        ],
-        [
             'id' => 'sidebar-logout',
             'text' => 'Log Out',
             'route' => 'logout',

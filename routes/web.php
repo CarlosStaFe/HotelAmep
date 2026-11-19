@@ -167,6 +167,13 @@ Route::delete('/admin/proveedores/{id}', [App\Http\Controllers\ProveedorControll
 ->name('proveedores.destroy')
 ->middleware('auth');
 
+Route::get('/admin/compras/create', [App\Http\Controllers\ProveedorController::class, 'compras'])
+->name('compras.create')
+->middleware('auth');
+Route::post('/admin/compras', [App\Http\Controllers\CompraController::class, 'store'])
+->name('compras.store')
+->middleware('auth');
+
 //RUTA PARA CALENDARIO
 Route::get('/admin/calendarios/calendario', [App\Http\Controllers\CalendarioController::class, 'calendario'])
 ->name('calendarios.calendario')

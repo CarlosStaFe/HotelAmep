@@ -1,0 +1,11 @@
+[
+{"id":"1","nombre":"ALIMENTOS","tipo":"Producción","observacion":null,"fecha_creacion":"2026-10-29 15:07:24","fecha_actualizacion":"2026-10-29 15:08:30"},
+{"id":"2","nombre":"BEBIDAS","tipo":"Consumibles","observacion":null,"fecha_creacion":"2026-10-29 15:07:44","fecha_actualizacion":"2026-10-29 15:07:44"},
+{"id":"3","nombre":"ENSERES","tipo":"Bienes\/Muebles","observacion":null,"fecha_creacion":"2026-10-29 15:08:12","fecha_actualizacion":"2026-10-29 15:08:12"},
+{"id":"4","nombre":"INSTALACIONES","tipo":"Bienes\/Muebles","observacion":null,"fecha_creacion":"2026-10-29 15:09:02","fecha_actualizacion":"2026-10-29 15:09:02"},
+{"id":"5","nombre":"LIMPIEZA","tipo":"Consumibles","observacion":null,"fecha_creacion":"2026-10-29 15:09:28","fecha_actualizacion":"2026-10-29 15:09:28"},
+{"id":"6","nombre":"MUEBLES, ÚTILES Y HERRAMIENTAS","tipo":"Bienes\/Muebles","observacion":null,"fecha_creacion":"2026-10-29 15:10:00","fecha_actualizacion":"2026-10-29 15:10:00"},
+{"id":"7","nombre":"TEXTILES","tipo":"Bienes\/Muebles","observacion":null,"fecha_creacion":"2026-10-29 15:10:27","fecha_actualizacion":"2026-10-29 15:10:27"},
+{"id":"8","nombre":"MANTENIMIENTO","tipo":"Mantenimiento","observacion":null,"fecha_creacion":"2026-10-29 16:20:29","fecha_actualizacion":"2026-10-29 16:20:29"},
+{"id":"9","nombre":"ADMINISTRACIÓN","tipo":"Administrativo","observacion":null,"fecha_creacion":"2026-10-29 16:28:35","fecha_actualizacion":"2026-10-29 16:28:35"}
+]

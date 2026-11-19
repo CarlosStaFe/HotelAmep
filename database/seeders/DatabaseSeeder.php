@@ -19,6 +19,10 @@ class DatabaseSeeder extends Seeder
             LocalidadesSeeder::class,
             HabitacionSeeder::class,
             RoleSeeder::class,
+            RubroSeeder::class,
+            SubrubroSeeder::class,
+            ArticuloSeeder::class,
+            ProveedorSeeder::class,
         ]);
 
         User::updateOrCreate(

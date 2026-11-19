@@ -99,6 +99,15 @@ class ComandaArticulosTest extends TestCase
         ]);
         DB::table('articulos')->insert([
             'subrubro_id' => $subrubroId,
+            'nombre' => 'Café',
+            'activo' => true,
+            'comanda' => true,
+            'vencimiento' => false,
+            'fecha_creacion' => $now,
+            'fecha_actualizacion' => $now,
+        ]);
+        DB::table('articulos')->insert([
+            'subrubro_id' => $subrubroId,
             'nombre' => 'Artículo sin comanda',
             'activo' => true,
             'comanda' => false,
@@ -118,10 +127,20 @@ class ComandaArticulosTest extends TestCase
         DB::table('stocks')->insert([
             'articulo_id' => $articuloConComanda,
             'cantidad' => 5,
+            'punto' => 'Depósito',
             'precioVta' => 100,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+        foreach ([
+            ['Depósito', 1.5], ['Comedor', 3], ['Bar', 4], ['Recepción', 6], [null, 9],
+        ] as [$punto, $cantidad]) {
+            DB::table('stocks')->insert([
+                'articulo_id' => $articuloConComanda, 'punto' => $punto,
+                'cantidad' => $cantidad, 'precioVta' => 100,
+                'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
 
         $response = $this->actingAs($user)
             ->getJson(route('comandas.cargar'));
@@ -129,9 +148,18 @@ class ComandaArticulosTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.0.nombre', 'Agua')
             ->assertJsonPath('data.0.subrubro', 'Bebidas')
-            ->assertJsonPath('data.0.stock', 5)
+            ->assertJsonPath('data.0.stock_deposito', 6.5)
+            ->assertJsonPath('data.0.stock_comedor', 3)
+            ->assertJsonPath('data.0.stock_bar', 4)
+            ->assertJsonPath('data.0.stock_recepcion', 6)
             ->assertJsonPath('data.0.precio', 100)
-            ->assertJsonCount(1, 'data');
+            ->assertJsonPath('data.1.nombre', 'Café')
+            ->assertJsonPath('data.1.stock_deposito', 0)
+            ->assertJsonPath('data.1.stock_comedor', 0)
+            ->assertJsonPath('data.1.stock_bar', 0)
+            ->assertJsonPath('data.1.stock_recepcion', 0)
+            ->assertJsonPath('data.1.precio', 'N/A')
+            ->assertJsonCount(2, 'data');
 
         $this->actingAs($user)
             ->get(route('comandas.comanda'))

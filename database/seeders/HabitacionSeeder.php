@@ -11,7 +11,7 @@ class HabitacionSeeder extends Seeder
     {
         $habitaciones = [
             ['numero' => '01', 'tipo' => 'Casero    ', 'estado' => '-         ', 'plazas' => 3, 'matri' => 0, 'simple' => 0, 'piso' => 'PB', 'vista' => 'Jardín', 'aire' => 'SI', 'cuna' => 'NO', 'toilette' => 'G', 'venta' => false, 'observacion' => ''],
-            ['numero' => '02', 'tipo' => 'Consejo   ', 'estado' => 'Disponible', 'plazas' => 3, 'matri' => 1, 'simple' => 1, 'piso' => 'PB', 'vista' => 'Jardín', 'aire' => 'SI', 'cuna' => 'NO', 'toilette' => 'G', 'venta' => false, 'observacion' => ''],
+            ['numero' => '02', 'tipo' => 'Consejo   ', 'estado' => 'Disponible', 'plazas' => 3, 'matri' => 1, 'simple' => 1, 'piso' => 'PB', 'vista' => 'Jardín', 'aire' => 'SI', 'cuna' => 'NO', 'toilette' => 'G', 'venta' => true, 'observacion' => ''],
             ['numero' => '03', 'tipo' => 'Habitación', 'estado' => 'Disponible', 'plazas' => 3, 'matri' => 0, 'simple' => 3, 'piso' => 'PB', 'vista' => 'Calle ', 'aire' => 'SI', 'cuna' => 'SI', 'toilette' => 'G', 'venta' => true, 'observacion' => ''],
             ['numero' => '04', 'tipo' => 'Habitación', 'estado' => 'Disponible', 'plazas' => 3, 'matri' => 1, 'simple' => 1, 'piso' => 'PB', 'vista' => 'Calle ', 'aire' => 'SI', 'cuna' => 'SI', 'toilette' => 'N', 'venta' => true, 'observacion' => ''],
             ['numero' => '05', 'tipo' => 'Habitación', 'estado' => 'Disponible', 'plazas' => 2, 'matri' => 0, 'simple' => 2, 'piso' => 'PB', 'vista' => 'Calle ', 'aire' => 'SI', 'cuna' => 'NO', 'toilette' => 'N', 'venta' => true, 'observacion' => ''],

@@ -49,9 +49,9 @@ class ArticuloPrecioTest extends TestCase
             ->get(route('articulos.index'))
             ->assertOk();
 
-        $this->assertMatchesRegularExpression('~<td>Agua</td>\s*<td>3\.375</td>\s*<td>0</td>\s*<td>5</td>\s*<td>6</td>~', $response->getContent());
-        $this->assertMatchesRegularExpression('~<td>Jugo</td>\s*<td>0</td>\s*<td>0</td>\s*<td>8</td>\s*<td>0</td>~', $response->getContent());
-        $this->assertMatchesRegularExpression('~<td>Sin stock</td>\s*(?:<td>0</td>\s*){4}~', $response->getContent());
+        $this->assertMatchesRegularExpression('~<td>Agua</td>\s*<td[^>]*>3\.375</td>\s*<td[^>]*>0</td>\s*<td[^>]*>5</td>\s*<td[^>]*>6</td>~', $response->getContent());
+        $this->assertMatchesRegularExpression('~<td>Jugo</td>\s*<td[^>]*>0</td>\s*<td[^>]*>0</td>\s*<td[^>]*>8</td>\s*<td[^>]*>0</td>~', $response->getContent());
+        $this->assertMatchesRegularExpression('~<td>Sin stock</td>\s*(?:<td[^>]*>0</td>\s*){4}~', $response->getContent());
     }
 
     public function test_menu_de_precios_abre_el_listado_para_seleccionar_un_articulo(): void
@@ -128,7 +128,9 @@ class ArticuloPrecioTest extends TestCase
         ])->assertRedirect(route('articulos.index'));
         $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Depósito', 'cantidad' => 2, 'precioVta' => 25.5]);
         $this->getJson(route('comandas.cargar'))
-            ->assertOk()->assertJsonFragment(['nombre' => 'Agua', 'stock' => 2, 'precio' => 25.5]);
+            ->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.stock_deposito', 2)
+            ->assertJsonPath('data.0.precio', 25.5);
     }
 
     public function test_ajuste_solo_modifica_el_primer_stock_del_punto_seleccionado(): void

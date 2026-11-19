@@ -19,10 +19,7 @@ class ArticuloController extends Controller
     public function index()
     {
         $articulos = Articulo::with(['subrubro.rubro', 'primerStock'])
-            ->withSum(['stocks as stock_deposito' => fn ($query) => $query->where('punto', 'Depósito')], 'cantidad')
-            ->withSum(['stocks as stock_comedor' => fn ($query) => $query->where('punto', 'Comedor')], 'cantidad')
-            ->withSum(['stocks as stock_bar' => fn ($query) => $query->where('punto', 'Bar')], 'cantidad')
-            ->withSum(['stocks as stock_recepcion' => fn ($query) => $query->where('punto', 'Recepción')], 'cantidad')
+            ->conStocksPorPunto()
             ->get();
         return view('admin.articulos.index', compact('articulos'));
     }
@@ -279,23 +276,21 @@ class ArticuloController extends Controller
      */
     public function cargarArticulos(): JsonResponse
     {
-        $articulos = Articulo::with('subrubro')
+        $articulos = Articulo::with(['subrubro', 'primerStock'])
+            ->conStocksPorPunto()
             ->where('articulos.activo', true)
             ->where('articulos.comanda', true)
-            ->leftJoin('stocks', 'articulos.id', '=', 'stocks.articulo_id')
-            ->select(
-                'articulos.*',
-                'stocks.cantidad as stock',
-                'stocks.precioVta as precio'
-            )
             ->orderBy('articulos.nombre')
             ->get()
             ->map(fn (Articulo $articulo) => [
                 'id' => $articulo->id,
                 'subrubro' => $articulo->subrubro?->nombre ?? 'Sin subrubro',
                 'nombre' => $articulo->nombre,
-                'stock' => $articulo->stock ?? 'N/A',
-                'precio' => $articulo->precio ?? 'N/A',
+                'stock_deposito' => $articulo->stock_deposito ?? 0,
+                'stock_comedor' => $articulo->stock_comedor ?? 0,
+                'stock_bar' => $articulo->stock_bar ?? 0,
+                'stock_recepcion' => $articulo->stock_recepcion ?? 0,
+                'precio' => $articulo->primerStock?->precioVta ?? 'N/A',
             ]);
 
         return response()->json(['data' => $articulos]);

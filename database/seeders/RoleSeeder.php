@@ -13,16 +13,16 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = Role::create(['name' => 'Administrador']);
-        $auditor = Role::create(['name' => 'Auditor']);
-        $barman = Role::create(['name' => 'Barman']);
-        $cocinero = Role::create(['name' => 'Cocinero']);
-        $contador = Role::create(['name' => 'Contador']);
-        $gerente = Role::create(['name' => 'Gerente']);
-        $moza = Role::create(['name' => 'Moza']);
-        $mucama = Role::create(['name' => 'Mucama']);
-        $recepcion = Role::create(['name' => 'Recepcion']);
-        $turismo = Role::create(['name' => 'Turismo']);
+        Role::findOrCreate('Administrador');
+        Role::findOrCreate('Auditor');
+        Role::findOrCreate('Barman');
+        Role::findOrCreate('Cocinero');
+        Role::findOrCreate('Contador');
+        Role::findOrCreate('Gerente');
+        Role::findOrCreate('Moza');
+        Role::findOrCreate('Mucama');
+        Role::findOrCreate('Recepcion');
+        Role::findOrCreate('Turismo');
 
     }
 }

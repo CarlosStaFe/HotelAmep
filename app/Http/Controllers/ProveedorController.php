@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Articulo;
 use App\Models\Proveedor;
+use App\Models\Rubro;
+use App\Models\Subrubro;
 use Illuminate\Http\Request;
 
 class ProveedorController extends Controller
@@ -25,6 +28,19 @@ class ProveedorController extends Controller
     public function create()
     {
         return view('admin.proveedores.create');
+    }
+
+    public function compras()
+    {
+        $proveedores = Proveedor::where('activo', true)
+            ->orderBy('nombre')
+            ->orderBy('id')
+            ->get(['id', 'nombre', 'cuit']);
+        $rubros = Rubro::orderBy('nombre')->orderBy('id')->get(['id', 'nombre']);
+        $subrubros = Subrubro::orderBy('nombre')->orderBy('id')->get(['id', 'rubro_id', 'nombre']);
+        $articulos = Articulo::orderBy('nombre')->orderBy('id')->get(['id', 'subrubro_id', 'nombre']);
+
+        return view('admin.proveedores.compras', compact('proveedores', 'rubros', 'subrubros', 'articulos'));
     }
 
     /**
