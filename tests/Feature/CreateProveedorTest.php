@@ -58,6 +58,17 @@ class CreateProveedorTest extends TestCase
             ->assertViewHas('proveedores', fn ($proveedores) => $proveedores->isEmpty());
     }
 
+    public function test_formulario_de_compras_restaura_contado_con_dias_bloqueados(): void
+    {
+        $respuesta = $this->actingAs(User::factory()->create())
+            ->withSession(['_old_input' => ['estado' => 'Contado', 'dias' => '30']])
+            ->get(route('compras.create'))
+            ->assertOk();
+
+        $this->assertMatchesRegularExpression('~<option value="Contado"\\s+selected>Contado</option>~', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<input[^>]*id="dias"[^>]*disabled[^>]*value="0"[^>]*>~', $respuesta->getContent());
+    }
+
     public function test_formulario_de_compras_carga_rubros_subrubros_y_articulos_y_restaura_su_seleccion(): void
     {
         $fecha = now();

@@ -4,7 +4,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const vista = readFileSync(new URL('../../resources/views/admin/comandas/comanda.blade.php', import.meta.url), 'utf8');
-const inicio = vista.indexOf("        document.addEventListener('DOMContentLoaded', function() {");
+const inicioPasajeros = vista.indexOf("            const pasajeroSelect = document.getElementById('pasajeros');");
+const inicio = vista.lastIndexOf("        document.addEventListener('DOMContentLoaded', function() {", inicioPasajeros);
 const fin = vista.indexOf('    </script>', inicio);
 assert.ok(inicio !== -1 && fin !== -1);
 const script = vista.slice(inicio, fin)

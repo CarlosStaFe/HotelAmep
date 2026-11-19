@@ -127,13 +127,13 @@ class ComandaArticulosTest extends TestCase
         DB::table('stocks')->insert([
             'articulo_id' => $articuloConComanda,
             'cantidad' => 5,
-            'punto' => 'Depósito',
+            'punto' => 'Deposito',
             'precioVta' => 100,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
         foreach ([
-            ['Depósito', 1.5], ['Comedor', 3], ['Bar', 4], ['Recepción', 6], [null, 9],
+            ['Deposito', 1.5], ['Comedor', 3], ['Bar', 4], ['Recepción', 6], [null, 9],
         ] as [$punto, $cantidad]) {
             DB::table('stocks')->insert([
                 'articulo_id' => $articuloConComanda, 'punto' => $punto,

@@ -61,7 +61,7 @@
                                 <th style="width: 30px; text-align: center;">Nro.</th>
                                 <th style="width: 100px;">Subrubro</th>
                                 <th style="width: 200px;">Nombre</th>
-                                <th style="width: 50px; text-align: center;">Depósito</th>
+                                <th style="width: 50px; text-align: center;">Deposito</th>
                                 <th style="width: 50px; text-align: center;">Comedor</th>
                                 <th style="width: 50px; text-align: center;">Bar</th>
                                 <th style="width: 50px; text-align: center;">Recepción</th>
@@ -94,6 +94,11 @@
                         <!-- Las filas se agregarán dinámicamente aquí -->
                     </tbody>
                 </table>
+                <div id="comandaMensajeContenedor" hidden>
+                    <button type="button" id="cerrarComandaMensaje" class="close" aria-label="Cerrar mensaje"><span aria-hidden="true">&times;</span></button>
+                    <span id="comandaMensaje" role="status" aria-live="polite"></span>
+                </div>
+                <button type="button" id="grabarComanda" class="btn btn-primary mb-3">Grabar</button>
             </div>
 
         </div>
@@ -116,13 +121,15 @@
                             <input type="text" class="form-control" id="consumoPrecio" readonly>
                             <small id="consumoPrecioAviso" class="text-danger" role="status"></small>
                         </div>
-                        <div class="form-group">
-                            <label for="consumoCantidad">Cantidad <b style="color: red;">(*)</b></label>
-                            <input type="number" class="form-control" id="consumoCantidad" min="0.001" max="999999999.999" step="0.001" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="consumoMoza">Número de moza <b style="color: red;">(*)</b></label>
-                            <input type="number" class="form-control" id="consumoMoza" min="1" step="1" required>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="consumoCantidad">Cantidad <b style="color: red;">(*)</b></label>
+                                <input type="number" class="form-control" id="consumoCantidad" min="1" max="999999999" step="1" required>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="consumoMoza">Número de moza <b style="color: red;">(*)</b></label>
+                                <input type="number" class="form-control" id="consumoMoza" min="1" step="1" required>
+                            </div>
                         </div>
                         <div id="consumoMensaje" class="text-danger" role="alert"></div>
                     </div>
@@ -319,10 +326,16 @@
             const cantidad = document.getElementById('consumoCantidad').value;
             const moza = document.getElementById('consumoMoza').value;
             const pasajero = document.getElementById('pasajeros');
+            const habitacion = document.getElementById('habitacion');
+            const punto = document.querySelector('input[name="punto"]:checked');
             mensaje.textContent = '';
 
             if (!pasajero.value || pasajero.disabled) {
                 mensaje.textContent = 'Seleccione un pasajero antes de cargar el consumo.';
+                return;
+            }
+            if (!habitacion.value || !punto) {
+                mensaje.textContent = 'Seleccione una habitación y un punto de venta antes de cargar el consumo.';
                 return;
             }
             if (!/^\d{1,9}(\.\d{1,3})?$/.test(cantidad) || Number(cantidad) <= 0) {
@@ -355,6 +368,8 @@
             fila.dataset.cantidad = cantidad;
             fila.dataset.precio = formatearImporte(centavos);
             fila.dataset.moza = moza;
+            fila.dataset.habitacion = habitacion.value;
+            fila.dataset.punto = punto.value;
             const valores = [
                 String(cuerpo.rows.length + 1), String(articuloConsumo.id), articuloConsumo.nombre,
                 formatearImporte(centavos), cantidad, formatearImporte(importe),
@@ -383,6 +398,96 @@
             $('#consumoModal').modal('hide');
         }
 
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const grabar = document.getElementById('grabarComanda');
+            const mensaje = document.getElementById('comandaMensaje');
+            const contenedorMensaje = document.getElementById('comandaMensajeContenedor');
+            const cerrarMensaje = document.getElementById('cerrarComandaMensaje');
+            const tabla = document.getElementById('tablaConsumos');
+
+            function ocultarMensaje() {
+                contenedorMensaje.hidden = true;
+                mensaje.textContent = '';
+            }
+
+            function mostrarMensaje(texto, estilo = 'alert alert-danger') {
+                mensaje.textContent = texto;
+                contenedorMensaje.className = estilo;
+                contenedorMensaje.hidden = false;
+            }
+
+            cerrarMensaje.addEventListener('click', ocultarMensaje);
+            grabar.addEventListener('click', async function() {
+                ocultarMensaje();
+                const habitacionInput = document.getElementById('habitacion');
+                const habitacion = habitacionInput.value;
+                const punto = document.querySelector('input[name="punto"]:checked');
+                const filas = Array.from(tabla.rows);
+                if (!habitacion || !punto || filas.length === 0) {
+                    mostrarMensaje('Seleccione habitación y punto de venta y cargue al menos un consumo.');
+                    return;
+                }
+                if (filas.some(fila => fila.dataset.habitacion !== habitacion || fila.dataset.punto !== punto.value)) {
+                    mostrarMensaje('Los consumos deben corresponder a la habitación y al punto seleccionados. Quite los que no correspondan.');
+                    return;
+                }
+                const detalles = filas.map(fila => ({
+                    articulo_id: fila.dataset.articuloId,
+                    pasajero_id: fila.dataset.pasajeroId,
+                    cantidad: fila.dataset.cantidad,
+                    precio: fila.dataset.precio,
+                    moza: fila.dataset.moza,
+                }));
+                grabar.disabled = true;
+                let respuesta;
+                let resultado;
+                try {
+                    respuesta = await fetch(@json(route('comandas.store')), {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': @json(csrf_token()),
+                        },
+                        body: JSON.stringify({ habitacion, punto: punto.value, detalles }),
+                    });
+                    if (respuesta.status >= 500) throw new Error('No se pudo confirmar el resultado.');
+                    resultado = await respuesta.json();
+                } catch (error) {
+                    mostrarMensaje('No se pudo confirmar si se guardó la comanda. Verifique antes de volver a intentarlo.');
+                    console.error('Error al guardar la comanda:', error);
+                    return;
+                }
+                if (!respuesta.ok) {
+                    mostrarMensaje(resultado.errors
+                        ? Object.values(resultado.errors).flat().join(' ')
+                        : (resultado.message || 'No se pudo guardar la comanda.'));
+                    grabar.disabled = false;
+                    return;
+                }
+                tabla.replaceChildren();
+                habitacionInput.value = '';
+                habitacionInput.dispatchEvent(new Event('change', { bubbles: true }));
+                punto.checked = false;
+                document.getElementById('formConsumo').reset();
+                document.getElementById('consumoPrecioAviso').textContent = '';
+                document.getElementById('consumoMensaje').textContent = '';
+                const correoMensaje = resultado.correos_enviados === 1
+                    ? 'Se envió 1 correo.'
+                    : `Se enviaron ${resultado.correos_enviados} correos.`;
+                mostrarMensaje(
+                    [resultado.mensaje, correoMensaje, ...resultado.advertencias].join(' '),
+                    resultado.advertencias.length ? 'alert alert-warning' : 'alert alert-success'
+                );
+                grabar.disabled = false;
+                const tablaArticulos = $('#example1').DataTable();
+                tablaArticulos.search('');
+                tablaArticulos.ajax.reload(null, true);
+            });
+        });
     </script>
 
     <script>

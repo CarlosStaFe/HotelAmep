@@ -32,7 +32,7 @@ class Articulo extends Model
     public function scopeConStocksPorPunto(Builder $query): void
     {
         $query
-            ->withSum(['stocks as stock_deposito' => fn ($stock) => $stock->where('punto', 'Depósito')], 'cantidad')
+            ->withSum(['stocks as stock_deposito' => fn ($stock) => $stock->where('punto', 'Deposito')], 'cantidad')
             ->withSum(['stocks as stock_comedor' => fn ($stock) => $stock->where('punto', 'Comedor')], 'cantidad')
             ->withSum(['stocks as stock_bar' => fn ($stock) => $stock->where('punto', 'Bar')], 'cantidad')
             ->withSum(['stocks as stock_recepcion' => fn ($stock) => $stock->where('punto', 'Recepción')], 'cantidad');

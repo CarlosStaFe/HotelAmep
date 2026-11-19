@@ -19,8 +19,8 @@ class CompraController extends Controller
             'tipoCpbte' => 'required|in:Factura A,Factura B,Factura C,Recibo',
             'prefijo' => ['required', 'numeric', 'min:0', 'max:2147483647', 'regex:/\A\d{1,10}\z/'],
             'subfijo' => ['required', 'numeric', 'min:0', 'max:2147483647', 'regex:/\A\d{1,10}\z/'],
-            'dias' => 'required|integer|min:0|max:2147483647',
-            'estado' => 'required|in:Pendiente,Pagada',
+            'dias' => 'exclude_if:estado,Contado|required|integer|min:0|max:2147483647',
+            'estado' => 'required|in:Pendiente,Contado',
             'observacion' => 'nullable|string|max:255',
             'detalles_json' => 'required|json',
         ]);
@@ -34,9 +34,11 @@ class CompraController extends Controller
             'detalles' => 'required|array|min:1',
             'detalles.*' => 'required|array:articulo_id,precio,cantidad,vence',
             'detalles.*.articulo_id' => 'required|integer|exists:articulos,id',
-            'detalles.*.precio' => ['required', 'numeric', 'regex:/\A\d{1,10}(?:\.\d{1,2})?\z/'],
+            'detalles.*.precio' => ['required', 'numeric', 'max:99999999.99', 'regex:/\A\d{1,10}(?:\.\d{1,2})?\z/'],
             'detalles.*.cantidad' => 'required|integer|min:1|max:999999999',
             'detalles.*.vence' => 'nullable|date_format:Y-m-d',
+        ], [
+            'detalles.*.precio.max' => 'El precio unitario no puede superar 99.999.999,99.',
         ])->validate()['detalles'];
 
         $total = 0;
@@ -66,7 +68,7 @@ class CompraController extends Controller
                 'tipoCpbte' => $datos['tipoCpbte'],
                 'prefijo' => $datos['prefijo'],
                 'subfijo' => $datos['subfijo'],
-                'dias' => $datos['dias'],
+                'dias' => $datos['estado'] === 'Contado' ? 0 : $datos['dias'],
                 'total' => $this->formatearCentavos($total),
                 'observacion' => $datos['observacion'] ?? null,
                 'estado' => $datos['estado'],
@@ -77,7 +79,7 @@ class CompraController extends Controller
 
             foreach ($detalles as $detalle) {
                 $stock = DB::table('stocks')->where('articulo_id', $detalle['articulo_id'])
-                    ->where('punto', 'Depósito')->orderBy('id')->lockForUpdate()->first();
+                    ->where('punto', 'Deposito')->orderBy('id')->lockForUpdate()->first();
                 if ($stock) {
                     $cantidadStock = (string) $stock->cantidad;
                     $signo = str_starts_with($cantidadStock, '-') ? -1 : 1;
@@ -98,7 +100,7 @@ class CompraController extends Controller
                         ->orderBy('id')->first(['precioVta']);
                     DB::table('stocks')->insert([
                         'articulo_id' => $detalle['articulo_id'],
-                        'punto' => 'Depósito',
+                        'punto' => 'Deposito',
                         'cantidad' => $detalle['cantidad'],
                         'precioCto' => $detalle['precio'],
                         'precioVta' => $primerStock ? $primerStock->precioVta : 0,
@@ -114,9 +116,18 @@ class CompraController extends Controller
                     'precio' => $detalle['precio'],
                     'subtotal' => $detalle['subtotal_calculado'],
                     'vence' => ($detalle['vence'] ?? null) ?: null,
-                    'punto' => 'Depósito',
+                    'punto' => 'Deposito',
                     'created_at' => now(),
                     'updated_at' => now(),
+                ]);
+
+                DB::table('movimientos')->insert([
+                    'articulo_id' => $detalle['articulo_id'],
+                    'user_id' => $request->user()->id,
+                    'tipo' => 'Compra',
+                    'cantidad' => $detalle['cantidad'],
+                    'precio' => $detalle['precio'],
+                    'fecha' => now()->toDateString(),
                 ]);
             }
         });

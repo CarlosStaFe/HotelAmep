@@ -28,7 +28,7 @@
                                 <th style="width: 50px;">Nro.</th>
                                 <th style="width: 250px;">Subrubro</th>
                                 <th style="width: 250px;">Nombre</th>
-                                <th style="width: 50px; text-align: right;">Depósito</th>
+                                <th style="width: 50px; text-align: right;">Deposito</th>
                                 <th style="width: 50px; text-align: right;">Comedor</th>
                                 <th style="width: 50px; text-align: right;">Bar</th>
                                 <th style="width: 50px; text-align: right;">Recepción</th>

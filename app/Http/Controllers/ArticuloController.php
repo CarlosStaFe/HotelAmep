@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ArticuloController extends Controller
 {
@@ -145,7 +146,16 @@ class ArticuloController extends Controller
     public function ajuste($id)
     {
         $articulo = Articulo::with('subrubro.rubro')->findOrFail($id);
-        return view('admin.articulos.ajuste', compact('articulo'));
+        $stocksPorPunto = [];
+        foreach (['Deposito', 'Comedor', 'Bar', 'Recepción'] as $punto) {
+            $stocksPorPunto[$punto] = (float) (DB::table('stocks')
+                ->where('articulo_id', $articulo->id)
+                ->where('punto', $punto)
+                ->orderBy('id')
+                ->value('cantidad') ?? 0);
+        }
+
+        return view('admin.articulos.ajuste', compact('articulo', 'stocksPorPunto'));
     }
 
     public function precio($id)
@@ -191,13 +201,20 @@ class ArticuloController extends Controller
     {
         $datos = $request->validate([
             'tipo' => 'required|in:Entrada,Salida',
-            'cantidad' => 'required|numeric|gt:0',
-            'punto' => 'required|in:Depósito,Comedor,Bar,Recepción',
+            'cantidad' => 'required|numeric|gt:0|decimal:0,3|max:999999999.999',
+            'punto' => 'required|in:Deposito,Comedor,Bar,Recepción',
             'motivo' => 'required|in:Ajuste,Rotura,Perdida,Vencido,Desgaste,Baja',
             'observacion' => 'required|string|max:255',
         ]);
 
-        DB::transaction(function () use ($datos, $id) {
+        $observacion = $datos['tipo'].' - '.$datos['motivo'].' - '.$datos['observacion'];
+        if (mb_strlen($observacion) > 100) {
+            throw ValidationException::withMessages([
+                'observacion' => 'El tipo, el motivo y la observación no pueden superar 100 caracteres en total.',
+            ]);
+        }
+
+        DB::transaction(function () use ($datos, $id, $observacion) {
             Articulo::whereKey($id)->lockForUpdate()->firstOrFail();
             $stock = DB::table('stocks')
                 ->where('articulo_id', $id)
@@ -210,7 +227,7 @@ class ArticuloController extends Controller
             $cantidad = (float) $datos['cantidad'];
 
             if ($datos['tipo'] === 'Salida' && $cantidad > $cantidadActual) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'cantidad' => 'No hay stock suficiente para registrar este egreso.',
                 ]);
             }
@@ -218,6 +235,12 @@ class ArticuloController extends Controller
             $nuevoStock = $datos['tipo'] === 'Entrada'
                 ? $cantidadActual + $cantidad
                 : $cantidadActual - $cantidad;
+
+            if ($nuevoStock > 999999999.999 || $nuevoStock < -999999999.999) {
+                throw ValidationException::withMessages([
+                    'cantidad' => 'La cantidad supera el máximo de stock permitido.',
+                ]);
+            }
 
             if ($stock) {
                 DB::table('stocks')->where('id', $stock->id)
@@ -243,10 +266,10 @@ class ArticuloController extends Controller
             DB::table('movimientos')->insert([
                 'articulo_id' => $id,
                 'user_id' => Auth::id(),
-                'tipo' => $datos['tipo'],
+                'tipo' => 'Ajuste',
                 'cantidad' => $cantidad,
-                'motivo' => $datos['motivo'],
-                'observacion' => $datos['observacion'],
+                'precio' => 0,
+                'observacion' => $observacion,
                 'fecha' => now(),
             ]);
         });

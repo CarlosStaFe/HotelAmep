@@ -80,6 +80,52 @@ test('restaura solo selecciones válidas y deshabilita listas vacías', () => {
     assert.equal(invalidos.articulo_id.disabled, true);
 });
 
+test('habilita días solo para compras pendientes y conserva el valor al cambiar de estado', () => {
+    const inicioEstado = vista.indexOf("            const estado = document.getElementById('estado');");
+    const inicioScript = vista.lastIndexOf("        document.addEventListener('DOMContentLoaded'", inicioEstado);
+    const finScript = vista.indexOf('    </script>', inicioEstado);
+    assert.ok(inicioEstado !== -1 && inicioScript !== -1 && finScript !== -1);
+
+    function entornoEstado(valor, diasIniciales, disabled) {
+        const estado = {
+            value: valor, handlers: {},
+            addEventListener(evento, handler) { this.handlers[evento] = handler; },
+        };
+        const dias = { value: diasIniciales, disabled, required: !disabled };
+        const requerido = { hidden: disabled };
+        const campos = { estado, dias, diasRequerido: requerido };
+        const document = {
+            getElementById(id) { return campos[id]; },
+            addEventListener(evento, handler) { if (evento === 'DOMContentLoaded') handler(); },
+        };
+        vm.runInNewContext(vista.slice(inicioScript, finScript), { document });
+        return { estado, dias, requerido };
+    }
+
+    const campos = entornoEstado('Pendiente', '30', false);
+    assert.equal(campos.dias.disabled, false);
+    assert.equal(campos.dias.required, true);
+    campos.estado.value = 'Contado';
+    campos.estado.handlers.change();
+    assert.equal(campos.dias.disabled, true);
+    assert.equal(campos.dias.required, false);
+    assert.equal(campos.dias.value, '0');
+    assert.equal(campos.requerido.hidden, true);
+    campos.estado.value = 'Pendiente';
+    campos.estado.handlers.change();
+    assert.equal(campos.dias.disabled, false);
+    assert.equal(campos.dias.required, true);
+    assert.equal(campos.dias.value, '30');
+    assert.equal(campos.requerido.hidden, false);
+
+    const contado = entornoEstado('Contado', '0', true);
+    assert.equal(contado.dias.disabled, true);
+    contado.estado.value = 'Pendiente';
+    contado.estado.handlers.change();
+    assert.equal(contado.dias.disabled, false);
+    assert.equal(contado.dias.value, '');
+});
+
 test('calcula el subtotal al cambiar el precio o la cantidad y rechaza valores inválidos', () => {
     const inicioSubtotal = vista.indexOf("        document.addEventListener('DOMContentLoaded'", fin);
     const finSubtotal = vista.indexOf('    </script>', inicioSubtotal);
@@ -107,10 +153,10 @@ test('calcula el subtotal al cambiar el precio o la cantidad y rechaza valores i
     campos.precio.cambiar('0.29');
     campos.cantidad.cambiar('100');
     assert.equal(campos.subtotal.value, '29.00');
-    campos.precio.cambiar('9999999999999.99');
-    campos.cantidad.cambiar('1');
-    assert.equal(campos.subtotal.value, '9999999999999.99');
-    campos.cantidad.cambiar('2');
+    campos.precio.cambiar('99999999.99');
+    campos.cantidad.cambiar('100000');
+    assert.equal(campos.subtotal.value, '9999999999000.00');
+    campos.cantidad.cambiar('100001');
     assert.equal(campos.subtotal.value, '');
     assert.match(campos.subtotalMensaje.textContent, /subtotal supera/);
     campos.precio.cambiar('');
@@ -180,8 +226,9 @@ test('carga y quita artículos temporales y envía la lista al guardar', () => {
         assert.equal(campos.tablaDetalles.children[0].children[indice].className, 'text-right');
     }
     assert.notEqual(campos.tablaDetalles.children[0].children[1].className, 'text-right');
-    for (const titulo of ['Nro.', 'Precio', 'Cantidad', 'Subtotal', 'Vencimiento']) {
-        assert.ok(vista.includes(`<th class="text-right">${titulo}</th>`));
+    assert.ok(vista.includes('<thead class="table-primary text-center">'));
+    for (const titulo of ['Nro.', 'Artículo', 'Precio', 'Cantidad', 'Subtotal', 'Vencimiento', 'Acciones']) {
+        assert.ok(vista.includes(`<th>${titulo}</th>`));
     }
     assert.deepEqual(JSON.parse(campos.detalles_json.value), [
         { articulo_id: '111', precio: '2.55', cantidad: '3', vence: '2027-01-01' },
@@ -203,6 +250,25 @@ test('carga y quita artículos temporales y envía la lista al guardar', () => {
     campos.formCompra.handlers.submit({ preventDefault() { prevenido = true; } });
     assert.equal(prevenido, false);
     assert.equal(campos.guardarCompra.disabled, true);
+});
+
+test('acepta el precio máximo de movimientos y rechaza uno superior', () => {
+    const campos = entornoCarga();
+    assert.match(vista, /id="precio"[^>]*max="99999999\.99"/);
+    campos.rubro_id.value = '1';
+    campos.subrubro_id.value = '11';
+    campos.articulo_id.value = '111';
+    campos.precio.value = '100000000.00';
+    campos.cantidad.value = '1';
+    campos.subtotal.value = '100000000.00';
+    campos.cargarArticulo.handlers.click();
+    assert.match(campos.detalleMensaje.textContent, /99\.999\.999,99/);
+    assert.deepEqual(JSON.parse(campos.detalles_json.value), []);
+
+    campos.precio.value = '99999999.99';
+    campos.subtotal.value = '99999999.99';
+    campos.cargarArticulo.handlers.click();
+    assert.equal(JSON.parse(campos.detalles_json.value)[0].precio, '99999999.99');
 });
 
 test('recupera artículos temporales después de un error del formulario', () => {

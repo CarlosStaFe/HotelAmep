@@ -36,8 +36,8 @@ class ArticuloPrecioTest extends TestCase
         $otro = $this->crearArticulo('Jugo');
         $this->crearArticulo('Sin stock');
         DB::table('stocks')->insert([
-            ['articulo_id' => $articulo, 'punto' => 'Depósito', 'cantidad' => 1.125],
-            ['articulo_id' => $articulo, 'punto' => 'Depósito', 'cantidad' => 2.25],
+            ['articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 1.125],
+            ['articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 2.25],
             ['articulo_id' => $articulo, 'punto' => 'Comedor', 'cantidad' => 0],
             ['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 5],
             ['articulo_id' => $articulo, 'punto' => 'Recepción', 'cantidad' => 6],
@@ -124,9 +124,13 @@ class ArticuloPrecioTest extends TestCase
         $this->assertSame(1, DB::table('stocks')->where('articulo_id', $articulo)->count());
 
         $this->post(route('articulos.grabar', $articulo), [
-            'tipo' => 'Entrada', 'cantidad' => '2', 'punto' => 'Depósito', 'motivo' => 'Ajuste', 'observacion' => 'Ingreso',
+            'tipo' => 'Entrada', 'cantidad' => '2', 'punto' => 'Deposito', 'motivo' => 'Ajuste', 'observacion' => 'Ingreso',
         ])->assertRedirect(route('articulos.index'));
-        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Depósito', 'cantidad' => 2, 'precioVta' => 25.5]);
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 2, 'precioVta' => 25.5]);
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulo, 'tipo' => 'Ajuste', 'cantidad' => 2, 'precio' => 0,
+            'observacion' => 'Entrada - Ajuste - Ingreso',
+        ]);
         $this->getJson(route('comandas.cargar'))
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.stock_deposito', 2)
@@ -154,7 +158,34 @@ class ArticuloPrecioTest extends TestCase
         $this->assertDatabaseHas('stocks', ['id' => $segundo, 'punto' => 'Bar', 'cantidad' => 7]);
         $this->assertDatabaseHas('stocks', ['id' => $otro, 'punto' => 'Comedor', 'cantidad' => 9]);
         $this->assertDatabaseHas('stocks', ['id' => $sinPunto, 'punto' => null, 'cantidad' => 3]);
-        $this->assertDatabaseHas('movimientos', ['articulo_id' => $articulo, 'tipo' => 'Salida', 'cantidad' => 2]);
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulo, 'tipo' => 'Ajuste', 'cantidad' => 2, 'precio' => 0,
+            'observacion' => 'Salida - Ajuste - Prueba',
+        ]);
+    }
+
+    public function test_ajuste_informa_el_stock_del_primer_registro_de_cada_punto(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        DB::table('stocks')->insert([
+            ['articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 0],
+            ['articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 5],
+            ['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 2],
+            ['articulo_id' => $articulo, 'punto' => 'Comedor', 'cantidad' => -1],
+        ]);
+        $this->actingAs(User::factory()->create());
+
+        $respuesta = $this->get(route('articulos.ajuste', $articulo))->assertOk()
+            ->assertViewHas('stocksPorPunto', [
+                'Deposito' => 0.0, 'Comedor' => -1.0, 'Bar' => 2.0, 'Recepción' => 0.0,
+            ]);
+        $this->assertMatchesRegularExpression('~<option value="Deposito" data-sin-stock="1"[^>]*selected>~', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<option value="Bar" data-sin-stock="0"~', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<small id="stockAviso"[^>]*role="status"\\s*>~', $respuesta->getContent());
+
+        $bar = $this->withSession(['_old_input' => ['punto' => 'Bar']])
+            ->get(route('articulos.ajuste', $articulo))->assertOk();
+        $this->assertMatchesRegularExpression('~<small id="stockAviso"[^>]*hidden~', $bar->getContent());
     }
 
     public function test_ajuste_valida_el_punto_y_no_crea_stock_para_una_salida_sin_existencias(): void
@@ -176,6 +207,42 @@ class ArticuloPrecioTest extends TestCase
         $this->assertDatabaseHas('stocks', [
             'articulo_id' => $articulo, 'punto' => 'Recepción', 'cantidad' => 2, 'precioVta' => 0,
         ]);
+    }
+
+    public function test_ajuste_valida_el_limite_de_la_observacion_del_movimiento(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $this->actingAs(User::factory()->create());
+        $prefijo = 'Entrada - Rotura - ';
+        $datos = [
+            'tipo' => 'Entrada', 'cantidad' => 2, 'punto' => 'Bar', 'motivo' => 'Rotura',
+            'observacion' => str_repeat('á', 101 - mb_strlen($prefijo)),
+        ];
+
+        $this->post(route('articulos.grabar', $articulo), $datos)->assertSessionHasErrors('observacion');
+        $this->assertDatabaseMissing('stocks', ['articulo_id' => $articulo]);
+        $this->assertSame(0, DB::table('movimientos')->count());
+
+        $datos['observacion'] = str_repeat('á', 100 - mb_strlen($prefijo));
+        $this->post(route('articulos.grabar', $articulo), $datos)
+            ->assertRedirect(route('articulos.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulo, 'observacion' => $prefijo.$datos['observacion'],
+        ]);
+    }
+
+    public function test_ajuste_rechaza_cantidades_fuera_de_la_precision_y_capacidad_de_stock(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        DB::table('stocks')->insert(['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 999999999.999]);
+        $this->actingAs(User::factory()->create());
+        $datos = ['tipo' => 'Entrada', 'cantidad' => '0.0001', 'punto' => 'Bar', 'motivo' => 'Ajuste', 'observacion' => 'Prueba'];
+
+        $this->post(route('articulos.grabar', $articulo), $datos)->assertSessionHasErrors('cantidad');
+        $datos['cantidad'] = '0.001';
+        $this->post(route('articulos.grabar', $articulo), $datos)->assertSessionHasErrors('cantidad');
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 999999999.999]);
+        $this->assertSame(0, DB::table('movimientos')->count());
     }
 
     public function test_valida_el_precio_y_la_existencia_del_articulo(): void

@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('articulo_id')->constrained('articulos');
             $table->foreignId('user_id')->constrained('users');
             $table->string('tipo', 20);
-            $table->string('motivo', 20);
             $table->decimal('cantidad', 10, 3);
+            $table->decimal('precio', 10, 2);
             $table->string('observacion',100)->nullable();
             $table->dateTime('fecha_creacion')->nullable()->useCurrent();
             $table->dateTime('fecha_actualizacion')->nullable()->useCurrent();

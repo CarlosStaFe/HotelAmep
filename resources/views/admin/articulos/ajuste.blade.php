@@ -35,8 +35,8 @@
                                 <label for="tipo" class="form-label">Tipo de Movimiento <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="tipo" name="tipo" required>
                                     <option value="">Seleccione tipo</option>
-                                    <option value="Entrada">Entrada</option>
-                                    <option value="Salida">Salida</option>
+                                    <option value="Entrada" {{ old('tipo') === 'Entrada' ? 'selected' : '' }}>Entrada</option>
+                                    <option value="Salida" {{ old('tipo') === 'Salida' ? 'selected' : '' }}>Salida</option>
                                 </select>
                                 @error('tipo') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
@@ -49,11 +49,17 @@
                                 <label for="punto" class="form-label">Punto <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="punto" name="punto" required>
                                     <option value="">Seleccione punto</option>
-                                    <option value="Depósito" {{ old('punto', 'Depósito') === 'Depósito' ? 'selected' : '' }}>Depósito</option>
-                                    <option value="Comedor" {{ old('punto', 'Depósito') === 'Comedor' ? 'selected' : '' }}>Comedor</option>
-                                    <option value="Bar" {{ old('punto', 'Depósito') === 'Bar' ? 'selected' : '' }}>Bar</option>
-                                    <option value="Recepción" {{ old('punto', 'Depósito') === 'Recepción' ? 'selected' : '' }}>Recepción</option>
+                                    <option value="Deposito" data-sin-stock="{{ $stocksPorPunto['Deposito'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Deposito' ? 'selected' : '' }}>Deposito</option>
+                                    <option value="Comedor" data-sin-stock="{{ $stocksPorPunto['Comedor'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Comedor' ? 'selected' : '' }}>Comedor</option>
+                                    <option value="Bar" data-sin-stock="{{ $stocksPorPunto['Bar'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Bar' ? 'selected' : '' }}>Bar</option>
+                                    <option value="Recepción" data-sin-stock="{{ $stocksPorPunto['Recepción'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Recepción' ? 'selected' : '' }}>Recepción</option>
                                 </select>
+                                @php
+                                    $puntoSeleccionado = old('punto', 'Deposito');
+                                    $sinStockSeleccionado = in_array($puntoSeleccionado, ['Deposito', 'Comedor', 'Bar', 'Recepción'], true)
+                                        && $stocksPorPunto[$puntoSeleccionado] == 0;
+                                @endphp
+                                <small id="stockAviso" class="text-warning" role="status" @if (!$sinStockSeleccionado) hidden @endif>El stock a ajustar en este punto es 0.</small>
                                 @error('punto') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
                             <div class="col-md-2 mb-2">
@@ -74,6 +80,7 @@
                             <div class="mb-5">
                                 <label for="observacion" class="form-label">Observación del ajuste <b style="color: red;">(*)</b></label>
                                 <textarea class="form-control" id="observacion" name="observacion" required>{{ old('observacion') }}</textarea>
+                                <small>El tipo, el motivo y la observación se guardan juntos, con un máximo de 100 caracteres.</small>
                                 @error('observacion') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
                         </div>
@@ -97,4 +104,18 @@
 @stop
 
 @section('js')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const punto = document.getElementById('punto');
+            const aviso = document.getElementById('stockAviso');
+
+            function actualizarAviso() {
+                const opcion = punto.options[punto.selectedIndex];
+                aviso.hidden = !opcion || opcion.dataset.sinStock !== '1';
+            }
+
+            punto.addEventListener('change', actualizarAviso);
+            actualizarAviso();
+        });
+    </script>
 @stop

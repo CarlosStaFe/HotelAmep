@@ -59,10 +59,12 @@
                                 <label for="tipoCpbte">Comprobante <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="tipoCpbte" name="tipoCpbte" required>
                                     <option value="" {{ old('tipoCpbte') ? '' : 'selected' }} disabled>Elige un tipo de comprobante...</option>
-                                    <option value="Factura A" {{ old('tipoCpbte') == 'Factura A' ? 'selected' : '' }}>Factura A</option>
                                     <option value="Factura B" {{ old('tipoCpbte') == 'Factura B' ? 'selected' : '' }}>Factura B</option>
                                     <option value="Factura C" {{ old('tipoCpbte') == 'Factura C' ? 'selected' : '' }}>Factura C</option>
-                                    <option value="Recibo" {{ old('tipoCpbte') == 'Recibo' ? 'selected' : '' }}>Recibo</option>
+                                    <option value="Nota Credito B" {{ old('tipoCpbte') == 'Nota Credito B' ? 'selected' : '' }}>Nota Credito B</option>
+                                    <option value="Nota Credito C" {{ old('tipoCpbte') == 'Nota Credito C' ? 'selected' : '' }}>Nota Credito C</option>
+                                    <option value="Factura A" {{ old('tipoCpbte') == 'Factura A' ? 'selected' : '' }}>Factura A</option>
+                                    <option value="Comprobante X" {{ old('tipoCpbte') == 'Comprobante X' ? 'selected' : '' }}>Comprobante X</option>
                                 </select>
                                 @error('tipoCpbte')
                                     <small style="color: red">{{ $message }}</small>
@@ -71,7 +73,7 @@
                             <div class="col-md-1 mb-3">
                                 <label for="prefijo" class="form-label">Prefijo<b style="color: red;">(*)</b></label>
                                 <input type="text" class="form-control" id="prefijo" name="prefijo"
-                                    placeholder="Ingrese C.U.I.T. del proveedor" value="{{ old('prefijo') }}" required>
+                                    placeholder="Ingrese prefijo factura" value="{{ old('prefijo') }}" required>
                                 @error('prefijo')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -79,7 +81,7 @@
                             <div class="col-md-1 mb-3">
                                 <label for="subfijo" class="form-label">Subfijo<b style="color: red;">(*)</b></label>
                                 <input type="text" class="form-control" id="subfijo" name="subfijo"
-                                    placeholder="Ingrese C.U.I.T. del proveedor" value="{{ old('subfijo') }}" required>
+                                    placeholder="Ingrese subfijo factura" value="{{ old('subfijo') }}" required>
                                 @error('subfijo')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -88,13 +90,14 @@
                                 <label for="estado" class="form-label">Estado <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="estado" name="estado" required>
                                     <option value="Pendiente" {{ old('estado', 'Pendiente') == 'Pendiente' ? 'selected' : '' }}>Pendiente</option>
-                                    <option value="Pagada" {{ old('estado') === 'Pagada' ? 'selected' : '' }}>Pagada</option>
+                                    <option value="Contado" {{ old('estado') === 'Contado' ? 'selected' : '' }}>Contado</option>
                                 </select>
                             </div>
                             <div class="col-md-1 mb-3">
-                                <label for="dias" class="form-label">Días Pago <b style="color: red;">(*)</b></label>
-                                <input type="number" class="form-control" id="dias" name="dias" min="0" step="1" required
-                                    placeholder="Ingrese días del proveedor" value="{{ old('dias') }}">
+                                <label for="dias" class="form-label">Días Pago <b id="diasRequerido" style="color: red;" @if(old('estado') === 'Contado') hidden @endif>(*)</b></label>
+                                <input type="number" class="form-control" id="dias" name="dias" min="0" step="1"
+                                    @if(old('estado') === 'Contado') disabled @else required @endif
+                                    placeholder="Ingrese días del proveedor" value="{{ old('estado') === 'Contado' ? '0' : old('dias') }}">
                                 @error('dias')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -140,12 +143,12 @@
                                 </select>
                             </div>
                             <div class="col-md-1 mb-3">
-                                <label for="precio" class="form-label">Precio Uni. <b style="color: red;">(*)</b></label>
-                                <input type="number" class="form-control" id="precio" name="precio" value="{{ old('precio') }}" min="0" max="9999999999.99" step="0.01">
-                            </div>
-                            <div class="col-md-1 mb-3">
                                 <label for="cantidad" class="form-label">Cantidad <b style="color: red;">(*)</b></label>
                                 <input type="number" class="form-control" id="cantidad" name="cantidad" value="{{ old('cantidad') }}" min="1" max="999999999" step="1">
+                            </div>
+                            <div class="col-md-1 mb-3">
+                                <label for="precio" class="form-label">Precio Uni. <b style="color: red;">(*)</b></label>
+                                <input type="number" class="form-control" id="precio" name="precio" value="{{ old('precio') }}" min="0" max="99999999.99" step="0.01">
                             </div>
                             <div class="col-md-1 mb-3">
                                 <label for="subtotal" class="form-label">Subtotal <b style="color: red;">(*)</b></label>
@@ -167,21 +170,21 @@
                         <div id="detalleMensaje" class="text-danger" role="alert"></div>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered table-striped">
-                                <thead>
+                                <thead class="table-primary text-center">
                                     <tr>
-                                        <th class="text-right">Nro.</th>
+                                        <th>Nro.</th>
                                         <th>Artículo</th>
-                                        <th class="text-right">Precio</th>
-                                        <th class="text-right">Cantidad</th>
-                                        <th class="text-right">Subtotal</th>
-                                        <th class="text-right">Vencimiento</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Subtotal</th>
+                                        <th>Vencimiento</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tablaDetalles"></tbody>
                             </table>
                         </div>
-                        <p>Total: <strong id="totalCompra">0.00</strong></p>
+                        <p class="alert alert-success d-inline-block h5">Total: <strong id="totalCompra">0.00</strong></p>
                         <hr>
                         <div class="row">
                             <div class="col-md-6">
@@ -321,10 +324,15 @@
                 return `${valor / 100n}.${String(valor % 100n).padStart(2, '0')}`;
             }
 
+            function precioValido(valor) {
+                return /^\d{1,10}(\.\d{1,2})?$/.test(String(valor))
+                    && centavos(valor) <= 9999999999n;
+            }
+
             function detalleValido(item) {
                 return item && typeof item === 'object'
                     && /^\d+$/.test(String(item.articulo_id))
-                    && /^\d{1,10}(\.\d{1,2})?$/.test(String(item.precio))
+                    && precioValido(item.precio)
                     && /^\d{1,9}$/.test(String(item.cantidad))
                     && Number(item.cantidad) > 0
                     && (item.vence == null || item.vence === '' || /^\d{4}-\d{2}-\d{2}$/.test(String(item.vence)));
@@ -401,8 +409,8 @@
                     fechaVto.reportValidity();
                     return;
                 }
-                if (!/^\d{1,10}(\.\d{1,2})?$/.test(precio.value) || !subtotal.value) {
-                    mensaje.textContent = 'Ingrese un precio válido con hasta dos decimales.';
+                if (!precioValido(precio.value) || !subtotal.value) {
+                    mensaje.textContent = 'Ingrese un precio válido de hasta 99.999.999,99 con dos decimales como máximo.';
                     return;
                 }
                 const detalle = {
@@ -439,6 +447,30 @@
             });
 
             mostrar();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const estado = document.getElementById('estado');
+            const dias = document.getElementById('dias');
+            const requerido = document.getElementById('diasRequerido');
+            let diasPendientes = estado.value === 'Pendiente' ? dias.value : '';
+
+            function actualizarDias() {
+                const contado = estado.value === 'Contado';
+                if (contado && !dias.disabled) {
+                    diasPendientes = dias.value;
+                } else if (!contado && dias.disabled) {
+                    dias.value = diasPendientes;
+                }
+                if (contado) dias.value = '0';
+                dias.disabled = contado;
+                dias.required = !contado;
+                requerido.hidden = contado;
+            }
+
+            estado.addEventListener('change', actualizarDias);
+            actualizarDias();
         });
     </script>
 @stop

@@ -26,6 +26,7 @@ function entorno() {
     const campos = {
         consumoProducto: elemento(), consumoPrecio: elemento(), consumoPrecioAviso: elemento(), consumoCantidad: elemento(),
         consumoMoza: elemento(), consumoMensaje: elemento(),
+        habitacion: { value: '10' },
         pasajeros: { value: '5', disabled: false, selectedIndex: 0, options: [{ textContent: 'Ana - 123' }] },
         tablaConsumos: elemento(),
     };
@@ -50,7 +51,11 @@ function entorno() {
     }
     $.fn = { dataTable: { render: { text() { return () => {}; } } } };
     const contexto = vm.createContext({
-        $, document: { getElementById(id) { return campos[id]; }, createElement: elemento },
+        $, document: {
+            getElementById(id) { return campos[id]; },
+            querySelector() { return { value: 'Bar' }; },
+            createElement: elemento,
+        },
     });
     vm.runInContext(scriptModal, contexto);
     vm.runInContext(scriptTabla, contexto);
@@ -82,6 +87,8 @@ test('abre el modal del producto y carga un consumo temporal con pasajero y moza
     assert.equal(fila.dataset.articuloId, 8);
     assert.equal(fila.dataset.pasajeroId, '5');
     assert.equal(fila.dataset.moza, '12');
+    assert.equal(fila.dataset.habitacion, '10');
+    assert.equal(fila.dataset.punto, 'Bar');
     assert.deepEqual(fila.cells.slice(0, 8).map(celda => celda.textContent), [
         '1', '8', '<Agua>', '2.35', '0.1', '0.24', 'Ana - 123', '12',
     ]);
@@ -133,7 +140,135 @@ test('muestra cero para precios no informados y alinea importes y stocks a la de
     assert.equal(precio('25.50'), '25.50');
     assert.equal(precio(0), 0);
     assert.deepEqual(Array.from(config.columnDefs[0].targets), [0, 3, 4, 5, 6, 7]);
-    for (const titulo of ['Depósito', 'Comedor', 'Bar', 'Recepción', 'Precio']) {
+    for (const titulo of ['Deposito', 'Comedor', 'Bar', 'Recepción', 'Precio']) {
         assert.match(vista, new RegExp(`<th style="width: \\d+px; text-align: center;">${titulo}</th>`));
     }
+});
+
+function entornoGrabacion(fetch) {
+    const referencia = vista.indexOf("            const grabar = document.getElementById('grabarComanda');");
+    const inicio = vista.lastIndexOf("        document.addEventListener('DOMContentLoaded'", referencia);
+    const fin = vista.indexOf('    </script>', referencia);
+    assert.ok(referencia !== -1 && inicio !== -1 && fin !== -1);
+    const script = vista.slice(inicio, fin)
+        .replace("@json(route('comandas.store'))", '"/admin/comandas"')
+        .replace('@json(csrf_token())', '"csrf"');
+    const grabar = {
+        disabled: false, handlers: {},
+        addEventListener(evento, handler) { this.handlers[evento] = handler; },
+    };
+    const cerrar = {
+        handlers: {},
+        addEventListener(evento, handler) { this.handlers[evento] = handler; },
+    };
+    const mensaje = { textContent: '' };
+    const contenedorMensaje = { hidden: true };
+    const habitacion = {
+        value: '10', eventos: [],
+        dispatchEvent(evento) { this.eventos.push(evento.type); },
+    };
+    const punto = { value: 'Bar', checked: true };
+    const formConsumo = { reiniciado: false, reset() { this.reiniciado = true; } };
+    const consumoPrecioAviso = { textContent: 'Aviso' };
+    const consumoMensaje = { textContent: 'Mensaje' };
+    const tabla = {
+        rows: [],
+        replaceChildren() { this.rows = []; },
+    };
+    const campos = {
+        grabarComanda: grabar, cerrarComandaMensaje: cerrar, comandaMensaje: mensaje,
+        comandaMensajeContenedor: contenedorMensaje, habitacion, tablaConsumos: tabla,
+        formConsumo, consumoPrecioAviso, consumoMensaje,
+    };
+    let recargas = 0;
+    let busqueda = 'filtro';
+    const document = {
+        getElementById(id) { return campos[id]; },
+        querySelector() { return punto; },
+        addEventListener(evento, handler) { if (evento === 'DOMContentLoaded') handler(); },
+    };
+    const $ = () => ({ DataTable: () => ({
+        search(valor) { busqueda = valor; },
+        ajax: { reload() { recargas++; } },
+    }) });
+    class Event { constructor(type) { this.type = type; } }
+    vm.runInNewContext(script, { document, fetch, $, Event, console: { error() {} } });
+    return {
+        grabar, cerrar, mensaje, contenedorMensaje, habitacion, punto, tabla, formConsumo, consumoPrecioAviso, consumoMensaje,
+        recargas: () => recargas, busqueda: () => busqueda,
+    };
+}
+
+test('graba los consumos del punto elegido y muestra advertencias de correo', async () => {
+    let solicitud;
+    const campos = entornoGrabacion(async (url, opciones) => {
+        solicitud = { url, opciones };
+        return { ok: true, status: 200, json: async () => ({ mensaje: 'Guardada.', correos_enviados: 0, advertencias: ['Correo no enviado.'] }) };
+    });
+    campos.tabla.rows = [{ dataset: {
+        habitacion: '10', punto: 'Bar', articuloId: '8', pasajeroId: '5',
+        cantidad: '0.1', precio: '2.35', moza: '12',
+    } }];
+    await campos.grabar.handlers.click();
+    assert.equal(solicitud.url, '/admin/comandas');
+    assert.deepEqual(JSON.parse(solicitud.opciones.body), {
+        habitacion: '10', punto: 'Bar',
+        detalles: [{ articulo_id: '8', pasajero_id: '5', cantidad: '0.1', precio: '2.35', moza: '12' }],
+    });
+    assert.equal(campos.tabla.rows.length, 0);
+    assert.equal(campos.mensaje.textContent, 'Guardada. Se enviaron 0 correos. Correo no enviado.');
+    assert.equal(campos.contenedorMensaje.className, 'alert alert-warning');
+    assert.equal(campos.contenedorMensaje.hidden, false);
+    assert.equal(campos.habitacion.value, '');
+    assert.deepEqual(campos.habitacion.eventos, ['change']);
+    assert.equal(campos.punto.checked, false);
+    assert.equal(campos.formConsumo.reiniciado, true);
+    assert.equal(campos.consumoPrecioAviso.textContent, '');
+    assert.equal(campos.consumoMensaje.textContent, '');
+    assert.equal(campos.busqueda(), '');
+    assert.equal(campos.grabar.disabled, false);
+    assert.equal(campos.recargas(), 1);
+});
+
+test('confirma el envío y limpia el formulario cuando no hay advertencias', async () => {
+    const campos = entornoGrabacion(async () => ({
+        ok: true, status: 200, json: async () => ({ mensaje: 'Guardada.', correos_enviados: 1, advertencias: [] }),
+    }));
+    campos.tabla.rows = [{ dataset: { habitacion: '10', punto: 'Bar' } }];
+    await campos.grabar.handlers.click();
+    assert.equal(campos.mensaje.textContent, 'Guardada. Se envió 1 correo.');
+    assert.equal(campos.contenedorMensaje.className, 'alert alert-success');
+    assert.equal(campos.contenedorMensaje.hidden, false);
+    campos.cerrar.handlers.click();
+    assert.equal(campos.contenedorMensaje.hidden, true);
+    assert.equal(campos.mensaje.textContent, '');
+    assert.equal(campos.tabla.rows.length, 0);
+    assert.equal(campos.habitacion.value, '');
+    assert.equal(campos.punto.checked, false);
+});
+
+test('conserva la lista cuando hay error y evita reintentar un resultado desconocido', async () => {
+    let respuesta = { ok: false, status: 422, json: async () => ({ errors: { detalles: ['Stock insuficiente.'] } }) };
+    const campos = entornoGrabacion(async () => respuesta);
+    await campos.grabar.handlers.click();
+    assert.match(campos.mensaje.textContent, /al menos un consumo/);
+    campos.tabla.rows = [{ dataset: { habitacion: '10', punto: 'Comedor' } }];
+    await campos.grabar.handlers.click();
+    assert.match(campos.mensaje.textContent, /habitación y al punto/);
+    campos.tabla.rows[0].dataset.punto = 'Bar';
+    await campos.grabar.handlers.click();
+    assert.equal(campos.mensaje.textContent, 'Stock insuficiente.');
+    assert.equal(campos.contenedorMensaje.hidden, false);
+    campos.cerrar.handlers.click();
+    assert.equal(campos.contenedorMensaje.hidden, true);
+    assert.equal(campos.mensaje.textContent, '');
+    assert.equal(campos.tabla.rows.length, 1);
+    assert.equal(campos.habitacion.value, '10');
+    assert.equal(campos.punto.checked, true);
+    assert.equal(campos.grabar.disabled, false);
+    respuesta = { ok: false, status: 500 };
+    await campos.grabar.handlers.click();
+    assert.match(campos.mensaje.textContent, /Verifique antes de volver/);
+    assert.equal(campos.tabla.rows.length, 1);
+    assert.equal(campos.grabar.disabled, true);
 });
