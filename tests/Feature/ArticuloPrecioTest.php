@@ -30,6 +30,39 @@ class ArticuloPrecioTest extends TestCase
         ]);
     }
 
+    public function test_listado_de_ajustes_muestra_solo_movimientos_de_ese_tipo(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $usuario = User::factory()->create(['name' => 'Usuario de ajuste']);
+        $this->get(route('articulos.listar-ajustes'))->assertRedirect(route('login'));
+
+        DB::table('movimientos')->insert([
+            [
+                'articulo_id' => $articulo, 'user_id' => $usuario->id, 'tipo' => 'Movimiento',
+                'fecha' => '2026-11-19', 'cantidad' => 2, 'precio' => 0,
+                'observacion' => 'Desde Bar hasta Comedor',
+            ],
+            [
+                'articulo_id' => $articulo, 'user_id' => $usuario->id, 'tipo' => 'Ajuste',
+                'fecha' => '2026-11-18', 'cantidad' => 1.5, 'precio' => 0,
+                'observacion' => 'Entrada - Ajuste - Inventario',
+            ],
+        ]);
+
+        $this->actingAs($usuario)->get(route('articulos.listar-ajustes'))
+            ->assertOk()
+            ->assertViewIs('admin.articulos.listajustes')
+            ->assertViewHas('ajustes', fn ($ajustes) => $ajustes->count() === 1 && $ajustes->first()->articulo === 'Agua')
+            ->assertSee('id="example1"', false)
+            ->assertSee('<td class="text-right">1</td>', false)
+            ->assertSee('<td data-order="2026-11-18">18/11/2026</td>', false)
+            ->assertSee('Agua')
+            ->assertSee('1.5')
+            ->assertSee('Entrada - Ajuste - Inventario')
+            ->assertSee('Usuario de ajuste')
+            ->assertDontSee('Desde Bar hasta Comedor');
+    }
+
     public function test_listado_muestra_la_suma_del_stock_de_cada_punto(): void
     {
         $articulo = $this->crearArticulo('Agua');
@@ -52,6 +85,122 @@ class ArticuloPrecioTest extends TestCase
         $this->assertMatchesRegularExpression('~<td>Agua</td>\s*<td[^>]*>3\.375</td>\s*<td[^>]*>0</td>\s*<td[^>]*>5</td>\s*<td[^>]*>6</td>~', $response->getContent());
         $this->assertMatchesRegularExpression('~<td>Jugo</td>\s*<td[^>]*>0</td>\s*<td[^>]*>0</td>\s*<td[^>]*>8</td>\s*<td[^>]*>0</td>~', $response->getContent());
         $this->assertMatchesRegularExpression('~<td>Sin stock</td>\s*(?:<td[^>]*>0</td>\s*){4}~', $response->getContent());
+    }
+
+    public function test_boton_mover_abre_el_formulario_del_articulo_con_stock_por_punto(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        DB::table('stocks')->insert(['articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 3]);
+        $this->get(route('articulos.mover', $articulo))->assertRedirect(route('login'));
+        $this->actingAs(User::factory()->create())
+            ->get(route('articulos.index'))->assertOk()
+            ->assertSee('href="'.route('articulos.mover', $articulo).'"', false);
+        $this->get(route('articulos.mover', $articulo))
+            ->assertOk()->assertViewIs('admin.articulos.mover')
+            ->assertSee('value="Agua"', false)->assertSee('value="Subrubro Agua"', false)
+            ->assertViewHas('stocksPorPunto', fn ($stocks) => $stocks['Deposito'] === 3.0 && $stocks['Bar'] === 0.0);
+        $this->get(route('articulos.mover', 999999))->assertNotFound();
+    }
+
+    public function test_mueve_stock_entre_puntos_y_crea_el_destino_si_no_existe(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $origen = DB::table('stocks')->insertGetId([
+            'articulo_id' => $articulo, 'punto' => 'Deposito', 'cantidad' => 5.125, 'precioVta' => 25,
+        ]);
+        $bar = DB::table('stocks')->insertGetId([
+            'articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 2.5, 'precioVta' => 25,
+        ]);
+        $usuario = User::factory()->create();
+        $this->actingAs($usuario);
+        $this->post(route('articulos.grabar-movimiento', $articulo), [
+            'punto' => 'Deposito', 'punto_hasta' => 'Bar', 'cantidad' => 2,
+        ])->assertRedirect(route('articulos.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('stocks', ['id' => $origen, 'cantidad' => 3.125]);
+        $this->assertDatabaseHas('stocks', ['id' => $bar, 'cantidad' => 4.5, 'precioVta' => 25]);
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulo, 'user_id' => $usuario->id, 'tipo' => 'Movimiento',
+            'cantidad' => 2, 'precio' => 0, 'observacion' => 'Desde Deposito hasta Bar',
+            'fecha' => now()->toDateString(),
+        ]);
+
+        $this->post(route('articulos.grabar-movimiento', $articulo), [
+            'punto' => 'Bar', 'punto_hasta' => 'Recepción', 'cantidad' => 4,
+        ])->assertRedirect(route('articulos.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('stocks', ['id' => $bar, 'cantidad' => 0.5]);
+        $this->assertDatabaseHas('stocks', [
+            'articulo_id' => $articulo, 'punto' => 'Recepción', 'cantidad' => 4, 'precioVta' => 25,
+        ]);
+        $this->assertDatabaseCount('movimientos', 2);
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulo, 'user_id' => $usuario->id, 'tipo' => 'Movimiento',
+            'cantidad' => 4, 'precio' => 0, 'observacion' => 'Desde Bar hasta Recepción',
+        ]);
+    }
+
+    public function test_mover_valida_los_puntos_y_la_cantidad_sin_modificar_stock(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $this->actingAs(User::factory()->create());
+        DB::table('stocks')->insert(['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 2]);
+        $url = route('articulos.grabar-movimiento', $articulo);
+        $datos = ['punto' => 'Bar', 'punto_hasta' => 'Comedor', 'cantidad' => 1];
+        foreach ([
+            [['punto_hasta' => 'Bar'], 'punto_hasta'],
+            [['punto_hasta' => 'Inválido'], 'punto_hasta'],
+            [['punto' => 'Inválido'], 'punto'],
+            [['cantidad' => 0], 'cantidad'],
+            [['cantidad' => '1.5'], 'cantidad'],
+            [['cantidad' => 3], 'cantidad'],
+            [['punto' => 'Deposito'], 'cantidad'],
+        ] as [$cambio, $campo]) {
+            $this->from(route('articulos.mover', $articulo))->post($url, array_replace($datos, $cambio))
+                ->assertRedirect(route('articulos.mover', $articulo))->assertSessionHasErrors($campo);
+        }
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 2]);
+        $this->assertDatabaseCount('stocks', 1);
+        $this->assertDatabaseCount('movimientos', 0);
+    }
+
+    public function test_mover_revierte_el_stock_si_no_se_puede_registrar_el_movimiento(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        DB::table('stocks')->insert(['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 3]);
+        DB::statement("CREATE TRIGGER fallar_movimiento BEFORE INSERT ON movimientos BEGIN SELECT RAISE(ABORT, 'Error de prueba'); END");
+        $this->actingAs(User::factory()->create())->post(route('articulos.grabar-movimiento', $articulo), [
+            'punto' => 'Bar', 'punto_hasta' => 'Comedor', 'cantidad' => 1,
+        ])->assertInternalServerError();
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 3]);
+        $this->assertDatabaseMissing('stocks', ['articulo_id' => $articulo, 'punto' => 'Comedor']);
+        $this->assertDatabaseCount('movimientos', 0);
+    }
+
+    public function test_mover_rechaza_desbordamiento_y_modifica_solo_el_primer_stock_por_punto(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $origen = DB::table('stocks')->insertGetId(['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 3]);
+        $duplicado = DB::table('stocks')->insertGetId(['articulo_id' => $articulo, 'punto' => 'Bar', 'cantidad' => 6]);
+        $destino = DB::table('stocks')->insertGetId(['articulo_id' => $articulo, 'punto' => 'Comedor', 'cantidad' => '999999999.999']);
+        $this->actingAs(User::factory()->create());
+        $datos = ['punto' => 'Bar', 'punto_hasta' => 'Comedor', 'cantidad' => 1];
+        $this->post(route('articulos.grabar-movimiento', $articulo), $datos)->assertSessionHasErrors('cantidad');
+        $this->assertDatabaseHas('stocks', ['id' => $origen, 'cantidad' => 3]);
+        $this->assertDatabaseHas('stocks', ['id' => $destino, 'cantidad' => 999999999.999]);
+        DB::table('stocks')->where('id', $destino)->update(['cantidad' => 2]);
+        $this->post(route('articulos.grabar-movimiento', $articulo), $datos)
+            ->assertRedirect(route('articulos.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('stocks', ['id' => $origen, 'cantidad' => 2]);
+        $this->assertDatabaseHas('stocks', ['id' => $duplicado, 'cantidad' => 6]);
+        $this->assertDatabaseHas('stocks', ['id' => $destino, 'cantidad' => 3]);
+    }
+
+    public function test_mover_requiere_autenticacion_y_articulo_existente(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $datos = ['punto' => 'Bar', 'punto_hasta' => 'Comedor', 'cantidad' => 1];
+        $this->post(route('articulos.grabar-movimiento', $articulo), $datos)->assertRedirect(route('login'));
+        $this->actingAs(User::factory()->create())->post(route('articulos.grabar-movimiento', 999999), $datos)->assertNotFound();
+        $this->assertDatabaseCount('stocks', 0);
     }
 
     public function test_menu_de_precios_abre_el_listado_para_seleccionar_un_articulo(): void

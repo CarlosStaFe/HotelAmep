@@ -110,6 +110,9 @@ Route::get('/admin/articulos/index', [App\Http\Controllers\ArticuloController::c
 Route::get('/admin/articulos/create', [App\Http\Controllers\ArticuloController::class, 'create'])
 ->name('articulos.create')
 ->middleware('auth');
+Route::get('/admin/articulos/listar-ajustes', [App\Http\Controllers\ArticuloController::class, 'listarAjustes'])
+->name('articulos.listar-ajustes')
+->middleware('auth');
 Route::post('/admin/articulos/create', [App\Http\Controllers\ArticuloController::class, 'store'])
 ->name('articulos.store')
 ->middleware('auth');
@@ -130,6 +133,12 @@ Route::delete('/admin/articulos/{id}', [App\Http\Controllers\ArticuloController:
 ->middleware('auth');
 Route::get('/admin/articulos/{id}/ajuste', [App\Http\Controllers\ArticuloController::class, 'ajuste'])
 ->name('articulos.ajuste')
+->middleware('auth');
+Route::get('/admin/articulos/{id}/mover', [App\Http\Controllers\ArticuloController::class, 'mover'])
+->name('articulos.mover')
+->middleware('auth');
+Route::post('/admin/articulos/{id}/mover', [App\Http\Controllers\ArticuloController::class, 'grabarMovimiento'])
+->name('articulos.grabar-movimiento')
 ->middleware('auth');
 Route::post('/admin/articulos/{id}/grabar-ajuste', [App\Http\Controllers\ArticuloController::class, 'grabar'])
 ->name('articulos.grabar')
@@ -234,6 +243,9 @@ Route::get('/admin/pasajeros/habitacion/{habitacion}', [App\Http\Controllers\Pas
 ->middleware('auth');
 
 //RUTAS PARA COMANDAS
+Route::get('/admin/comandas/index', [App\Http\Controllers\ComandaController::class, 'index'])
+->name('comandas.index')
+->middleware('auth');
 Route::get('/admin/comandas/cargar', [App\Http\Controllers\ArticuloController::class, 'cargarArticulos'])
 ->name('comandas.cargar')
 ->middleware('auth');

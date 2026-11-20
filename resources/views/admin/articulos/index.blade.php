@@ -61,9 +61,9 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ url('/admin/articulos/' . $articulo->id) }}" title="Ver" class="btn btn-success"><i class="bi bi-eye"></i></a>
                                             <a href="{{ url('/admin/articulos/' . $articulo->id . '/edit') }}" title="Editar" class="btn btn-info"><i class="bi bi-pencil"></i></a>
-                                            <a href="{{ url('/admin/articulos/' . $articulo->id . '/delete') }}" title="Eliminar" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                                            <a href="{{ route('articulos.mover', $articulo->id) }}" title="Mover" class="btn btn-success"><i class="bi bi-arrow-left-right"></i></a>
+{{--                                             <a href="{{ url('/admin/articulos/' . $articulo->id . '/delete') }}" title="Eliminar" class="btn btn-danger"><i class="bi bi-trash"></i></a> --}}
                                             <a href="{{ url('/admin/articulos/' . $articulo->id . '/ajuste') }}" title="Ajuste" class="btn btn-warning"><i class="bi bi-wrench"></i></a>
                                             <a href="{{ route('articulos.precio', $articulo->id) }}" title="Modificar precio" aria-label="Modificar precio" class="btn btn-primary"><i class="bi bi-currency-dollar"></i></a>
                                         </div>

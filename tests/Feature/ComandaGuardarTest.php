@@ -76,6 +76,193 @@ class ComandaGuardarTest extends TestCase
         ];
     }
 
+    public function test_listado_muestra_todos_los_consumos_y_devoluciones(): void
+    {
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create(['name' => 'Operador']);
+        $fecha = '2026-11-19 17:10:00';
+        foreach ([
+            [$pasajeros[0], $articulos[0], 'Bar', 2, 4.70, 'Abierta', null],
+            [$pasajeros[1], $articulos[1], 'Comedor', -1, -4, 'Cerrada', 'Devolucion'],
+        ] as [$pasajero, $articulo, $punto, $cantidad, $total, $estado, $observacion]) {
+            DB::table('comandas')->insert([
+                'articulo_id' => $articulo, 'pasajero_id' => $pasajero, 'user_id' => $usuario->id,
+                'fecha' => $fecha, 'habitacion' => '10', 'puntoVenta' => $punto,
+                'cantidad' => $cantidad, 'precio' => $articulo === $articulos[0] ? 2.35 : 4,
+                'total' => $total, 'moza' => '12', 'estado' => $estado, 'observacion' => $observacion,
+                'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+            ]);
+        }
+
+        $this->actingAs($usuario)->get(route('comandas.index'))
+            ->assertOk()->assertViewIs('admin.comandas.index')
+            ->assertViewHas('comandas', fn ($comandas) => $comandas->count() === 2)
+            ->assertSee('tablaComandas')
+            ->assertSee('Agua &lt;fría&gt;', false)->assertSee('Café')
+            ->assertSee('Ana')->assertSee('Luis')->assertSee('Comedor')
+            ->assertSee('Devolucion')->assertSee('-1')->assertSee('Cerrada')->assertSee('Operador');
+    }
+
+    public function test_selector_contiene_solo_habitaciones_con_comandas_abiertas_sin_duplicados(): void
+    {
+        [, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        $fecha = '2026-11-19 17:10:00';
+        foreach ([['10', 'Abierta'], ['10', 'Abierta'], ['2', 'Abierta'], ['30', 'Cerrada']] as [$habitacion, $estado]) {
+            DB::table('comandas')->insert([
+                'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+                'fecha' => $fecha, 'habitacion' => $habitacion, 'puntoVenta' => 'Bar',
+                'cantidad' => 1, 'precio' => 2.35, 'total' => 2.35, 'estado' => $estado,
+                'fecha_creacion' => $fecha, 'fecha_actualizacion' => $fecha,
+            ]);
+        }
+
+        $this->actingAs($usuario)->get(route('comandas.index'))
+            ->assertOk()
+            ->assertViewHas('habitacionesAbiertas', fn ($habitaciones) => $habitaciones->all() === ['2', '10'])
+            ->assertSeeInOrder(['id="habitacionCerrar"', 'value="2"', 'value="10"', 'id="cerrarComanda"'], false)
+            ->assertDontSee('<option value="30">', false);
+    }
+
+    public function test_incluye_el_numero_de_habitacion_en_el_correo_de_cada_pasajero(): void
+    {
+        Mail::fake();
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+
+        $this->actingAs(User::factory()->create())->postJson(route('comandas.store'), [
+            'habitacion' => $habitacion, 'punto' => 'Bar', 'detalles' => $this->detalles($pasajeros, $articulos),
+        ])->assertOk()->assertJsonPath('correos_enviados', 2);
+
+        foreach (['ana@example.com', 'luis@example.com'] as $email) {
+            Mail::assertSent(ComandaMail::class, function (ComandaMail $mail) use ($email) {
+                return $mail->hasTo($email) && str_contains($mail->render(), 'Habitación: 10');
+            });
+        }
+    }
+
+    public function test_devuelve_consumo_guardado_y_notifica_al_pasajero(): void
+    {
+        Mail::fake();
+        $this->travelTo(Carbon::parse('2026-11-19 17:10:00'));
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        $this->actingAs($usuario);
+        $detalle = $this->detalles($pasajeros, $articulos)[1];
+        $carga = ['habitacion' => $habitacion, 'punto' => 'Bar', 'detalles' => [$detalle]];
+        $this->postJson(route('comandas.store'), $carga)->assertOk();
+        Mail::fake();
+
+        DB::table('stocks')->where('articulo_id', $articulos[1])->update(['precioVta' => 6]);
+        $detalle['precio'] = '6.00';
+        $detalle['cantidad'] = '0.5';
+        $detalle['devolucion'] = true;
+        $carga['detalles'] = [$detalle];
+        $this->postJson(route('comandas.store'), $carga)->assertOk()->assertJsonPath('correos_enviados', 1);
+
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulos[1], 'punto' => 'Bar', 'cantidad' => 7.5]);
+        $this->assertDatabaseHas('comandas', [
+            'articulo_id' => $articulos[1], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+            'cantidad' => -0.5, 'precio' => 6, 'total' => -3, 'observacion' => 'Devolucion',
+        ]);
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulos[1], 'user_id' => $usuario->id, 'tipo' => 'Devolucion',
+            'cantidad' => 0.5, 'precio' => 6, 'fecha' => '2026-11-19',
+        ]);
+        Mail::assertSent(ComandaMail::class, function (ComandaMail $mail) {
+            $html = $mail->render();
+
+            return $mail->hasTo('ana@example.com') && str_contains($html, 'Café (Devolución)')
+                && str_contains($html, '-0.5') && str_contains($html, '-3.00') && $mail->total === '-3.00';
+        });
+    }
+
+    public function test_rechaza_devoluciones_excesivas_y_consumos_de_la_misma_lista(): void
+    {
+        Mail::fake();
+        $this->travelTo(Carbon::parse('2026-11-19 17:10:00'));
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $this->actingAs(User::factory()->create());
+        $consumo = $this->detalles($pasajeros, $articulos)[1];
+        $devolucion = $consumo;
+        $devolucion['cantidad'] = '1';
+        $devolucion['devolucion'] = true;
+        $carga = ['habitacion' => $habitacion, 'punto' => 'Bar', 'detalles' => [$consumo, $devolucion]];
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $this->assertSame(0, DB::table('comandas')->count());
+        $this->assertSame(0, DB::table('movimientos')->count());
+
+        $carga['detalles'] = [$consumo];
+        $this->postJson(route('comandas.store'), $carga)->assertOk();
+        $devolucion['cantidad'] = '1.1';
+        $carga['detalles'] = [$devolucion, $devolucion];
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $this->assertSame(1, DB::table('comandas')->count());
+        $this->assertSame(1, DB::table('movimientos')->count());
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulos[1], 'punto' => 'Bar', 'cantidad' => 7]);
+
+        $devolucion['cantidad'] = '2';
+        $carga['detalles'] = [$devolucion];
+        $this->postJson(route('comandas.store'), $carga)->assertOk();
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulos[1], 'punto' => 'Bar', 'cantidad' => 9]);
+    }
+
+    public function test_no_devuelve_consumos_anteriores_a_la_estadia_actual(): void
+    {
+        Mail::fake();
+        $this->travelTo(Carbon::parse('2026-11-18 17:10:00'));
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $this->actingAs(User::factory()->create());
+        $detalle = $this->detalles($pasajeros, $articulos)[1];
+        $carga = ['habitacion' => $habitacion, 'punto' => 'Bar', 'detalles' => [$detalle]];
+        $this->postJson(route('comandas.store'), $carga)->assertOk();
+        $this->travelTo(Carbon::parse('2026-11-19 17:10:00'));
+        $detalle['devolucion'] = true;
+        $carga['detalles'] = [$detalle];
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulos[1], 'punto' => 'Bar', 'cantidad' => 7]);
+    }
+
+    public function test_la_devolucion_corresponde_al_pasajero_y_punto_del_consumo(): void
+    {
+        Mail::fake();
+        $this->travelTo(Carbon::parse('2026-11-19 17:10:00'));
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $this->actingAs(User::factory()->create());
+        $detalle = $this->detalles($pasajeros, $articulos)[1];
+        $carga = ['habitacion' => $habitacion, 'punto' => 'Bar', 'detalles' => [$detalle]];
+        $this->postJson(route('comandas.store'), $carga)->assertOk();
+
+        $detalle['devolucion'] = true;
+        $detalle['pasajero_id'] = $pasajeros[1];
+        $carga['detalles'] = [$detalle];
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $detalle['pasajero_id'] = $pasajeros[0];
+        $carga['detalles'] = [$detalle];
+        $carga['punto'] = 'Comedor';
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $this->assertSame(1, DB::table('comandas')->count());
+        $this->assertSame(1, DB::table('movimientos')->count());
+    }
+
+    public function test_rechaza_devolucion_si_excede_la_capacidad_del_stock(): void
+    {
+        Mail::fake();
+        $this->travelTo(Carbon::parse('2026-11-19 17:10:00'));
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $this->actingAs(User::factory()->create());
+        $detalle = $this->detalles($pasajeros, $articulos)[1];
+        $carga = ['habitacion' => $habitacion, 'punto' => 'Bar', 'detalles' => [$detalle]];
+        $this->postJson(route('comandas.store'), $carga)->assertOk();
+        DB::table('stocks')->where('articulo_id', $articulos[1])->update(['cantidad' => '999999999.999']);
+        $detalle['devolucion'] = true;
+        $carga['detalles'] = [$detalle];
+        $this->postJson(route('comandas.store'), $carga)->assertUnprocessable()->assertJsonValidationErrors('detalles');
+        $this->assertSame(1, DB::table('comandas')->count());
+        $this->assertSame(1, DB::table('movimientos')->count());
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulos[1], 'punto' => 'Bar', 'cantidad' => 999999999.999]);
+    }
+
     public function test_guarda_consumos_descuenta_stock_y_envia_un_correo_privado_a_cada_pasajero(): void
     {
         Mail::fake();

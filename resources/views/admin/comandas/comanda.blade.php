@@ -134,6 +134,7 @@
                         <div id="consumoMensaje" class="text-danger" role="alert"></div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" id="devolverConsumo" style="margin-right: auto;">Devolver</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Cargar</button>
                     </div>
@@ -301,6 +302,7 @@
                 abrirModalConsumo(articulo);
             });
             $('#formConsumo').on('submit', cargarConsumo);
+            $('#devolverConsumo').on('click', function(evento) { cargarConsumo(evento, true); });
         });
     </script>
 
@@ -320,7 +322,7 @@
             $('#consumoModal').modal('show');
         }
 
-        function cargarConsumo(evento) {
+        function cargarConsumo(evento, devolucion = false) {
             evento.preventDefault();
             const mensaje = document.getElementById('consumoMensaje');
             const cantidad = document.getElementById('consumoCantidad').value;
@@ -370,9 +372,11 @@
             fila.dataset.moza = moza;
             fila.dataset.habitacion = habitacion.value;
             fila.dataset.punto = punto.value;
+            if (devolucion) fila.dataset.devolucion = '1';
             const valores = [
-                String(cuerpo.rows.length + 1), String(articuloConsumo.id), articuloConsumo.nombre,
-                formatearImporte(centavos), cantidad, formatearImporte(importe),
+                String(cuerpo.rows.length + 1), String(articuloConsumo.id), articuloConsumo.nombre + (devolucion ? ' (Devolución)' : ''),
+                formatearImporte(centavos), (devolucion ? '-' : '') + cantidad,
+                (devolucion && importe > 0n ? '-' : '') + formatearImporte(importe),
                 pasajero.options[pasajero.selectedIndex].textContent, moza,
             ];
             valores.forEach((valor, indice) => {
@@ -440,6 +444,7 @@
                     cantidad: fila.dataset.cantidad,
                     precio: fila.dataset.precio,
                     moza: fila.dataset.moza,
+                    ...(fila.dataset.devolucion === '1' ? { devolucion: true } : {}),
                 }));
                 grabar.disabled = true;
                 let respuesta;

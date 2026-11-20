@@ -18,6 +18,7 @@ class ComandaMail extends Mailable
         public string $fecha,
         public array $consumos,
         public string $total,
+        public string $habitacion,
     ) {}
 
     public function envelope(): Envelope

@@ -11,6 +11,18 @@ class ComandaArticulosTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_listar_comandas_requiere_autenticacion(): void
+    {
+        $this->get(route('comandas.index'))->assertRedirect(route('login'));
+
+        $this->actingAs(User::factory()->create())
+            ->get('/admin/comandas/index')
+            ->assertOk()
+            ->assertViewIs('admin.comandas.index')
+            ->assertViewHas('habitacionesAbiertas', fn ($habitaciones) => $habitaciones->isEmpty())
+            ->assertSee('Listar Comandas');
+    }
+
     public function test_comanda_shows_rooms_with_occupied_reservations_only_once(): void
     {
         $user = User::factory()->create();

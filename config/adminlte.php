@@ -516,7 +516,7 @@ return [
                     'classes' => 'bg-cyan text-white',
                 ],
                 [
-                    'text' => 'Listar Consumo',
+                    'text' => 'Listar Comandas',
                     'url' => '/admin/comandas/index',
                     'icon' => 'bi bi-list-check',
                     'classes' => 'bg-cyan text-white',

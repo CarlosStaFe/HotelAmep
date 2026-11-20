@@ -12,6 +12,162 @@ assert.ok(inicioTabla !== -1 && finTabla !== -1 && inicioModal !== -1 && finModa
 const scriptTabla = vista.slice(inicioTabla, finTabla).replace("@json(route('comandas.cargar'))", '"/admin/comandas/cargar"');
 const scriptModal = vista.slice(inicioModal, finModal);
 
+function opcionesListado(document = {}, tabla = {}, pdfMake = undefined, fetch = undefined, FileReader = undefined, Date = globalThis.Date) {
+    const listado = readFileSync(new URL('../../resources/views/admin/comandas/index.blade.php', import.meta.url), 'utf8');
+    const inicio = listado.indexOf('        $(function() {');
+    const fin = listado.indexOf('    </script>', inicio);
+    assert.ok(inicio !== -1 && fin !== -1);
+    let opciones;
+    const $ = selector => {
+        if (typeof selector === 'function') return selector();
+        assert.equal(selector, '#tablaComandas');
+        return { DataTable(config) { opciones = config; return tabla; } };
+    };
+    $.fn = { dataTable: { ext: { type: { order: {} } } } };
+    if (!document.getElementById) document.getElementById = () => ({ addEventListener() {} });
+    const script = listado.slice(inicio, fin).replace("@json(asset('assets/img/pinarverde.png'))", '"/assets/img/pinarverde.png"');
+    vm.runInNewContext(script, { $, document, pdfMake, fetch, FileReader, Date, console: { error() {} } });
+    return opciones;
+}
+
+test('el listado ordena por habitación y luego por fecha ascendente', () => {
+    const opciones = opcionesListado();
+    assert.deepEqual(Array.from(opciones.order, criterio => Array.from(criterio)), [[2, 'asc'], [1, 'asc'], [0, 'asc']]);
+});
+
+test('genera PDF de comandas abiertas de la habitación por pasajero y fecha, sin depender de filtros', async () => {
+    const campos = {};
+    for (const id of ['habitacionCerrar', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'cerrarComanda']) {
+        campos[id] = { value: '', handlers: {}, addEventListener(evento, callback) { this.handlers[evento] = callback; } };
+    }
+    const fila = (id, fecha, habitacion, pasajero, importe, estado, pasajeroId, precio = '4.00') => ({
+        dataset: { pasajeroId },
+        cells: [id, fecha, habitacion, 'Bar', pasajero, 'Café', '1', precio, importe, '3', estado, '']
+            .map(textContent => ({ textContent })),
+    });
+    const filas = [
+        fila('3', '2026-11-20 12:00:00', '10', 'Luis', '4.00', 'Abierta', '2'),
+        fila('2', '2026-11-20 11:00:00', '10', 'Ana', '-1234.56', 'Abierta', '1'),
+        fila('1', '2026-11-19 10:00:00', '10', 'Ana', '1234567.89', 'Abierta', '1', '1234.5'),
+        fila('4', '2026-11-20 10:00:00', '10', 'Ana', '100.00', 'Cerrada', '1'),
+        fila('5', '2026-11-20 10:00:00', '100', 'Ana', '100.00', 'Abierta', '1'),
+        fila('6', '2026-11-18 10:00:00', '10', 'Ana', '0.10', 'Abierta', '3'),
+    ];
+    const tabla = { rows(selector) {
+        assert.equal(selector.search, 'none');
+        return { nodes: () => ({ toArray: () => filas }) };
+    } };
+    let pdf;
+    let archivo;
+    const pdfMake = { createPdf(definicion) {
+        pdf = definicion;
+        return { download(nombre) { archivo = nombre; } };
+    } };
+    const fetch = async url => {
+        assert.equal(url, '/assets/img/pinarverde.png');
+        return { ok: true, blob: async () => 'imagen' };
+    };
+    class FileReader {
+        readAsDataURL(blob) { assert.equal(blob, 'imagen'); this.result = 'data:image/png;base64,logo'; this.onload(); }
+    }
+    const ahora = new Date('2026-11-20T16:55:16');
+    class FechaFija extends Date { constructor() { super(ahora); } }
+    opcionesListado({ getElementById: id => campos[id] }, tabla, pdfMake, fetch, FileReader, FechaFija);
+    await campos.cerrarComanda.handlers.click();
+    assert.equal(campos.comandaMensaje.textContent, 'Seleccione una habitación.');
+    assert.equal(pdf, undefined);
+    campos.habitacionCerrar.value = '10';
+    await campos.cerrarComanda.handlers.click();
+    assert.equal(campos.comandaMensajeContenedor.hidden, true);
+    assert.equal(archivo, 'comanda_10_2026-11-20.pdf');
+    assert.equal(pdf.pageSize, 'A4');
+    assert.equal(pdf.pageOrientation, 'portrait');
+    assert.equal(pdf.content[0].columns[0].image, 'data:image/png;base64,logo');
+    assert.equal(pdf.content[0].columns[1].text, 'Hotel Pinar del Río');
+    assert.equal(pdf.content[0].columns[2].text, `Generado: ${new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'medium', hour12: false }).format(ahora)}`);
+    assert.equal(pdf.content[1].text, 'Consumos abiertos - Habitación 10');
+    const cuerpo = pdf.content[2].table.body;
+    assert.ok(cuerpo[0].every(celda => celda.bold === true));
+    assert.equal(cuerpo[1][5], '1,234.50');
+    for (const fila of cuerpo.slice(1).filter(fila => typeof fila[0] === 'object')) {
+        assert.equal(fila[0].bold, true);
+        assert.equal(fila[6].bold, true);
+    }
+    assert.deepEqual(Array.from(cuerpo.slice(1), row => [
+        row[0].text || row[0], typeof row[1] === 'string' ? row[1] : '', row[6].text || row[6],
+    ]), [
+        ['Ana', '2026-11-19 10:00:00', '1,234,567.89'],
+        ['Ana', '2026-11-20 11:00:00', '-1,234.56'],
+        ['Total pasajero: Ana (ID 1)', '', '1,233,333.33'],
+        ['Ana', '2026-11-18 10:00:00', '0.10'],
+        ['Total pasajero: Ana (ID 3)', '', '0.10'],
+        ['Luis', '2026-11-20 12:00:00', '4.00'],
+        ['Total pasajero: Luis (ID 2)', '', '4.00'],
+        ['Total habitación 10', '', '1,233,337.43'],
+    ]);
+    campos.habitacionCerrar.value = '30';
+    await campos.cerrarComanda.handlers.click();
+    assert.match(campos.comandaMensaje.textContent, /No hay comandas abiertas/);
+});
+
+test('informa el error si no se puede cargar el logo del PDF', async () => {
+    const campos = {};
+    for (const id of ['habitacionCerrar', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'cerrarComanda']) {
+        campos[id] = { value: '10', handlers: {}, addEventListener(evento, callback) { this.handlers[evento] = callback; } };
+    }
+    const fila = { dataset: { pasajeroId: '1' }, cells: ['1', '2026-11-20 12:00:00', '10', 'Bar', 'Ana', 'Agua', '1', '4', '4', '1', 'Abierta', '']
+        .map(textContent => ({ textContent })) };
+    const tabla = { rows: () => ({ nodes: () => ({ toArray: () => [fila] }) }) };
+    let creado = false;
+    const pdfMake = { createPdf() { creado = true; } };
+    opcionesListado({ getElementById: id => campos[id] }, tabla, pdfMake, async () => ({ ok: false, status: 404 }));
+    await campos.cerrarComanda.handlers.click();
+    assert.match(campos.comandaMensaje.textContent, /No se pudo cargar el logo/);
+    assert.equal(campos.cerrarComanda.disabled, false);
+    assert.equal(creado, false);
+});
+
+test('informa si no está disponible la herramienta de PDF', () => {
+    const campos = {};
+    for (const id of ['habitacionCerrar', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'cerrarComanda']) {
+        campos[id] = { value: '10', handlers: {}, addEventListener(evento, callback) { this.handlers[evento] = callback; } };
+    }
+    opcionesListado({ getElementById: id => campos[id] });
+    campos.cerrarComanda.handlers.click();
+    assert.match(campos.comandaMensaje.textContent, /No se pudo cargar/);
+    assert.equal(campos.comandaMensajeContenedor.hidden, false);
+});
+
+test('totaliza importes filtrados por habitación al terminar cada grupo, incluso entre páginas', () => {
+    const document = {
+        createElement(tag) {
+            return { tag, children: [], append(...hijos) { this.children.push(...hijos); } };
+        },
+    };
+    const opciones = opcionesListado(document);
+    const fila = (habitacion, importe) => ({
+        cells: Array.from({ length: 9 }, (_, i) => ({ textContent: i === 2 ? habitacion : i === 8 ? importe : '' })),
+        after(total) { this.total = total; },
+    });
+    const filas = [fila('10', '0.10'), fila('10', '0.20'), fila('10', '-0.01'), fila('20', '-4.00')];
+    let pagina = filas.slice(0, 2);
+    const api = { rows(selector) {
+        const elementos = selector.page === 'current' ? pagina : filas;
+        return { nodes: () => ({ toArray: () => elementos }) };
+    } };
+    opciones.drawCallback.call({ api: () => api });
+    assert.equal(filas[1].total, undefined);
+    pagina = filas.slice(2);
+    opciones.drawCallback.call({ api: () => api });
+    assert.equal(filas[2].total.children[0].textContent, 'Total habitación 10');
+    assert.equal(filas[2].total.children[1].textContent, '0.29');
+    assert.equal(filas[3].total.children[0].textContent, 'Total habitación 20');
+    assert.equal(filas[3].total.children[1].textContent, '-4.00');
+    filas.splice(0, 1);
+    opciones.drawCallback.call({ api: () => api });
+    assert.equal(filas[1].total.children[1].textContent, '0.19');
+});
+
 function entorno() {
     function elemento() {
         return {
@@ -36,6 +192,7 @@ function entorno() {
     let config;
     let click;
     let submit;
+    let devolver;
     const modal = [];
     const dataTable = {
         row() { return { data: () => articulo }; },
@@ -46,6 +203,7 @@ function entorno() {
         if (selector === '#example1') return { DataTable(opciones) { config = opciones; return dataTable; } };
         if (selector === '#example1 tbody') return { on(evento, subselector, handler) { click = handler; } };
         if (selector === '#formConsumo') return { on(evento, handler) { submit = handler; } };
+        if (selector === '#devolverConsumo') return { on(evento, handler) { devolver = handler; } };
         if (selector === '#consumoModal') return { modal(accion) { modal.push(accion); } };
         return { closest() { return { hasClass() { return false; } }; } };
     }
@@ -63,6 +221,7 @@ function entorno() {
         campos, modal, config,
         abrir(producto) { articulo = producto; click.call({}); },
         cargar() { let prevenido = false; submit({ preventDefault() { prevenido = true; } }); assert.ok(prevenido); },
+        devolver() { let prevenido = false; devolver({ preventDefault() { prevenido = true; } }); assert.ok(prevenido); },
     };
 }
 
@@ -104,6 +263,28 @@ test('abre el modal del producto y carga un consumo temporal con pasajero y moza
     fila.cells[8].children[0].handlers.click();
     assert.equal(campos.tablaConsumos.rows.length, 1);
     assert.equal(campos.tablaConsumos.rows[0].cells[0].textContent, '1');
+});
+
+test('agrega una devolución negativa a la lista temporal y la envía al grabar', async () => {
+    const { campos, abrir, devolver } = entorno();
+    abrir({ id: 8, nombre: 'Agua', precio: '2.35' });
+    campos.consumoCantidad.value = '0.5';
+    campos.consumoMoza.value = '12';
+    devolver();
+    const fila = campos.tablaConsumos.rows[0];
+    assert.equal(fila.dataset.devolucion, '1');
+    assert.equal(fila.cells[2].textContent, 'Agua (Devolución)');
+    assert.equal(fila.cells[4].textContent, '-0.5');
+    assert.equal(fila.cells[5].textContent, '-1.18');
+    let solicitud;
+    const grabacion = entornoGrabacion(async (url, opciones) => {
+        solicitud = JSON.parse(opciones.body);
+        return { ok: true, status: 200, json: async () => ({ mensaje: 'Guardada.', correos_enviados: 0, advertencias: [] }) };
+    });
+    grabacion.tabla.rows = [fila];
+    await grabacion.grabar.handlers.click();
+    assert.equal(solicitud.detalles[0].devolucion, true);
+    assert.equal(solicitud.detalles[0].cantidad, '0.5');
 });
 
 test('no carga datos inválidos ni productos sin precio', () => {

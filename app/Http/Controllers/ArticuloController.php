@@ -25,6 +25,21 @@ class ArticuloController extends Controller
         return view('admin.articulos.index', compact('articulos'));
     }
 
+    public function listarAjustes()
+    {
+        $ajustes = DB::table('movimientos')
+            ->join('articulos', 'movimientos.articulo_id', '=', 'articulos.id')
+            ->join('users', 'movimientos.user_id', '=', 'users.id')
+            ->where('movimientos.tipo', 'Ajuste')
+            ->select('movimientos.id', 'movimientos.fecha', 'movimientos.cantidad', 'movimientos.precio',
+                'movimientos.observacion', 'articulos.nombre as articulo', 'users.name as usuario')
+            ->orderByDesc('movimientos.fecha')
+            ->orderByDesc('movimientos.id')
+            ->get();
+
+        return view('admin.articulos.listajustes', compact('ajustes'));
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -146,6 +161,89 @@ class ArticuloController extends Controller
     public function ajuste($id)
     {
         $articulo = Articulo::with('subrubro.rubro')->findOrFail($id);
+        $stocksPorPunto = $this->stocksPorPunto($articulo);
+
+        return view('admin.articulos.ajuste', compact('articulo', 'stocksPorPunto'));
+    }
+
+    public function mover($id)
+    {
+        $articulo = Articulo::with('subrubro.rubro')->findOrFail($id);
+        $stocksPorPunto = $this->stocksPorPunto($articulo);
+
+        return view('admin.articulos.mover', compact('articulo', 'stocksPorPunto'));
+    }
+
+    public function grabarMovimiento(Request $request, $id)
+    {
+        $datos = $request->validate([
+            'cantidad' => 'required|integer|between:1,999999999',
+            'punto' => 'required|in:Deposito,Comedor,Bar,Recepción',
+            'punto_hasta' => 'required|in:Deposito,Comedor,Bar,Recepción|different:punto',
+        ], [
+            'punto_hasta.different' => 'El punto de destino debe ser distinto del punto de origen.',
+        ]);
+
+        DB::transaction(function () use ($id, $datos, $request) {
+            Articulo::whereKey($id)->lockForUpdate()->firstOrFail();
+            $stocks = [];
+            foreach ([$datos['punto'], $datos['punto_hasta']] as $punto) {
+                $stocks[$punto] = DB::table('stocks')->where('articulo_id', $id)->where('punto', $punto)
+                    ->orderBy('id')->lockForUpdate()->first();
+            }
+            $origen = $stocks[$datos['punto']];
+            $destino = $stocks[$datos['punto_hasta']];
+            $cantidad = (int) $datos['cantidad'] * 1000;
+            $stockOrigen = $origen ? (int) round((float) $origen->cantidad * 1000) : 0;
+            $stockDestino = $destino ? (int) round((float) $destino->cantidad * 1000) : 0;
+
+            if ($cantidad > $stockOrigen) {
+                throw ValidationException::withMessages(['cantidad' => 'No hay stock suficiente en el punto de origen.']);
+            }
+            if ($stockDestino + $cantidad > 999999999999) {
+                throw ValidationException::withMessages(['cantidad' => 'La cantidad supera el máximo de stock permitido en el destino.']);
+            }
+            $formatear = function (int $valor): string {
+                $absoluto = abs($valor);
+
+                return ($valor < 0 ? '-' : '').intdiv($absoluto, 1000).'.'.str_pad((string) ($absoluto % 1000), 3, '0', STR_PAD_LEFT);
+            };
+            $fecha = now();
+            DB::table('stocks')->where('id', $origen->id)->update([
+                'cantidad' => $formatear($stockOrigen - $cantidad), 'updated_at' => $fecha,
+            ]);
+            if ($destino) {
+                DB::table('stocks')->where('id', $destino->id)->update([
+                    'cantidad' => $formatear($stockDestino + $cantidad), 'updated_at' => $fecha,
+                ]);
+            } else {
+                $primerStock = DB::table('stocks')->where('articulo_id', $id)->orderBy('id')->first(['precioVta']);
+                DB::table('stocks')->insert([
+                    'articulo_id' => $id, 'punto' => $datos['punto_hasta'],
+                    'cantidad' => $formatear($cantidad), 'precioVta' => $primerStock->precioVta,
+                    'created_at' => $fecha, 'updated_at' => $fecha,
+                ]);
+            }
+            DB::table('movimientos')->insert([
+                'articulo_id' => $id,
+                'user_id' => $request->user()->id,
+                'tipo' => 'Movimiento',
+                'cantidad' => $datos['cantidad'],
+                'precio' => 0,
+                'observacion' => 'Desde '.$datos['punto'].' hasta '.$datos['punto_hasta'],
+                'fecha' => $fecha->toDateString(),
+            ]);
+        });
+
+        return redirect()->route('articulos.index')
+            ->with('mensaje', 'Artículo movido exitosamente.')
+            ->with('icono', 'success')
+            ->with('showConfirmButton', false)
+            ->with('textoBoton', '');
+    }
+
+    private function stocksPorPunto(Articulo $articulo): array
+    {
         $stocksPorPunto = [];
         foreach (['Deposito', 'Comedor', 'Bar', 'Recepción'] as $punto) {
             $stocksPorPunto[$punto] = (float) (DB::table('stocks')
@@ -155,7 +253,7 @@ class ArticuloController extends Controller
                 ->value('cantidad') ?? 0);
         }
 
-        return view('admin.articulos.ajuste', compact('articulo', 'stocksPorPunto'));
+        return $stocksPorPunto;
     }
 
     public function precio($id)

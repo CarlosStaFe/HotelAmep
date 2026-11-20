@@ -25,7 +25,18 @@ class ComandaController extends Controller
      */
     public function index()
     {
-        return redirect()->route('comandas.comanda');
+        $comandas = DB::table('comandas')
+            ->leftJoin('articulos', 'comandas.articulo_id', '=', 'articulos.id')
+            ->leftJoin('pasajeros', 'comandas.pasajero_id', '=', 'pasajeros.id')
+            ->leftJoin('users', 'comandas.user_id', '=', 'users.id')
+            ->select('comandas.*', 'articulos.nombre as articulo', 'pasajeros.apelyNombre as pasajero', 'users.name as usuario')
+            ->orderByDesc('comandas.fecha')
+            ->orderByDesc('comandas.id')
+            ->get();
+        $habitacionesAbiertas = $comandas->where('estado', 'Abierta')->pluck('habitacion')
+            ->unique()->sort(SORT_NATURAL)->values();
+
+        return view('admin.comandas.index', compact('habitacionesAbiertas', 'comandas'));
     }
 
     /**
@@ -45,12 +56,13 @@ class ComandaController extends Controller
             'habitacion' => 'required|integer|exists:habitaciones,id',
             'punto' => 'required|in:Comedor,Bar,Recepcion',
             'detalles' => 'required|array|min:1',
-            'detalles.*' => 'required|array:articulo_id,pasajero_id,cantidad,precio,moza',
+            'detalles.*' => 'required|array:articulo_id,pasajero_id,cantidad,precio,moza,devolucion',
             'detalles.*.articulo_id' => 'required|integer|exists:articulos,id',
             'detalles.*.pasajero_id' => 'required|integer|exists:pasajeros,id',
             'detalles.*.cantidad' => ['required', 'numeric', 'gt:0', 'regex:/\A\d{1,9}(?:\.\d{1,3})?\z/'],
             'detalles.*.precio' => ['required', 'numeric', 'regex:/\A\d{1,10}(?:\.\d{1,2})?\z/'],
             'detalles.*.moza' => ['required', 'numeric', 'gt:0', 'max:9007199254740991', 'regex:/\A\d{1,16}\z/'],
+            'detalles.*.devolucion' => 'sometimes|boolean',
         ]);
 
         if (!array_is_list($datos['detalles'])) {
@@ -66,9 +78,9 @@ class ComandaController extends Controller
             }
 
             $pasajeroIds = array_unique(array_column($datos['detalles'], 'pasajero_id'));
-            $asignados = Asignada::where('habitacion_id', $habitacion->id)->where('estado', 'Ocupada')
-                ->whereIn('pasajero_id', $pasajeroIds)->distinct()->pluck('pasajero_id');
-            if ($asignados->count() !== count($pasajeroIds)) {
+            $asignaciones = Asignada::where('habitacion_id', $habitacion->id)->where('estado', 'Ocupada')
+                ->whereIn('pasajero_id', $pasajeroIds)->get(['pasajero_id', 'checkin'])->groupBy('pasajero_id');
+            if ($asignaciones->count() !== count($pasajeroIds)) {
                 throw ValidationException::withMessages(['detalles' => 'Hay pasajeros que ya no están asignados a esta habitación.']);
             }
             $pasajeros = Pasajero::whereIn('id', $pasajeroIds)->get()->keyBy('id');
@@ -82,12 +94,39 @@ class ComandaController extends Controller
             }
 
             $necesario = [];
+            $devuelto = [];
             foreach ($datos['detalles'] as $detalle) {
                 $id = $detalle['articulo_id'];
                 $cantidad = $this->escalar($detalle['cantidad'], 3);
-                $necesario[$id] = ($necesario[$id] ?? 0) + $cantidad;
-                if ($necesario[$id] > 999999999999) {
+                if (!empty($detalle['devolucion'])) {
+                    $pasajeroId = $detalle['pasajero_id'];
+                    $devuelto[$pasajeroId][$id] = ($devuelto[$pasajeroId][$id] ?? 0) + $cantidad;
+                    $necesario[$id] = ($necesario[$id] ?? 0) - $cantidad;
+                } else {
+                    $necesario[$id] = ($necesario[$id] ?? 0) + $cantidad;
+                }
+                if (abs($necesario[$id]) > 999999999999) {
                     throw ValidationException::withMessages(['detalles' => 'La cantidad solicitada supera el stock permitido.']);
+                }
+            }
+
+            foreach ($devuelto as $pasajeroId => $articulosDevueltos) {
+                $ingresos = $asignaciones[$pasajeroId]->pluck('checkin')->unique();
+                if ($ingresos->count() !== 1) {
+                    throw ValidationException::withMessages(['detalles' => 'No se puede determinar el ingreso de la estadía para la devolución.']);
+                }
+                foreach ($articulosDevueltos as $id => $cantidad) {
+                    $consumido = 0;
+                    $comandas = DB::table('comandas')->where('pasajero_id', $pasajeroId)
+                        ->where('articulo_id', $id)->where('habitacion', $habitacion->numero)
+                        ->where('puntoVenta', $punto)->where('fecha', '>=', $ingresos->first().' 00:00:00')
+                        ->where('fecha', '<=', $fecha)->lockForUpdate()->get(['cantidad']);
+                    foreach ($comandas as $comanda) {
+                        $consumido += $this->escalar($comanda->cantidad, 3);
+                    }
+                    if ($cantidad > $consumido) {
+                        throw ValidationException::withMessages(['detalles' => 'La devolución de '.$articulos[$id]->nombre.' supera el consumo disponible del pasajero en esta estadía y punto.']);
+                    }
                 }
             }
 
@@ -98,21 +137,35 @@ class ComandaController extends Controller
                     throw ValidationException::withMessages(['detalles' => 'Hay registros de stock duplicados para '.$articulos[$id]->nombre.' en '.$punto.'.']);
                 }
                 $stock = $stocks->first();
-                if (!$stock || $this->escalar($stock->cantidad, 3) < $necesario[$id]) {
+                $cantidadStock = $stock ? $this->escalar($stock->cantidad, 3) : 0;
+                if ($cantidadStock < $necesario[$id]) {
                     throw ValidationException::withMessages(['detalles' => 'No hay stock suficiente de '.$articulos[$id]->nombre.' en '.$punto.'.']);
                 }
                 $primerStock = DB::table('stocks')->where('articulo_id', $id)->orderBy('id')->first(['precioVta']);
+                if (!$primerStock) {
+                    throw ValidationException::withMessages(['detalles' => 'No hay precio registrado para '.$articulos[$id]->nombre.'.']);
+                }
                 foreach ($datos['detalles'] as $detalle) {
                     if ((int) $detalle['articulo_id'] === (int) $id
                         && $this->escalar($detalle['precio'], 2) !== $this->escalar($primerStock->precioVta, 2)) {
                         throw ValidationException::withMessages(['detalles' => 'El precio de '.$articulos[$id]->nombre.' cambió. Vuelva a cargar el consumo.']);
                     }
                 }
-                $restante = $this->escalar($stock->cantidad, 3) - $necesario[$id];
-                DB::table('stocks')->where('id', $stock->id)->update([
-                    'cantidad' => $this->formatear($restante, 3),
-                    'updated_at' => $fecha,
-                ]);
+                $restante = $cantidadStock - $necesario[$id];
+                if ($restante > 999999999999) {
+                    throw ValidationException::withMessages(['detalles' => 'La devolución supera el stock máximo permitido de '.$articulos[$id]->nombre.'.']);
+                }
+                if ($stock) {
+                    DB::table('stocks')->where('id', $stock->id)->update([
+                        'cantidad' => $this->formatear($restante, 3),
+                        'updated_at' => $fecha,
+                    ]);
+                } else {
+                    DB::table('stocks')->insert([
+                        'articulo_id' => $id, 'punto' => $punto, 'cantidad' => $this->formatear($restante, 3),
+                        'precioVta' => $primerStock->precioVta, 'created_at' => $fecha, 'updated_at' => $fecha,
+                    ]);
+                }
             }
 
             $mensajes = [];
@@ -125,6 +178,9 @@ class ComandaController extends Controller
                 $total = intdiv($centavos * $milesimas + 500, 1000);
                 $precio = $this->formatear($centavos, 2);
                 $importe = $this->formatear($total, 2);
+                $devolucion = !empty($detalle['devolucion']);
+                $cantidadComanda = ($devolucion ? '-' : '').$detalle['cantidad'];
+                $importeComanda = ($devolucion && $total > 0 ? '-' : '').$importe;
                 DB::table('comandas')->insert([
                     'articulo_id' => $detalle['articulo_id'],
                     'pasajero_id' => $detalle['pasajero_id'],
@@ -132,10 +188,11 @@ class ComandaController extends Controller
                     'fecha' => $fecha,
                     'puntoVenta' => $punto,
                     'habitacion' => $habitacion->numero,
-                    'cantidad' => $detalle['cantidad'],
+                    'cantidad' => $cantidadComanda,
                     'precio' => $precio,
-                    'total' => $importe,
+                    'total' => $importeComanda,
                     'moza' => (string) $detalle['moza'],
+                    'observacion' => $devolucion ? 'Devolucion' : null,
                     'estado' => 'Abierta',
                     'fecha_creacion' => $fecha,
                     'fecha_actualizacion' => $fecha,
@@ -143,19 +200,20 @@ class ComandaController extends Controller
                 DB::table('movimientos')->insert([
                     'articulo_id' => $detalle['articulo_id'],
                     'user_id' => $request->user()->id,
-                    'tipo' => 'Comanda',
+                    'tipo' => $devolucion ? 'Devolucion' : 'Comanda',
                     'cantidad' => $detalle['cantidad'],
                     'precio' => $precio,
                     'fecha' => $fecha->toDateString(),
                 ]);
                 $pasajero = $pasajeros[$detalle['pasajero_id']];
                 $mensajes[$pasajero->id]['pasajero'] = $pasajero;
-                $mensajes[$pasajero->id]['total'] = ($mensajes[$pasajero->id]['total'] ?? 0) + $total;
+                $mensajes[$pasajero->id]['habitacion'] = (string) $habitacion->numero;
+                $mensajes[$pasajero->id]['total'] = ($mensajes[$pasajero->id]['total'] ?? 0) + ($devolucion ? -$total : $total);
                 $mensajes[$pasajero->id]['consumos'][] = [
-                    'articulo' => $articulos[$detalle['articulo_id']]->nombre,
-                    'cantidad' => (string) $detalle['cantidad'],
+                    'articulo' => $articulos[$detalle['articulo_id']]->nombre.($devolucion ? ' (Devolución)' : ''),
+                    'cantidad' => $cantidadComanda,
                     'precio' => $precio,
-                    'total' => $importe,
+                    'total' => $importeComanda,
                     'moza' => (string) $detalle['moza'],
                 ];
             }
@@ -178,7 +236,7 @@ class ComandaController extends Controller
             try {
                 Mail::to($pasajero->email)->send(new ComandaMail(
                     $pasajero->apelyNombre, $punto, $fecha->format('d/m/Y H:i'), $mensaje['consumos'],
-                    $this->formatear($mensaje['total'], 2)
+                    $this->formatear($mensaje['total'], 2), $mensaje['habitacion']
                 ));
                 $correosEnviados++;
             } catch (MailException $error) {
@@ -210,6 +268,10 @@ class ComandaController extends Controller
     private function formatear(int $valor, int $decimales): string
     {
         $factor = 10 ** $decimales;
+
+        if ($valor < 0) {
+            return '-'.$this->formatear(-$valor, $decimales);
+        }
 
         return intdiv($valor, $factor).'.'.str_pad((string) ($valor % $factor), $decimales, '0', STR_PAD_LEFT);
     }
