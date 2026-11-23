@@ -275,7 +275,7 @@
                             ],
                             margin: [0, 0, 0, 10],
                         },
-                        { text: `Consumos abiertos - Habitación ${habitacion}`, style: 'titulo' },
+                        { text: `Consumos - Habitación ${habitacion}`, style: 'titulo' },
                         { table: { headerRows: 1, widths: ['*', 'auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', '*'], body: cuerpo } },
                     ],
                     styles: {

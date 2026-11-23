@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -42,6 +43,75 @@ class CompraTest extends TestCase
             'estado' => 'Pendiente', 'observacion' => 'Prueba',
             'detalles_json' => json_encode($detalles, JSON_THROW_ON_ERROR),
         ];
+    }
+
+    public function test_muestra_compras_en_el_listado_segun_sus_encabezados(): void
+    {
+        [$proveedor] = $this->datos();
+        DB::table('compras')->insert([
+            'proveedor_id' => $proveedor,
+            'fechaCpra' => '2026-11-19',
+            'tipoCpbte' => 'Factura A',
+            'prefijo' => 1,
+            'subfijo' => 23,
+            'dias' => 30,
+            'total' => 9.36,
+            'estado' => 'Pendiente',
+            'usuario_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('compras.index'))
+            ->assertOk()
+            ->assertSeeText('Fecha')
+            ->assertSee('<td style="text-align: right;">19/11/2026</td>', false)
+            ->assertSeeText('Nombre')
+            ->assertSeeText('Razón Social')
+            ->assertSeeText('Factura A')
+            ->assertSeeText('PreFijo')
+            ->assertSeeText('SubFijo')
+            ->assertSee('<td style="text-align: right;">1</td>', false)
+            ->assertSee('<td style="text-align: right;">23</td>', false)
+            ->assertSeeText('Pendiente')
+            ->assertSeeText('Proveedor SA');
+    }
+
+    public function test_resalta_compras_solo_cuando_la_fecha_de_vencimiento_ya_paso(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-23 15:00:00'));
+        [$proveedor] = $this->datos();
+        $base = [
+            'proveedor_id' => $proveedor,
+            'tipoCpbte' => 'Factura A',
+            'prefijo' => 1,
+            'dias' => 3,
+            'total' => 10,
+            'estado' => 'Pendiente',
+            'usuario_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $esperadas = [];
+        foreach ([
+            [['fechaCpra' => '2026-11-19', 'subfijo' => 1], true],
+            [['fechaCpra' => '2026-11-20', 'subfijo' => 2], false],
+            [['fechaCpra' => '2026-11-21', 'subfijo' => 3], false],
+            [['fechaCpra' => '2026-11-22', 'subfijo' => 4, 'dias' => 0, 'estado' => 'Contado'], false],
+            [['fechaCpra' => '2026-11-23', 'subfijo' => 5, 'dias' => 0, 'estado' => 'Contado'], false],
+        ] as [$datos, $vencida]) {
+            $id = DB::table('compras')->insertGetId(array_merge($base, $datos));
+            $esperadas[$id] = $vencida;
+        }
+
+        $response = $this->actingAs(User::factory()->create())->get(route('compras.index'))->assertOk();
+        preg_match_all('/<tr(?: class="([^"]*)")?\s*>\s*<td style="text-align: right;">(\d+)<\/td>/', $response->getContent(), $filas, PREG_SET_ORDER);
+        $this->assertCount(5, $filas);
+        foreach ($filas as $fila) {
+            $this->assertSame($esperadas[(int) $fila[2]], $fila[1] === 'table-danger');
+        }
     }
 
     public function test_guarda_compra_y_detalles_y_actualiza_solo_el_primer_stock_en_deposito(): void

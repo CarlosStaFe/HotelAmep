@@ -11,6 +11,26 @@ use Illuminate\Validation\ValidationException;
 
 class CompraController extends Controller
 {
+    public function index()
+    {
+        $compras = DB::table('compras')
+            ->leftJoin('proveedores', 'compras.proveedor_id', '=', 'proveedores.id')
+            ->orderByDesc('compras.id')
+            ->get([
+                'compras.id',
+                'compras.fechaCpra',
+                'proveedores.nombre as proveedor_nombre',
+                'proveedores.razonSocial as proveedor_razon_social',
+                'compras.tipoCpbte',
+                'compras.prefijo',
+                'compras.subfijo',
+                'compras.estado',
+                'compras.dias',
+            ]);
+
+        return view('admin.proveedores.listarcpras', compact('compras'));
+    }
+
     public function store(Request $request)
     {
         $datos = $request->validate([

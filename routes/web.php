@@ -179,6 +179,9 @@ Route::delete('/admin/proveedores/{id}', [App\Http\Controllers\ProveedorControll
 Route::get('/admin/compras/create', [App\Http\Controllers\ProveedorController::class, 'compras'])
 ->name('compras.create')
 ->middleware('auth');
+Route::get('/admin/compras/index', [App\Http\Controllers\CompraController::class, 'index'])
+->name('compras.index')
+->middleware('auth');
 Route::post('/admin/compras', [App\Http\Controllers\CompraController::class, 'store'])
 ->name('compras.store')
 ->middleware('auth');

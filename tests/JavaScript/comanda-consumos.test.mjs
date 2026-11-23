@@ -85,7 +85,7 @@ test('genera PDF de comandas abiertas de la habitación por pasajero y fecha, si
     assert.equal(pdf.content[0].columns[0].image, 'data:image/png;base64,logo');
     assert.equal(pdf.content[0].columns[1].text, 'Hotel Pinar del Río');
     assert.equal(pdf.content[0].columns[2].text, `Generado: ${new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'medium', hour12: false }).format(ahora)}`);
-    assert.equal(pdf.content[1].text, 'Consumos abiertos - Habitación 10');
+    assert.equal(pdf.content[1].text, 'Consumos - Habitación 10');
     const cuerpo = pdf.content[2].table.body;
     assert.ok(cuerpo[0].every(celda => celda.bold === true));
     assert.equal(cuerpo[1][5], '1,234.50');
