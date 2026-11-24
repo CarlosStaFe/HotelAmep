@@ -35,9 +35,72 @@ test('el listado ordena por habitación y luego por fecha ascendente', () => {
     assert.deepEqual(Array.from(opciones.order, criterio => Array.from(criterio)), [[2, 'asc'], [1, 'asc'], [0, 'asc']]);
 });
 
+test('suma los medios de pago al ingresarlos y señala importes inválidos', () => {
+    const listado = readFileSync(new URL('../../resources/views/admin/comandas/index.blade.php', import.meta.url), 'utf8');
+    const inicio = listado.indexOf("        document.addEventListener('DOMContentLoaded'");
+    const fin = listado.indexOf('    </script>', inicio);
+    assert.ok(inicio !== -1 && fin !== -1);
+    for (const id of ['efectivo', 'transferencia', 'tarjeta']) {
+        assert.match(listado, new RegExp(`<input type="text" id="${id}"[^>]*inputmode="decimal"`));
+    }
+    assert.match(listado, /id="total"[^>]*readonly/);
+    const campos = {};
+    for (const id of ['efectivo', 'transferencia', 'tarjeta', 'total', 'pagosMensaje']) {
+        campos[id] = {
+            value: '', textContent: '', selectionStart: null, handlers: {},
+            addEventListener(evento, callback) { this.handlers[evento] = callback; },
+            setSelectionRange(inicio) { this.selectionStart = inicio; },
+        };
+    }
+    const document = {
+        getElementById(id) { return campos[id]; },
+        addEventListener(evento, callback) { if (evento === 'DOMContentLoaded') callback(); },
+    };
+    vm.runInNewContext(listado.slice(inicio, fin), { document });
+    assert.equal(campos.total.value, '0.00');
+    campos.efectivo.value = '0.10';
+    campos.efectivo.handlers.input();
+    campos.transferencia.value = '0.20';
+    campos.transferencia.handlers.input();
+    campos.tarjeta.value = '12.3';
+    campos.tarjeta.handlers.input();
+    assert.equal(campos.total.value, '12.60');
+    campos.tarjeta.value = '';
+    campos.tarjeta.handlers.input();
+    assert.equal(campos.total.value, '0.30');
+    campos.tarjeta.value = '1234567.89';
+    campos.tarjeta.handlers.input();
+    assert.equal(campos.tarjeta.value, '1,234,567.89');
+    assert.equal(campos.total.value, '1,234,568.19');
+    document.activeElement = campos.tarjeta;
+    campos.tarjeta.value = '12,34567.89';
+    campos.tarjeta.selectionStart = 5;
+    campos.tarjeta.handlers.input();
+    assert.equal(campos.tarjeta.value, '1,234,567.89');
+    assert.equal(campos.tarjeta.selectionStart, 5);
+    document.activeElement = null;
+    campos.tarjeta.value = '';
+    campos.tarjeta.handlers.input();
+    campos.efectivo.value = '1.234';
+    campos.efectivo.handlers.input();
+    assert.equal(campos.total.value, '');
+    assert.match(campos.pagosMensaje.textContent, /dos decimales/);
+    campos.efectivo.value = '-1';
+    campos.efectivo.handlers.input();
+    assert.equal(campos.total.value, '');
+    campos.efectivo.value = ',';
+    campos.efectivo.handlers.input();
+    assert.equal(campos.efectivo.value, ',');
+    assert.equal(campos.total.value, '');
+    campos.efectivo.value = '';
+    campos.efectivo.handlers.input();
+    assert.equal(campos.total.value, '0.20');
+    assert.equal(campos.pagosMensaje.textContent, '');
+});
+
 test('genera PDF de comandas abiertas de la habitación por pasajero y fecha, sin depender de filtros', async () => {
     const campos = {};
-    for (const id of ['habitacionCerrar', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'cerrarComanda']) {
+    for (const id of ['habitacionCerrar', 'totalComandaAbierta', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'listarComanda']) {
         campos[id] = { value: '', handlers: {}, addEventListener(evento, callback) { this.handlers[evento] = callback; } };
     }
     const fila = (id, fecha, habitacion, pasajero, importe, estado, pasajeroId, precio = '4.00') => ({
@@ -47,8 +110,8 @@ test('genera PDF de comandas abiertas de la habitación por pasajero y fecha, si
     });
     const filas = [
         fila('3', '2026-11-20 12:00:00', '10', 'Luis', '4.00', 'Abierta', '2'),
-        fila('2', '2026-11-20 11:00:00', '10', 'Ana', '-1234.56', 'Abierta', '1'),
-        fila('1', '2026-11-19 10:00:00', '10', 'Ana', '1234567.89', 'Abierta', '1', '1234.5'),
+        fila('2', '2026-11-20 11:00:00', '10', 'Ana', '-1,234.56', 'Abierta', '1'),
+        fila('1', '2026-11-19 10:00:00', '10', 'Ana', '1,234,567.89', 'Abierta', '1', '1,234.50'),
         fila('4', '2026-11-20 10:00:00', '10', 'Ana', '100.00', 'Cerrada', '1'),
         fila('5', '2026-11-20 10:00:00', '100', 'Ana', '100.00', 'Abierta', '1'),
         fila('6', '2026-11-18 10:00:00', '10', 'Ana', '0.10', 'Abierta', '3'),
@@ -73,11 +136,13 @@ test('genera PDF de comandas abiertas de la habitación por pasajero y fecha, si
     const ahora = new Date('2026-11-20T16:55:16');
     class FechaFija extends Date { constructor() { super(ahora); } }
     opcionesListado({ getElementById: id => campos[id] }, tabla, pdfMake, fetch, FileReader, FechaFija);
-    await campos.cerrarComanda.handlers.click();
+    await campos.listarComanda.handlers.click();
     assert.equal(campos.comandaMensaje.textContent, 'Seleccione una habitación.');
     assert.equal(pdf, undefined);
     campos.habitacionCerrar.value = '10';
-    await campos.cerrarComanda.handlers.click();
+    campos.habitacionCerrar.handlers.change();
+    assert.equal(campos.totalComandaAbierta.value, '1,233,337.43');
+    await campos.listarComanda.handlers.click();
     assert.equal(campos.comandaMensajeContenedor.hidden, true);
     assert.equal(archivo, 'comanda_10_2026-11-20.pdf');
     assert.equal(pdf.pageSize, 'A4');
@@ -106,13 +171,13 @@ test('genera PDF de comandas abiertas de la habitación por pasajero y fecha, si
         ['Total habitación 10', '', '1,233,337.43'],
     ]);
     campos.habitacionCerrar.value = '30';
-    await campos.cerrarComanda.handlers.click();
+    await campos.listarComanda.handlers.click();
     assert.match(campos.comandaMensaje.textContent, /No hay comandas abiertas/);
 });
 
 test('informa el error si no se puede cargar el logo del PDF', async () => {
     const campos = {};
-    for (const id of ['habitacionCerrar', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'cerrarComanda']) {
+    for (const id of ['habitacionCerrar', 'totalComandaAbierta', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'listarComanda']) {
         campos[id] = { value: '10', handlers: {}, addEventListener(evento, callback) { this.handlers[evento] = callback; } };
     }
     const fila = { dataset: { pasajeroId: '1' }, cells: ['1', '2026-11-20 12:00:00', '10', 'Bar', 'Ana', 'Agua', '1', '4', '4', '1', 'Abierta', '']
@@ -121,19 +186,19 @@ test('informa el error si no se puede cargar el logo del PDF', async () => {
     let creado = false;
     const pdfMake = { createPdf() { creado = true; } };
     opcionesListado({ getElementById: id => campos[id] }, tabla, pdfMake, async () => ({ ok: false, status: 404 }));
-    await campos.cerrarComanda.handlers.click();
+    await campos.listarComanda.handlers.click();
     assert.match(campos.comandaMensaje.textContent, /No se pudo cargar el logo/);
-    assert.equal(campos.cerrarComanda.disabled, false);
+    assert.equal(campos.listarComanda.disabled, false);
     assert.equal(creado, false);
 });
 
 test('informa si no está disponible la herramienta de PDF', () => {
     const campos = {};
-    for (const id of ['habitacionCerrar', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'cerrarComanda']) {
+    for (const id of ['habitacionCerrar', 'totalComandaAbierta', 'comandaMensaje', 'comandaMensajeContenedor', 'cerrarComandaMensaje', 'listarComanda']) {
         campos[id] = { value: '10', handlers: {}, addEventListener(evento, callback) { this.handlers[evento] = callback; } };
     }
-    opcionesListado({ getElementById: id => campos[id] });
-    campos.cerrarComanda.handlers.click();
+    opcionesListado({ getElementById: id => campos[id] }, { rows: () => ({ nodes: () => ({ toArray: () => [] }) }) });
+    campos.listarComanda.handlers.click();
     assert.match(campos.comandaMensaje.textContent, /No se pudo cargar/);
     assert.equal(campos.comandaMensajeContenedor.hidden, false);
 });
@@ -149,7 +214,7 @@ test('totaliza importes filtrados por habitación al terminar cada grupo, inclus
         cells: Array.from({ length: 9 }, (_, i) => ({ textContent: i === 2 ? habitacion : i === 8 ? importe : '' })),
         after(total) { this.total = total; },
     });
-    const filas = [fila('10', '0.10'), fila('10', '0.20'), fila('10', '-0.01'), fila('20', '-4.00')];
+    const filas = [fila('10', '1,000.10'), fila('10', '0.20'), fila('10', '-0.01'), fila('20', '-4.00')];
     let pagina = filas.slice(0, 2);
     const api = { rows(selector) {
         const elementos = selector.page === 'current' ? pagina : filas;
@@ -160,7 +225,7 @@ test('totaliza importes filtrados por habitación al terminar cada grupo, inclus
     pagina = filas.slice(2);
     opciones.drawCallback.call({ api: () => api });
     assert.equal(filas[2].total.children[0].textContent, 'Total habitación 10');
-    assert.equal(filas[2].total.children[1].textContent, '0.29');
+    assert.equal(filas[2].total.children[1].textContent, '1,000.29');
     assert.equal(filas[3].total.children[0].textContent, 'Total habitación 20');
     assert.equal(filas[3].total.children[1].textContent, '-4.00');
     filas.splice(0, 1);

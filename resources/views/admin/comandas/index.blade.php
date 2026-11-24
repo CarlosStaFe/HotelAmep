@@ -52,8 +52,8 @@
                                     <td>{{ $comanda->pasajero }}</td>
                                     <td>{{ $comanda->articulo }}</td>
                                     <td class="text-right">{{ $comanda->cantidad }}</td>
-                                    <td class="text-right">{{ $comanda->precio }}</td>
-                                    <td class="text-right">{{ $comanda->total }}</td>
+                                    <td class="text-right" data-order="{{ $comanda->precio }}">{{ number_format($comanda->precio, 2, '.', ',') }}</td>
+                                    <td class="text-right" data-order="{{ $comanda->total }}">{{ number_format($comanda->total, 2, '.', ',') }}</td>
                                     <td>{{ $comanda->moza }}</td>
                                     <td>{{ $comanda->estado }}</td>
                                     <td>{{ $comanda->observacion }}</td>
@@ -66,22 +66,63 @@
             </div>
 
             <div class="col-lg-12 mt-4">
+                @if (session('comanda_cerrada'))
+                    <div class="alert alert-success" role="status">{{ session('comanda_cerrada') }}</div>
+                @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger" role="alert">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <div id="comandaMensajeContenedor" hidden>
                     <button type="button" id="cerrarComandaMensaje" class="close" aria-label="Cerrar mensaje"><span aria-hidden="true">&times;</span></button>
                     <span id="comandaMensaje" role="status" aria-live="polite"></span>
                 </div>
-                <div class="d-flex align-items-end mb-3">
+                <form action="{{ route('comandas.cerrar') }}" method="POST">
+                    @csrf
+                <div class="d-flex flex-wrap align-items-end mb-3">
                     <div class="mr-3">
                         <label for="habitacionCerrar">Habitación</label>
                         <select id="habitacionCerrar" name="habitacion" class="form-control">
                             <option value="">Seleccione habitación</option>
                             @foreach ($habitacionesAbiertas as $habitacion)
-                                <option value="{{ $habitacion }}">{{ $habitacion }}</option>
+                                <option value="{{ $habitacion }}" {{ old('habitacion') === (string) $habitacion ? 'selected' : '' }}>{{ $habitacion }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <button type="button" id="cerrarComanda" class="btn btn-info">Cerrar</button>
+                    <div class="ml-3">
+                        <label for="totalComandaAbierta">Total comanda</label>
+                        <input type="text" id="totalComandaAbierta" class="form-control" readonly>
+                    </div>
+                    <div class="ml-3">
+                        <label for="efectivo">Efectivo</label>
+                        <input type="text" id="efectivo" name="efectivo" class="form-control" inputmode="decimal" aria-describedby="pagosMensaje" value="{{ old('efectivo') }}">
+                    </div>
+                    <div class="ml-3">
+                        <label for="transferencia">Transferencia</label>
+                        <input type="text" id="transferencia" name="transferencia" class="form-control" inputmode="decimal" aria-describedby="pagosMensaje" value="{{ old('transferencia') }}">
+                    </div>
+                    <div class="ml-3">
+                        <label for="tarjeta">Tarjeta</label>
+                        <input type="text" id="tarjeta" name="tarjeta" class="form-control" inputmode="decimal" aria-describedby="pagosMensaje" value="{{ old('tarjeta') }}">
+                    </div>
+                    <div class="ml-3">
+                        <label for="total">Total Pagado</label>
+                        <input type="text" id="total" name="total" class="form-control" value="0.00" readonly>
+                    </div>
+                    <div class="ml-3">
+                        <button type="button" id="listarComanda" class="btn btn-info">Listar</button>
+                    </div>
+                    <div class="ml-3">
+                        <button type="submit" id="cerrarComanda" class="btn btn-warning">Cerrar</button>
+                    </div>
                 </div>
+                <small id="pagosMensaje" class="text-danger" role="status" aria-live="polite"></small>
+                </form>
             </div>
 
         </div>
@@ -94,6 +135,18 @@
             const compararHabitaciones = (a, b) => a.localeCompare(b, 'es', { numeric: true }) || (a < b ? -1 : a > b ? 1 : 0);
             $.fn.dataTable.ext.type.order['habitacion-asc'] = compararHabitaciones;
             $.fn.dataTable.ext.type.order['habitacion-desc'] = (a, b) => compararHabitaciones(b, a);
+            const aCentavos = valor => {
+                const texto = valor.trim().replace(/,/g, '');
+                const negativo = texto.startsWith('-');
+                const [entero, decimal = ''] = (negativo ? texto.slice(1) : texto).split('.');
+                const centavos = BigInt(entero) * 100n + BigInt(decimal.padEnd(2, '0'));
+                return negativo ? -centavos : centavos;
+            };
+            const formatearTotal = valor => {
+                const absoluto = valor < 0n ? -valor : valor;
+                const entero = String(absoluto / 100n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${valor < 0n ? '-' : ''}${entero}.${String(absoluto % 100n).padStart(2, '0')}`;
+            };
 
             const tablaComandas = $('#tablaComandas').DataTable({
                 pageLength: 10,
@@ -105,12 +158,8 @@
                     const grupos = new Map();
                     tabla.rows({ search: 'applied', order: 'applied' }).nodes().toArray().forEach(fila => {
                         const habitacion = fila.cells[2].textContent;
-                        const importe = fila.cells[8].textContent.trim();
-                        const negativo = importe.startsWith('-');
-                        const [entero, decimal = ''] = (negativo ? importe.slice(1) : importe).split('.');
-                        const centavos = BigInt(entero) * 100n + BigInt(decimal.padEnd(2, '0'));
                         const grupo = grupos.get(habitacion) || { total: 0n };
-                        grupo.total += negativo ? -centavos : centavos;
+                        grupo.total += aCentavos(fila.cells[8].textContent);
                         grupo.ultimaFila = fila;
                         grupos.set(habitacion, grupo);
                     });
@@ -119,7 +168,6 @@
                         const grupo = grupos.get(habitacion);
                         if (grupo.ultimaFila !== fila) return;
                         const total = grupo.total;
-                        const absoluto = total < 0n ? -total : total;
                         const renglon = document.createElement('tr');
                         renglon.className = 'table-info font-weight-bold';
                         const etiqueta = document.createElement('td');
@@ -128,7 +176,7 @@
                         etiqueta.textContent = `Total habitación ${habitacion}`;
                         const importe = document.createElement('td');
                         importe.className = 'text-right';
-                        importe.textContent = `${total < 0n ? '-' : ''}${absoluto / 100n}.${String(absoluto % 100n).padStart(2, '0')}`;
+                        importe.textContent = formatearTotal(total);
                         const resto = document.createElement('td');
                         resto.colSpan = 4;
                         renglon.append(etiqueta, importe, resto);
@@ -158,8 +206,22 @@
             });
 
             const habitacionCerrar = document.getElementById('habitacionCerrar');
+            const totalComandaAbierta = document.getElementById('totalComandaAbierta');
             const mensaje = document.getElementById('comandaMensaje');
             const contenedorMensaje = document.getElementById('comandaMensajeContenedor');
+            function actualizarTotalComanda() {
+                const habitacion = habitacionCerrar.value;
+                if (!habitacion) {
+                    totalComandaAbierta.value = '';
+                    return;
+                }
+                const filas = tablaComandas.rows({ search: 'none' }).nodes().toArray()
+                    .filter(fila => fila.cells[2].textContent === habitacion && fila.cells[10].textContent === 'Abierta');
+                const suma = filas.reduce((total, fila) => total + aCentavos(fila.cells[8].textContent), 0n);
+                totalComandaAbierta.value = formatearTotal(suma);
+            }
+            habitacionCerrar.addEventListener('change', actualizarTotalComanda);
+            actualizarTotalComanda();
             function mostrarMensaje(texto) {
                 mensaje.textContent = texto;
                 contenedorMensaje.className = 'alert alert-warning';
@@ -169,8 +231,8 @@
                 contenedorMensaje.hidden = true;
                 mensaje.textContent = '';
             });
-            const cerrarComanda = document.getElementById('cerrarComanda');
-            cerrarComanda.addEventListener('click', async function() {
+            const listarComanda = document.getElementById('listarComanda');
+            listarComanda.addEventListener('click', async function() {
                 const habitacion = habitacionCerrar.value;
                 if (!habitacion) {
                     mostrarMensaje('Seleccione una habitación.');
@@ -196,18 +258,6 @@
                 let totalPasajero = 0n;
                 let pasajeroActual = null;
                 let nombrePasajero = '';
-                const aCentavos = valor => {
-                    const texto = valor.trim();
-                    const negativo = texto.startsWith('-');
-                    const [entero, decimal = ''] = (negativo ? texto.slice(1) : texto).split('.');
-                    const centavos = BigInt(entero) * 100n + BigInt(decimal.padEnd(2, '0'));
-                    return negativo ? -centavos : centavos;
-                };
-                const formatearTotal = valor => {
-                    const absoluto = valor < 0n ? -valor : valor;
-                    const entero = String(absoluto / 100n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                    return `${valor < 0n ? '-' : ''}${entero}.${String(absoluto % 100n).padStart(2, '0')}`;
-                };
                 const cuerpo = [[
                     'Pasajero', 'Fecha y hora', 'Punto', 'Artículo', 'Cantidad', 'Precio', 'Importe', 'Moza', 'Observación',
                 ].map(text => ({ text, bold: true }))];
@@ -233,7 +283,7 @@
                 });
                 agregarTotal(`Total pasajero: ${nombrePasajero} (ID ${pasajeroActual})`, totalPasajero);
                 agregarTotal(`Total habitación ${habitacion}`, total);
-                cerrarComanda.disabled = true;
+                listarComanda.disabled = true;
                 let logo;
                 try {
                     const respuesta = await fetch(@json(asset('assets/img/pinarverde.png')));
@@ -248,10 +298,10 @@
                 } catch (error) {
                     console.error('No se pudo cargar el logo para el PDF:', error);
                     mostrarMensaje('No se pudo cargar el logo del hotel para generar el PDF.');
-                    cerrarComanda.disabled = false;
+                    listarComanda.disabled = false;
                     return;
                 }
-                cerrarComanda.disabled = false;
+                listarComanda.disabled = false;
                 const ahora = new Date();
                 const fechaGeneracion = new Intl.DateTimeFormat('es-AR', {
                     dateStyle: 'short', timeStyle: 'medium', hour12: false,
@@ -285,6 +335,59 @@
                     defaultStyle: { fontSize: 7 },
                 }).download(`comanda_${habitacionArchivo}_${fechaArchivo}.pdf`);
             });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pagos = ['efectivo', 'transferencia', 'tarjeta'].map(id => document.getElementById(id));
+            const total = document.getElementById('total');
+            const mensaje = document.getElementById('pagosMensaje');
+
+            function formatearPago(pago) {
+                const valor = pago.value.replace(/,/g, '');
+                if ((pago.value !== '' && valor === '') || !/^\d*(?:\.\d*)?$/.test(valor)) return;
+                const posicion = pago.selectionStart;
+                const caracteres = posicion === null ? 0 : pago.value.slice(0, posicion).replace(/,/g, '').length;
+                const [entero, decimal] = valor.split('.');
+                pago.value = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                    + (decimal === undefined ? '' : `.${decimal}`);
+                if (document.activeElement === pago && posicion !== null) {
+                    let nuevaPosicion = 0;
+                    let vistos = 0;
+                    while (nuevaPosicion < pago.value.length && vistos < caracteres) {
+                        if (pago.value[nuevaPosicion] !== ',') vistos++;
+                        nuevaPosicion++;
+                    }
+                    pago.setSelectionRange(nuevaPosicion, nuevaPosicion);
+                }
+            }
+
+            function calcularTotal() {
+                let suma = 0n;
+                for (const pago of pagos) {
+                    const valor = pago.value.replace(/,/g, '');
+                    if ((pago.value !== '' && valor === '') || (valor !== '' && !/^\d{1,13}(?:\.\d{1,2})?$/.test(valor))) {
+                        total.value = '';
+                        mensaje.textContent = 'Ingrese importes positivos con hasta dos decimales.';
+                        return;
+                    }
+                    if (valor === '') continue;
+                    const [entero, decimal = ''] = valor.split('.');
+                    suma += BigInt(entero) * 100n + BigInt(decimal.padEnd(2, '0'));
+                }
+                const entero = String(suma / 100n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                total.value = `${entero}.${String(suma % 100n).padStart(2, '0')}`;
+                mensaje.textContent = '';
+            }
+
+            pagos.forEach(pago => {
+                formatearPago(pago);
+                pago.addEventListener('input', function() {
+                    formatearPago(pago);
+                    calcularTotal();
+                });
+            });
+            calcularTotal();
         });
     </script>
 @stop

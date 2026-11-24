@@ -30,10 +30,11 @@ class ComandaController extends Controller
             ->leftJoin('pasajeros', 'comandas.pasajero_id', '=', 'pasajeros.id')
             ->leftJoin('users', 'comandas.user_id', '=', 'users.id')
             ->select('comandas.*', 'articulos.nombre as articulo', 'pasajeros.apelyNombre as pasajero', 'users.name as usuario')
+            ->where('comandas.estado', 'Abierta')
             ->orderByDesc('comandas.fecha')
             ->orderByDesc('comandas.id')
             ->get();
-        $habitacionesAbiertas = $comandas->where('estado', 'Abierta')->pluck('habitacion')
+        $habitacionesAbiertas = $comandas->pluck('habitacion')
             ->unique()->sort(SORT_NATURAL)->values();
 
         return view('admin.comandas.index', compact('habitacionesAbiertas', 'comandas'));
@@ -72,7 +73,7 @@ class ComandaController extends Controller
         $punto = $datos['punto'] === 'Recepcion' ? 'Recepción' : $datos['punto'];
         $fecha = now();
         $mensajes = DB::transaction(function () use ($request, $datos, $punto, $fecha) {
-            $habitacion = Habitacion::findOrFail($datos['habitacion']);
+            $habitacion = Habitacion::whereKey($datos['habitacion'])->lockForUpdate()->firstOrFail();
             if (!Reserva::where('habitacion_id', $habitacion->id)->where('estado', 'Ocupada')->exists()) {
                 throw ValidationException::withMessages(['habitacion' => 'La habitación ya no tiene una reserva ocupada.']);
             }
@@ -253,6 +254,81 @@ class ComandaController extends Controller
             'correos_enviados' => $correosEnviados,
             'advertencias' => $advertencias,
         ]);
+    }
+
+    public function cerrar(Request $request)
+    {
+        $datos = $request->validate([
+            'habitacion' => 'required|string|max:10',
+            'efectivo' => ['nullable', 'required_without_all:transferencia,tarjeta', 'regex:/\A(?:\d{1,13}|\d{1,3}(?:,\d{3}){1,4})(?:\.\d{1,2})?\z/'],
+            'transferencia' => ['nullable', 'required_without_all:efectivo,tarjeta', 'regex:/\A(?:\d{1,13}|\d{1,3}(?:,\d{3}){1,4})(?:\.\d{1,2})?\z/'],
+            'tarjeta' => ['nullable', 'required_without_all:efectivo,transferencia', 'regex:/\A(?:\d{1,13}|\d{1,3}(?:,\d{3}){1,4})(?:\.\d{1,2})?\z/'],
+        ]);
+
+        foreach (['efectivo', 'transferencia', 'tarjeta'] as $medio) {
+            if (isset($datos[$medio])) {
+                $datos[$medio] = str_replace(',', '', (string) $datos[$medio]);
+            }
+        }
+        Validator::make($datos, [
+            'efectivo' => ['nullable', 'numeric', 'max:9999999999999.99', 'regex:/\A\d{1,13}(?:\.\d{1,2})?\z/'],
+            'transferencia' => ['nullable', 'numeric', 'max:9999999999999.99', 'regex:/\A\d{1,13}(?:\.\d{1,2})?\z/'],
+            'tarjeta' => ['nullable', 'numeric', 'max:9999999999999.99', 'regex:/\A\d{1,13}(?:\.\d{1,2})?\z/'],
+        ])->validate();
+
+        $pagos = [];
+        foreach (['efectivo', 'transferencia', 'tarjeta'] as $medio) {
+            $pagos[$medio] = $this->escalar($datos[$medio] ?? '0', 2);
+        }
+        $totalPagado = array_sum($pagos);
+        if ($totalPagado > 999999999999999) {
+            throw ValidationException::withMessages(['total' => 'El total del pago supera el máximo permitido.']);
+        }
+
+        DB::transaction(function () use ($request, $datos, $pagos, $totalPagado) {
+            $habitacion = Habitacion::where('numero', $datos['habitacion'])->lockForUpdate()->first();
+            if (!$habitacion) {
+                throw ValidationException::withMessages(['habitacion' => 'La habitación seleccionada no existe.']);
+            }
+
+            $reservas = Reserva::where('habitacion_id', $habitacion->id)->where('estado', 'Ocupada')
+                ->lockForUpdate()->get(['fecha_inicio', 'fecha_fin']);
+            if ($reservas->count() !== 1) {
+                throw ValidationException::withMessages(['habitacion' => 'La habitación debe tener una única reserva ocupada para cerrar la comanda.']);
+            }
+
+            $comandas = DB::table('comandas')->where('habitacion', $habitacion->numero)
+                ->where('estado', 'Abierta')->orderBy('id')->lockForUpdate()->get(['id', 'total']);
+            if ($comandas->isEmpty()) {
+                throw ValidationException::withMessages(['habitacion' => 'No hay comandas abiertas para la habitación seleccionada.']);
+            }
+            $totalComanda = $comandas->sum(fn ($comanda) => $this->escalar($comanda->total, 2));
+            if ($totalPagado !== $totalComanda) {
+                throw ValidationException::withMessages([
+                    'total' => 'La suma de los pagos debe coincidir con el total de las comandas abiertas: '.preg_replace('/\B(?=(\d{3})+(?:\.|$))/', ',', $this->formatear($totalComanda, 2)).'.',
+                ]);
+            }
+
+            $fecha = now();
+            DB::table('cajas')->insert([
+                'checkin' => $reservas->first()->fecha_inicio,
+                'checkout' => $reservas->first()->fecha_fin,
+                'habitacion' => $habitacion->numero,
+                'efectivo' => $this->formatear($pagos['efectivo'], 2),
+                'transferencia' => $this->formatear($pagos['transferencia'], 2),
+                'tarjeta' => $this->formatear($pagos['tarjeta'], 2),
+                'total' => $this->formatear($totalPagado, 2),
+                'user_id' => $request->user()->id,
+                'created_at' => $fecha,
+                'updated_at' => $fecha,
+            ]);
+            DB::table('comandas')->whereIn('id', $comandas->pluck('id'))->update([
+                'estado' => 'Cerrada',
+                'fecha_actualizacion' => $fecha,
+            ]);
+        });
+
+        return redirect()->route('comandas.index')->with('comanda_cerrada', 'Comanda cerrada y pago registrado correctamente.');
     }
 
     private function escalar(string|int|float $valor, int $decimales): int

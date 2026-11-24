@@ -17,8 +17,8 @@
                 <div class="card-header">
                     <h2 class="card-title"><b>Completar el formulario</b></h2>
                 </div>
-                <div class="row">
-                    <div class="col-md-1 ml-1">
+                <div class="row col-md-12">
+                    <div class="col-md-2 ml-1">
                         <label for="habitacion" class="form-label">Habitación <b style="color: red;">(*)</b></label>
                         <select class="form-control" id="habitacion" name="habitacion" required>
                             <option value="">Seleccione</option>
@@ -37,14 +37,14 @@
                         </select>
                         <small id="pasajerosMensaje" class="text-danger" role="status"></small>
                     </div>
-                    <div class="col-md-5 mr-5 ml-2">
+                    <div class="col-md-4 ml-2">
                         <label class="form-label">Puntos de Venta <b style="color: red;">(*)</b></label>
                         <div>
-                            <div class="form-check form-check-inline mr-5">
+                            <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" id="punto_comedor" name="punto" value="Comedor" {{ old('punto') == 'Comedor' ? 'checked' : '' }} required>
                                 <label class="form-check-label" for="punto_comedor">Comedor</label>
                             </div>
-                            <div class="form-check form-check-inline mr-5">
+                            <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" id="punto_bar" name="punto" value="Bar" {{ old('punto') == 'Bar' ? 'checked' : '' }} required>
                                 <label class="form-check-label" for="punto_bar">Bar</label>
                             </div>
@@ -54,6 +54,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
                     <table id="example1" class="table table-sm table-bordered table-hover table-striped">
                         <thead>

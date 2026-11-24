@@ -76,14 +76,15 @@ class ComandaGuardarTest extends TestCase
         ];
     }
 
-    public function test_listado_muestra_todos_los_consumos_y_devoluciones(): void
+    public function test_listado_muestra_solo_los_consumos_y_devoluciones_abiertos(): void
     {
         [$habitacion, $pasajeros, $articulos] = $this->datos();
         $usuario = User::factory()->create(['name' => 'Operador']);
         $fecha = '2026-11-19 17:10:00';
         foreach ([
             [$pasajeros[0], $articulos[0], 'Bar', 2, 4.70, 'Abierta', null],
-            [$pasajeros[1], $articulos[1], 'Comedor', -1, -4, 'Cerrada', 'Devolucion'],
+            [$pasajeros[1], $articulos[1], 'Comedor', -1, -4, 'Abierta', 'Devolucion'],
+            [$pasajeros[0], $articulos[0], 'Bar', 1, 2.35, 'Cerrada', 'Comanda cerrada de prueba'],
         ] as [$pasajero, $articulo, $punto, $cantidad, $total, $estado, $observacion]) {
             DB::table('comandas')->insert([
                 'articulo_id' => $articulo, 'pasajero_id' => $pasajero, 'user_id' => $usuario->id,
@@ -100,7 +101,8 @@ class ComandaGuardarTest extends TestCase
             ->assertSee('tablaComandas')
             ->assertSee('Agua &lt;fría&gt;', false)->assertSee('Café')
             ->assertSee('Ana')->assertSee('Luis')->assertSee('Comedor')
-            ->assertSee('Devolucion')->assertSee('-1')->assertSee('Cerrada')->assertSee('Operador');
+            ->assertSee('Devolucion')->assertSee('-1')->assertSee('Operador')
+            ->assertDontSee('Comanda cerrada de prueba');
     }
 
     public function test_selector_contiene_solo_habitaciones_con_comandas_abiertas_sin_duplicados(): void
@@ -122,6 +124,127 @@ class ComandaGuardarTest extends TestCase
             ->assertViewHas('habitacionesAbiertas', fn ($habitaciones) => $habitaciones->all() === ['2', '10'])
             ->assertSeeInOrder(['id="habitacionCerrar"', 'value="2"', 'value="10"', 'id="cerrarComanda"'], false)
             ->assertDontSee('<option value="30">', false);
+    }
+
+    public function test_cierra_comandas_de_la_habitacion_y_registra_los_medios_de_pago(): void
+    {
+        [, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        foreach ([
+            ['10', 'Abierta', '12.34'],
+            ['10', 'Abierta', '-2.04'],
+            ['10', 'Cerrada', '50.00'],
+            ['20', 'Abierta', '100.00'],
+        ] as [$habitacion, $estado, $total]) {
+            DB::table('comandas')->insert([
+                'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+                'fecha' => now(), 'habitacion' => $habitacion, 'puntoVenta' => 'Bar',
+                'cantidad' => 1, 'precio' => 1, 'total' => $total, 'estado' => $estado,
+                'fecha_creacion' => now(), 'fecha_actualizacion' => now(),
+            ]);
+        }
+
+        $this->actingAs($usuario)->post(route('comandas.cerrar'), [
+            'habitacion' => '10', 'efectivo' => '0.10', 'transferencia' => '0.20', 'tarjeta' => '10.00',
+        ])->assertRedirect(route('comandas.index'))->assertSessionHasNoErrors()->assertSessionHas('comanda_cerrada');
+        $this->assertDatabaseHas('cajas', [
+            'habitacion' => '10', 'checkin' => '2026-11-19', 'checkout' => '2026-11-20',
+            'efectivo' => 0.10, 'transferencia' => 0.20, 'tarjeta' => 10, 'total' => 10.30,
+            'user_id' => $usuario->id,
+        ]);
+        $this->assertSame(3, DB::table('comandas')->where('habitacion', '10')->where('estado', 'Cerrada')->count());
+        $this->assertSame(1, DB::table('comandas')->where('habitacion', '20')->where('estado', 'Abierta')->count());
+
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '10.30'])
+            ->assertSessionHasErrors('habitacion');
+        $this->assertSame(1, DB::table('cajas')->count());
+    }
+
+    public function test_rechaza_pagos_invalidos_o_distintos_al_total_sin_cerrar(): void
+    {
+        [, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        DB::table('comandas')->insert([
+            'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+            'fecha' => now(), 'habitacion' => '10', 'puntoVenta' => 'Bar',
+            'cantidad' => 1, 'precio' => 10, 'total' => 10, 'estado' => 'Abierta',
+            'fecha_creacion' => now(), 'fecha_actualizacion' => now(),
+        ]);
+        $this->actingAs($usuario);
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '9.99'])->assertSessionHasErrors('total');
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '10.01'])->assertSessionHasErrors('total');
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10'])->assertSessionHasErrors('efectivo');
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '-10'])->assertSessionHasErrors('efectivo');
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '10.001'])->assertSessionHasErrors('efectivo');
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '1,0'])->assertSessionHasErrors('efectivo');
+        $this->assertDatabaseHas('comandas', ['habitacion' => '10', 'estado' => 'Abierta']);
+        $this->assertSame(0, DB::table('cajas')->count());
+    }
+
+    public function test_muestra_importes_formateados_y_cierra_con_pago_con_separadores(): void
+    {
+        [, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        $datos = [
+            'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+            'fecha' => now(), 'habitacion' => '10', 'puntoVenta' => 'Bar',
+            'cantidad' => 1, 'precio' => 1234.50, 'total' => 1234.50, 'estado' => 'Abierta',
+            'fecha_creacion' => now(), 'fecha_actualizacion' => now(),
+        ];
+        DB::table('comandas')->insert($datos);
+        DB::table('comandas')->insert(array_merge($datos, ['habitacion' => '20', 'total' => -1234.50]));
+        $this->actingAs($usuario)->get(route('comandas.index'))->assertOk()
+            ->assertSee('>1,234.50</td>', false)
+            ->assertSee('>-1,234.50</td>', false)
+            ->assertSee('data-order="1234.5', false)
+            ->assertSee('data-order="-1234.5', false);
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '1,234.50'])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('cajas', ['habitacion' => '10', 'efectivo' => 1234.50, 'total' => 1234.50]);
+        $this->assertDatabaseHas('comandas', ['habitacion' => '10', 'estado' => 'Cerrada']);
+    }
+
+    public function test_cierre_exige_reserva_ocupada_y_permite_pago_cero_si_el_total_es_cero(): void
+    {
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        DB::table('comandas')->insert([
+            'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+            'fecha' => now(), 'habitacion' => '10', 'puntoVenta' => 'Bar',
+            'cantidad' => 1, 'precio' => 0, 'total' => 0, 'estado' => 'Abierta',
+            'fecha_creacion' => now(), 'fecha_actualizacion' => now(),
+        ]);
+        DB::table('reservas')->where('habitacion_id', $habitacion)->update(['estado' => 'Reservada']);
+        $this->actingAs($usuario)->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '0'])
+            ->assertSessionHasErrors('habitacion');
+        $this->assertSame(0, DB::table('cajas')->count());
+
+        DB::table('reservas')->where('habitacion_id', $habitacion)->update(['estado' => 'Ocupada']);
+        $this->post(route('comandas.cerrar'), ['habitacion' => '10', 'efectivo' => '0'])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('cajas', ['habitacion' => '10', 'efectivo' => 0, 'total' => 0]);
+    }
+
+    public function test_no_cierra_si_hay_varias_reservas_ocupadas_o_sin_autenticacion(): void
+    {
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        $usuario = User::factory()->create();
+        DB::table('comandas')->insert([
+            'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[0], 'user_id' => $usuario->id,
+            'fecha' => now(), 'habitacion' => '10', 'puntoVenta' => 'Bar',
+            'cantidad' => 1, 'precio' => 10, 'total' => 10, 'estado' => 'Abierta',
+            'fecha_creacion' => now(), 'fecha_actualizacion' => now(),
+        ]);
+        DB::table('reservas')->insert([
+            'habitacion_id' => $habitacion, 'pasajero_id' => $pasajeros[1], 'estado' => 'Ocupada',
+            'fecha_inicio' => '2026-11-21', 'fecha_fin' => '2026-11-22', 'detalle' => 'Reserva',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $datos = ['habitacion' => '10', 'efectivo' => '10'];
+        $this->postJson(route('comandas.cerrar'), $datos)->assertUnauthorized();
+        $this->actingAs($usuario)->post(route('comandas.cerrar'), $datos)->assertSessionHasErrors('habitacion');
+        $this->assertDatabaseHas('comandas', ['habitacion' => '10', 'estado' => 'Abierta']);
+        $this->assertSame(0, DB::table('cajas')->count());
     }
 
     public function test_incluye_el_numero_de_habitacion_en_el_correo_de_cada_pasajero(): void

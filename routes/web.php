@@ -258,6 +258,9 @@ Route::get('/admin/comandas/comanda', [App\Http\Controllers\ArticuloController::
 Route::post('/admin/comandas', [App\Http\Controllers\ComandaController::class, 'store'])
 ->name('comandas.store')
 ->middleware('auth');
+Route::post('/admin/comandas/cerrar', [App\Http\Controllers\ComandaController::class, 'cerrar'])
+->name('comandas.cerrar')
+->middleware('auth');
 
 //RUTAS PARA LOCALIDADES (AJAX)
 Route::get('/admin/localidades/provincia/{idProv}', [App\Http\Controllers\LocalidadController::class, 'getLocalidades'])
