@@ -20,6 +20,8 @@ class UsuarioCreadoMailTest extends TestCase
         Mail::fake();
 
         $administrador = User::factory()->create();
+        Role::findOrCreate('Administrador', 'web');
+        $administrador->assignRole('Administrador');
         Role::create(['name' => 'Recepcionista', 'guard_name' => 'web']);
 
         $password = 'clave-segura-123';
@@ -64,6 +66,8 @@ class UsuarioCreadoMailTest extends TestCase
         Mail::fake();
 
         $administrador = User::factory()->create();
+        Role::findOrCreate('Administrador', 'web');
+        $administrador->assignRole('Administrador');
         $usuario = User::factory()->create([
             'email' => 'anterior@example.com',
             'telefono' => '123456789',
@@ -102,6 +106,8 @@ class UsuarioCreadoMailTest extends TestCase
         Mail::fake();
 
         $administrador = User::factory()->create();
+        Role::findOrCreate('Administrador', 'web');
+        $administrador->assignRole('Administrador');
         $usuario = User::factory()->create(['telefono' => '123456789']);
         Role::create(['name' => 'Recepcionista', 'guard_name' => 'web']);
 

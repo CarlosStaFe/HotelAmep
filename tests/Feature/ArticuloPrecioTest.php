@@ -10,6 +10,7 @@ use Tests\TestCase;
 class ArticuloPrecioTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     private function crearArticulo(string $nombre): int
     {

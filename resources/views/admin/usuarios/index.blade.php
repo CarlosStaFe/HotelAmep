@@ -17,10 +17,12 @@
                 <div class="card-header">
                     <h3 class="card-title"><b>Usuarios registrados</b></h3>
 
+                    @if (auth()->user()->canAccessMenu('usuarios.create'))
                     <div class="card-tools">
                         <a href="{{ url('/admin/usuarios/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
+                    @endif
                 </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
 
@@ -54,7 +56,9 @@
                                     <td style="text-align: center;">
                                         <div class="btn-group" role="group" aria-label="Basic example">
                                             <a href="{{ route('usuarios.show', $usuario) }}" class="btn btn-success"><i class="bi bi-eye"></i></a>
-                                            <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
+                                            @if (auth()->user()->hasRole('Administrador') || ! $usuario->hasRole('Administrador'))
+                                                <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-info"><i class="bi bi-pencil"></i></a>
+                                            @endif
 {{--                                             <a href="{{ url('/admin/usuarios/' . $usuario->id . '/delete') }}" class="btn btn-danger"><i class="bi bi-trash"></i></a> --}}
                                         </div>
                                     </td>

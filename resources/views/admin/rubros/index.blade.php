@@ -16,10 +16,12 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title"><b>Rubros registrados</b></h3>
+                    @if (auth()->user()->canAccessMenu('rubros.create'))
                     <div class="card-tools">
                         <a href="{{ url('/admin/rubros/create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
+                    @endif
                 </div>
                 <div class="card-body" style="box-sizing: border-box; display: block;">
 

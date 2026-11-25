@@ -309,7 +309,7 @@ return [
         ['header' => 'Menú Principal'],
         [
             'text' => 'Auditoría',
-            'icon' => 'bi bi-mortarboard',
+            'icon' => 'bi bi-eye',
             'classes' => 'bg-navy text-white',
             'submenu' => [
                 [
@@ -327,14 +327,14 @@ return [
                         [
                             'text' => 'Registrar Rubro',
                             'url' => '/admin/rubros/create',
-                            'icon' => 'bi bi-inboxes',
+                            'icon' => 'bi bi-bookmark-plus',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],
                 ],
                 [
                     'text' => 'Subrubros',
-                    'icon' => 'fas fa-layer-group',
+                    'icon' => 'bi bi-bookmarks',
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
                         [
@@ -346,14 +346,14 @@ return [
                         [
                             'text' => 'Registrar Subrubro',
                             'url' => '/admin/subrubros/create',
-                            'icon' => 'bi bi-inboxes',
+                            'icon' => 'bi bi-bookmark-plus-fill',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],
                 ],
                 [
                     'text' => 'Usuarios',
-                    'icon' => 'fas fa-layer-group',
+                    'icon' => 'bi bi-person-check-fill',
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
                         [
@@ -365,16 +365,28 @@ return [
                         [
                             'text' => 'Registrar Usuario',
                             'url' => '/admin/usuarios/create',
-                            'icon' => 'bi bi-inboxes',
+                            'icon' => 'bi bi-person-add',
+                            'classes' => 'bg-cyan text-white',
+                        ],
+                        [
+                            'text' => 'Usuarios conectados',
+                            'url' => '/admin/usuarios/conectados',
+                            'icon' => 'bi bi-person-video',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],
                 ],
                 [
-                    'text' => 'Seguridad',
-                    'icon' => 'fas fa-layer-group',
+                    'text' => 'Sistema',
+                    'icon' => 'bi bi-floppy',
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
+                        [
+                            'text' => 'Permisos de Menú',
+                            'url' => '/admin/permisos',
+                            'icon' => 'bi bi-shield-lock',
+                            'classes' => 'bg-cyan text-white',
+                        ],
                         [
                             'text' => 'Copia de Seguridad',
                             'url' => '/admin/copias/index',
@@ -410,7 +422,7 @@ return [
                         [
                             'text' => 'Registrar Artículo',
                             'url' => '/admin/articulos/create',
-                            'icon' => 'bi bi-inboxes',
+                            'icon' => 'bi bi-bag-plus',
                             'classes' => 'bg-cyan text-white',
                         ],
                         [
@@ -499,7 +511,7 @@ return [
                 [
                     'text' => 'Registrar Pasajero',
                     'url' => '/admin/pasajeros/create',
-                    'icon' => 'bi bi-person-vcard',
+                    'icon' => 'bi bi-people-fill',
                     'classes' => 'bg-cyan text-white',
                 ],
             ],
@@ -512,7 +524,7 @@ return [
                 [
                     'text' => 'Cargar Consumo',
                     'url' => '/admin/comandas/comanda',
-                    'icon' => 'bi bi-cup-straw',
+                    'icon' => 'bi bi-cup-hot',
                     'classes' => 'bg-cyan text-white',
                 ],
                 [
@@ -522,6 +534,12 @@ return [
                     'classes' => 'bg-cyan text-white',
                 ],
             ],
+        ],
+        [
+            'text' => 'Caja',
+            'url' => '/admin/caja',
+            'icon' => 'bi bi-safe',
+            'classes' => 'bg-navy text-white',
         ],
         [
             'id' => 'sidebar-logout',
@@ -545,6 +563,7 @@ return [
     */
 
     'filters' => [
+        App\Menu\MenuAccessFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\GateFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\HrefFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\SearchFilter::class,

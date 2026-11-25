@@ -10,6 +10,7 @@ use Tests\TestCase;
 class CreatePasajeroTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     public function test_passenger_edit_form_loads_existing_location(): void
     {

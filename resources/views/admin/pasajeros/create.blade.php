@@ -155,7 +155,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <a href="{{ url('/admin/pasajeros/index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route(auth()->user()->canAccessMenu('pasajeros.index') ? 'pasajeros.index' : 'admin.index') }}" class="btn btn-secondary">Cancelar</a>
                                     <button type="submit" class="btn btn-primary">Guardar</button>
                                 </div>
                             </div>

@@ -7,6 +7,14 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Permisos de menú
+
+Un administrador puede asignar o quitar opciones por usuario en **Auditoría → Sistema → Permisos de Menú**. Los demás usuarios comienzan sin opciones; cada permiso incluye las acciones relacionadas. Los administradores siempre tienen acceso completo.
+
+La restauración de copias es exclusiva de administradores. Para evitar asignaciones incorrectas, el sistema exige que la copia elimine y recree la tabla `user_menu_access`, como hacen las copias generadas por el sistema después de esta mejora; las copias anteriores se rechazan. La opción Copia de Seguridad permite descargar toda la base de datos.
+
+Al agregar una opción o ruta administrativa, actualice `config/menu_access.php` con sus rutas relacionadas y ejecute las migraciones antes de habilitar la aplicación.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

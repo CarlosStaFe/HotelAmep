@@ -31,6 +31,13 @@ Route::get('/admin', [App\Http\Controllers\AdminController::class, 'index'])
 ->name('admin.index')
 ->middleware('auth');
 
+Route::middleware(['auth', App\Http\Middleware\AuthorizeMenuAccess::class])->group(function () {
+
+Route::get('/admin/permisos', [App\Http\Controllers\MenuAccessController::class, 'index'])
+->name('permisos.index');
+Route::put('/admin/permisos/{usuario}', [App\Http\Controllers\MenuAccessController::class, 'update'])
+->name('permisos.update');
+
 //RUTA PARA USUARIOS
 Route::get('/admin/usuarios/index', [App\Http\Controllers\UsuarioController::class, 'index'])
 ->name('usuarios.index')
@@ -40,6 +47,9 @@ Route::get('/admin/usuarios/create', [App\Http\Controllers\UsuarioController::cl
 ->middleware('auth');
 Route::post('/admin/usuarios/create', [App\Http\Controllers\UsuarioController::class, 'store'])
 ->name('usuarios.store')
+->middleware('auth');
+Route::get('/admin/usuarios/conectados', [App\Http\Controllers\UsuarioController::class, 'conectados'])
+->name('usuarios.conectados')
 ->middleware('auth');
 Route::get('/admin/usuarios/{id}', [App\Http\Controllers\UsuarioController::class, 'show'])
 ->name('usuarios.show')
@@ -262,6 +272,14 @@ Route::post('/admin/comandas/cerrar', [App\Http\Controllers\ComandaController::c
 ->name('comandas.cerrar')
 ->middleware('auth');
 
+// RUTA PARA CAJA
+Route::get('/admin/caja', [App\Http\Controllers\CajaController::class, 'index'])
+->name('caja.index')
+->middleware('auth');
+Route::patch('/admin/caja/{caja}/control', [App\Http\Controllers\CajaController::class, 'actualizarControl'])
+->name('caja.control')
+->middleware('auth');
+
 //RUTAS PARA LOCALIDADES (AJAX)
 Route::get('/admin/localidades/provincia/{idProv}', [App\Http\Controllers\LocalidadController::class, 'getLocalidades'])
 ->name('localidades.provincia')
@@ -289,3 +307,4 @@ Route::get('/admin/copias/descargar/{nombre}', [App\Http\Controllers\CopiaSeguri
 Route::delete('/admin/copias/{nombre}', [App\Http\Controllers\CopiaSeguridadController::class, 'destroy'])
 ->name('copias.destroy')
 ->middleware('auth');
+});

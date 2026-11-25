@@ -11,6 +11,7 @@ use Tests\TestCase;
 class CalendarioReservaTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     private function habitacion(int $numero, int $plazas = 2): int
     {

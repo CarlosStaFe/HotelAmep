@@ -27,6 +27,9 @@
                                 <select class="form-control" id="role" name="role" required>
                                     <option value="">Seleccione Rol</option>
                                     @foreach (\Spatie\Permission\Models\Role::where('guard_name', 'web')->orderBy('name')->get() as $role)
+                                        @if ($role->name === 'Administrador' && ! auth()->user()->hasRole('Administrador'))
+                                            @continue
+                                        @endif
                                         <option value="{{ $role->name }}"
                                             {{ old('role', $usuario->roles->first()?->name ?? '') === $role->name ? 'selected' : '' }}>
                                             {{ $role->name }}
@@ -48,7 +51,8 @@
                             <div class="col-md-3 mb-3">
                                 <label for="email" class="form-label">Email <b style="color: red;">(*)</b></label>
                                 <input type="email" class="form-control" id="email" name="email"
-                                    placeholder="Ingrese el email del usuario" value="{{ old('email', $usuario->email) }}" required>
+                                    placeholder="Ingrese el email del usuario" value="{{ old('email', $usuario->email) }}" required
+                                    {{ ! auth()->user()->hasRole('Administrador') && ! auth()->user()->is($usuario) ? 'readonly' : '' }}>
                                 @error('email')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -63,6 +67,7 @@
                             </div>
                         </div>
                         <div class="row">
+                            @if (auth()->user()->hasRole('Administrador') || auth()->user()->is($usuario))
                             <div class="col-md-4 mb-3">
                                 <label for="password" class="form-label">Contraseña</label>
                                 <div class="input-group">
@@ -82,6 +87,7 @@
                                 <input type="password" class="form-control" id="password_confirmation"
                                     name="password_confirmation" placeholder="Repita la contraseña">
                             </div>
+                            @endif
                             <div class="col-md-2 mb-2">
                                 <label for="activo" class="form-label">Estado <b style="color: red;">(*)</b></label>
                                 <select class="form-control" id="activo" name="activo" required>

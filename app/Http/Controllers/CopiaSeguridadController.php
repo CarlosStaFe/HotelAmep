@@ -120,6 +120,12 @@ class CopiaSeguridadController extends Controller
 
         try {
             $sql = File::get($ruta);
+            $tablaPermisos = '(?:`[^`]+`\s*\.\s*)?`?user_menu_access`?';
+            $eliminaPermisos = preg_match('/^[ \t]*DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?' . $tablaPermisos . '\s*;/im', $sql, $drop, PREG_OFFSET_CAPTURE);
+            $creaPermisos = preg_match('/^[ \t]*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?' . $tablaPermisos . '\s*\(/im', $sql, $create, PREG_OFFSET_CAPTURE);
+            if (! $eliminaPermisos || ! $creaPermisos || $drop[0][1] > $create[0][1]) {
+                return back()->with('error', 'La copia no contiene la tabla de permisos de menú y no puede restaurarse desde el sistema.');
+            }
             DB::connection()->getPdo()->exec($sql);
         } catch (\Throwable $e) {
             return back()->with('error', 'No se pudo restaurar la copia: ' . $e->getMessage());

@@ -12,6 +12,7 @@ use Tests\TestCase;
 class SubrubroTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     public function test_rubro_can_be_created_and_updated(): void
     {

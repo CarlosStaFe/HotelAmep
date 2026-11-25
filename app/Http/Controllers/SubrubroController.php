@@ -47,7 +47,7 @@ class SubrubroController extends Controller
         $subrubro->fecha_actualizacion = now();
         $subrubro->save();
 
-        return redirect()->route('subrubros.index')
+        return redirect()->route($request->user()->canAccessMenu('subrubros.index') ? 'subrubros.index' : 'subrubros.create')
             ->with('mensaje', 'Subrubro creado exitosamente.')
             ->with('icono', 'success')
             ->with('showConfirmButton', false)

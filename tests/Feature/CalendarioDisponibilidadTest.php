@@ -10,6 +10,7 @@ use Tests\TestCase;
 class CalendarioDisponibilidadTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     public function test_form_restores_required_description_after_validation_error(): void
     {

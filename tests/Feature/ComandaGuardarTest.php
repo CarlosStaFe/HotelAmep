@@ -14,6 +14,7 @@ use Tests\TestCase;
 class ComandaGuardarTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     private function datos(): array
     {

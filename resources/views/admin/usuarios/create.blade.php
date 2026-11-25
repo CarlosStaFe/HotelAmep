@@ -26,6 +26,9 @@
                                 <select class="form-control" id="role" name="role" required>
                                     <option value="">Seleccione Rol</option>
                                     @foreach (\Spatie\Permission\Models\Role::where('guard_name', 'web')->orderBy('name')->get() as $role)
+                                        @if ($role->name === 'Administrador' && ! auth()->user()->hasRole('Administrador'))
+                                            @continue
+                                        @endif
                                         <option value="{{ $role->name }}"
                                             {{ old('role') === $role->name ? 'selected' : '' }}>
                                             {{ $role->name }}
@@ -95,7 +98,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <a href="{{ url('/admin/usuarios/index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route(auth()->user()->canAccessMenu('usuarios.index') ? 'usuarios.index' : 'admin.index') }}" class="btn btn-secondary">Cancelar</a>
                                     <button type="submit" class="btn btn-primary">Guardar</button>
                                 </div>
                             </div>

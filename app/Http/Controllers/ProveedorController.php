@@ -88,7 +88,7 @@ class ProveedorController extends Controller
             'fecha_actualizacion' => now(),
         ]);
 
-        return redirect()->route('proveedores.index')
+        return redirect()->route($request->user()->canAccessMenu('proveedores.index') ? 'proveedores.index' : 'proveedores.create')
             ->with('mensaje', 'Proveedor creado correctamente.');
     }
 

@@ -43,7 +43,7 @@ class RubroController extends Controller
         $rubro->fecha_actualizacion = now();
         $rubro->save();
 
-        return redirect()->route('rubros.index')
+        return redirect()->route($request->user()->canAccessMenu('rubros.index') ? 'rubros.index' : 'rubros.create')
         ->with('mensaje', 'Rubro creado exitosamente.')
         ->with('icono', 'success')
         ->with('showConfirmButton', false)

@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'rubros.index' => ['grupo' => 'Auditoría / Rubros', 'texto' => 'Listado de Rubros', 'url' => '/admin/rubros/index', 'rutas' => ['rubros.index', 'rubros.show', 'rubros.edit', 'rubros.update', 'rubros.delete', 'rubros.destroy']],
+    'rubros.create' => ['grupo' => 'Auditoría / Rubros', 'texto' => 'Registrar Rubro', 'url' => '/admin/rubros/create', 'rutas' => ['rubros.create', 'rubros.store']],
+    'subrubros.index' => ['grupo' => 'Auditoría / Subrubros', 'texto' => 'Listado de Subrubros', 'url' => '/admin/subrubros/index', 'rutas' => ['subrubros.index', 'subrubros.show', 'subrubros.edit', 'subrubros.update', 'subrubros.delete', 'subrubros.destroy']],
+    'subrubros.create' => ['grupo' => 'Auditoría / Subrubros', 'texto' => 'Registrar Subrubro', 'url' => '/admin/subrubros/create', 'rutas' => ['subrubros.create', 'subrubros.store']],
+    'usuarios.index' => ['grupo' => 'Auditoría / Usuarios', 'texto' => 'Listado de Usuarios', 'url' => '/admin/usuarios/index', 'rutas' => ['usuarios.index', 'usuarios.show', 'usuarios.edit', 'usuarios.update']],
+    'usuarios.create' => ['grupo' => 'Auditoría / Usuarios', 'texto' => 'Registrar Usuario', 'url' => '/admin/usuarios/create', 'rutas' => ['usuarios.create', 'usuarios.store']],
+    'usuarios.conectados' => ['grupo' => 'Auditoría / Usuarios', 'texto' => 'Usuarios conectados', 'url' => '/admin/usuarios/conectados', 'rutas' => ['usuarios.conectados']],
+    'copias.index' => ['grupo' => 'Auditoría / Sistema', 'texto' => 'Copia de Seguridad', 'url' => '/admin/copias/index', 'rutas' => ['copias.index', 'copias.store', 'copias.descargar', 'copias.destroy']],
+    'articulos.index' => ['grupo' => 'Administración / Artículos', 'texto' => 'Listado de Artículos', 'url' => '/admin/articulos/index', 'rutas' => ['articulos.index', 'articulos.show', 'articulos.edit', 'articulos.update', 'articulos.delete', 'articulos.destroy', 'articulos.ajuste', 'articulos.grabar', 'articulos.mover', 'articulos.grabar-movimiento', 'articulos.precio', 'articulos.grabar-precio']],
+    'articulos.create' => ['grupo' => 'Administración / Artículos', 'texto' => 'Registrar Artículo', 'url' => '/admin/articulos/create', 'rutas' => ['articulos.create', 'articulos.store']],
+    'articulos.listar-ajustes' => ['grupo' => 'Administración / Artículos', 'texto' => 'Listado de Ajustes', 'url' => '/admin/articulos/listar-ajustes', 'rutas' => ['articulos.listar-ajustes']],
+    'proveedores.index' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Listado de Proveedores', 'url' => '/admin/proveedores/index', 'rutas' => ['proveedores.index', 'proveedores.show', 'proveedores.edit', 'proveedores.update', 'proveedores.delete', 'proveedores.destroy', 'localidades.provincia', 'localidades.codigos_postales']],
+    'proveedores.create' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Registrar Proveedor', 'url' => '/admin/proveedores/create', 'rutas' => ['proveedores.create', 'proveedores.store', 'localidades.provincia', 'localidades.codigos_postales']],
+    'compras.index' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Listar Compras', 'url' => '/admin/compras/index', 'rutas' => ['compras.index']],
+    'compras.create' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Cargar Compras', 'url' => '/admin/compras/create', 'rutas' => ['compras.create', 'compras.store']],
+    'calendarios.calendario' => ['grupo' => 'Disponibilidad', 'texto' => 'Calendario', 'url' => '/admin/calendarios/calendario', 'rutas' => ['calendarios.calendario', 'calendarios.reservar']],
+    'calendarios.disponibilidad' => ['grupo' => 'Disponibilidad', 'texto' => 'Generar Calendario', 'url' => '/admin/calendarios/disponibilidad', 'rutas' => ['calendarios.disponibilidad', 'calendarios.store']],
+    'calendarios.index' => ['grupo' => 'Disponibilidad', 'texto' => 'Lista de Reservas', 'url' => '/admin/calendarios/index', 'rutas' => ['calendarios.index', 'reservas.cambiar-estado']],
+    'calendarios.asignadas' => ['grupo' => 'Disponibilidad', 'texto' => 'Asignar Habitaciones', 'url' => '/admin/calendarios/asignar', 'rutas' => ['calendarios.asignadas', 'calendarios.asignadas.store', 'calendarios.asignadas.destroy']],
+    'pasajeros.index' => ['grupo' => 'Pasajeros', 'texto' => 'Listado de Pasajeros', 'url' => '/admin/pasajeros/index', 'rutas' => ['pasajeros.index', 'pasajeros.show', 'pasajeros.edit', 'pasajeros.update', 'pasajeros.delete', 'pasajeros.destroy', 'localidades.provincia', 'localidades.codigos_postales']],
+    'pasajeros.create' => ['grupo' => 'Pasajeros', 'texto' => 'Registrar Pasajero', 'url' => '/admin/pasajeros/create', 'rutas' => ['pasajeros.create', 'pasajeros.store', 'localidades.provincia', 'localidades.codigos_postales']],
+    'comandas.comanda' => ['grupo' => 'Comanda', 'texto' => 'Cargar Consumo', 'url' => '/admin/comandas/comanda', 'rutas' => ['comandas.comanda', 'comandas.cargar', 'comandas.store', 'pasajeros.habitacion']],
+    'comandas.index' => ['grupo' => 'Comanda', 'texto' => 'Listar Comandas', 'url' => '/admin/comandas/index', 'rutas' => ['comandas.index', 'comandas.cerrar']],
+    'caja.index' => ['grupo' => 'Caja', 'texto' => 'Caja', 'url' => '/admin/caja', 'rutas' => ['caja.index', 'caja.control']],
+];

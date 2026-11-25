@@ -11,6 +11,7 @@ use Tests\TestCase;
 class CompraTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     private function datos(): array
     {

@@ -39,7 +39,9 @@
 
                     <div class="d-flex justify-content-between">
                         <a href="{{ url('/admin/usuarios/index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-success">Editar</a>
+                        @if (auth()->user()->hasRole('Administrador') || ! $usuario->hasRole('Administrador'))
+                            <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-success">Editar</a>
+                        @endif
                     </div>
                 </div>
             </div>

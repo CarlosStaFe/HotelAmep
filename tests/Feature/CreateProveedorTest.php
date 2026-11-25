@@ -11,6 +11,7 @@ use Tests\TestCase;
 class CreateProveedorTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     private function createLocalidad(): int
     {

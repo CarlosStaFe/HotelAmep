@@ -10,6 +10,7 @@ use Tests\TestCase;
 class ComandaArticulosTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\WithFullMenuAccess;
 
     public function test_listar_comandas_requiere_autenticacion(): void
     {

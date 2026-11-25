@@ -78,7 +78,7 @@ class PasajeroController extends Controller
             'fecha_actualizacion' => now(),
         ]);
 
-        return redirect()->route('pasajeros.index')
+        return redirect()->route($request->user()->canAccessMenu('pasajeros.index') ? 'pasajeros.index' : 'pasajeros.create')
             ->with('mensaje', 'Pasajero creado exitosamente.')
             ->with('icono', 'success')
             ->with('showConfirmButton', false)

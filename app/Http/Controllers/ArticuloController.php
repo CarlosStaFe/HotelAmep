@@ -74,7 +74,7 @@ class ArticuloController extends Controller
         $articulo->fecha_actualizacion = now();
         $articulo->save();
 
-        return redirect()->route('articulos.index')
+        return redirect()->route($request->user()->canAccessMenu('articulos.index') ? 'articulos.index' : 'articulos.create')
             ->with('mensaje', 'Artículo creado exitosamente.')
             ->with('icono', 'success')
             ->with('showConfirmButton', false)

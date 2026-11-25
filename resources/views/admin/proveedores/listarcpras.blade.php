@@ -17,10 +17,12 @@
                 <div class="card-header">
                     <h3 class="card-title"><b>Compras registradas</b></h3>
 
+                    @if (auth()->user()->canAccessMenu('compras.create'))
                     <div class="card-tools">
                         <a href="{{ route('compras.create') }}" class="btn btn-primary"
                             aria-label="Crear Nuevo">Crear Nuevo</a>
                     </div>
+                    @endif
                 </div>
 
                 <div class="card-body" style="box-sizing: border-box; display: block;">
