@@ -56,7 +56,12 @@
                                     <td style="text-align: right;">{{ $compra->subfijo }}</td>
                                     <td>{{ $compra->estado }}</td>
                                     <td style="text-align: right;">{{ $compra->dias }}</td>
-                                    <td style="text-align: center;">-</td>
+                                    <td style="text-align: center;">
+                                        <a href="{{ route('compras.show', $compra->id) }}" class="btn btn-success"
+                                            aria-label="Ver detalle de la compra {{ $compra->id }}" title="Ver detalle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

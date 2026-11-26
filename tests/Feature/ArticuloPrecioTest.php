@@ -327,7 +327,7 @@ class ArticuloPrecioTest extends TestCase
 
         $respuesta = $this->get(route('articulos.ajuste', $articulo))->assertOk()
             ->assertViewHas('stocksPorPunto', [
-                'Deposito' => 0.0, 'Comedor' => -1.0, 'Bar' => 2.0, 'Recepción' => 0.0,
+                'Deposito' => 0.0, 'Comedor' => -1.0, 'Bar' => 2.0, 'Recepción' => 0.0, 'Producción' => 0.0,
             ]);
         $this->assertMatchesRegularExpression('~<option value="Deposito" data-sin-stock="1"[^>]*selected>~', $respuesta->getContent());
         $this->assertMatchesRegularExpression('~<option value="Bar" data-sin-stock="0"~', $respuesta->getContent());
@@ -336,6 +336,41 @@ class ArticuloPrecioTest extends TestCase
         $bar = $this->withSession(['_old_input' => ['punto' => 'Bar']])
             ->get(route('articulos.ajuste', $articulo))->assertOk();
         $this->assertMatchesRegularExpression('~<small id="stockAviso"[^>]*hidden~', $bar->getContent());
+    }
+
+    public function test_ajuste_de_produccion_muestra_y_actualiza_su_stock(): void
+    {
+        $articulo = $this->crearArticulo('Agua');
+        $this->actingAs(User::factory()->create());
+
+        $respuesta = $this->withSession(['_old_input' => ['punto' => 'Producción']])
+            ->get(route('articulos.ajuste', $articulo))->assertOk()
+            ->assertViewHas('stocksPorPunto', fn ($stocks) => $stocks['Producción'] === 0.0);
+        $this->assertMatchesRegularExpression('~<option value="Producción" data-sin-stock="1"[^>]*selected>~u', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<small id="stockAviso"[^>]*role="status"\\s*>~', $respuesta->getContent());
+
+        $datos = [
+            'tipo' => 'Entrada', 'cantidad' => '2.500', 'punto' => 'Producción',
+            'motivo' => 'Producción', 'observacion' => 'Ingreso',
+        ];
+        $this->post(route('articulos.grabar', $articulo), $datos)
+            ->assertRedirect(route('articulos.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Producción', 'cantidad' => 2.5]);
+        $this->assertDatabaseHas('movimientos', [
+            'articulo_id' => $articulo, 'tipo' => 'Ajuste', 'observacion' => 'Entrada - Producción - Ingreso',
+        ]);
+
+        $respuesta = $this->withSession(['_old_input' => ['punto' => 'Producción']])
+            ->get(route('articulos.ajuste', $articulo))->assertOk()
+            ->assertViewHas('stocksPorPunto', fn ($stocks) => $stocks['Producción'] === 2.5);
+        $this->assertMatchesRegularExpression('~<option value="Producción" data-sin-stock="0"[^>]*selected>~u', $respuesta->getContent());
+        $this->assertMatchesRegularExpression('~<small id="stockAviso"[^>]*hidden~', $respuesta->getContent());
+
+        $datos['tipo'] = 'Salida';
+        $datos['cantidad'] = '1.000';
+        $this->post(route('articulos.grabar', $articulo), $datos)
+            ->assertRedirect(route('articulos.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('stocks', ['articulo_id' => $articulo, 'punto' => 'Producción', 'cantidad' => 1.5]);
     }
 
     public function test_ajuste_valida_el_punto_y_no_crea_stock_para_una_salida_sin_existencias(): void

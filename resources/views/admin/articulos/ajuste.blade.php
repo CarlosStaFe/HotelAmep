@@ -53,10 +53,11 @@
                                     <option value="Comedor" data-sin-stock="{{ $stocksPorPunto['Comedor'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Comedor' ? 'selected' : '' }}>Comedor</option>
                                     <option value="Bar" data-sin-stock="{{ $stocksPorPunto['Bar'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Bar' ? 'selected' : '' }}>Bar</option>
                                     <option value="Recepción" data-sin-stock="{{ $stocksPorPunto['Recepción'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Recepción' ? 'selected' : '' }}>Recepción</option>
+                                    <option value="Producción" data-sin-stock="{{ $stocksPorPunto['Producción'] == 0 ? '1' : '0' }}" {{ old('punto', 'Deposito') === 'Producción' ? 'selected' : '' }}>Producción</option>
                                 </select>
                                 @php
                                     $puntoSeleccionado = old('punto', 'Deposito');
-                                    $sinStockSeleccionado = in_array($puntoSeleccionado, ['Deposito', 'Comedor', 'Bar', 'Recepción'], true)
+                                    $sinStockSeleccionado = in_array($puntoSeleccionado, ['Deposito', 'Comedor', 'Bar', 'Recepción', 'Producción'], true)
                                         && $stocksPorPunto[$puntoSeleccionado] == 0;
                                 @endphp
                                 <small id="stockAviso" class="text-warning" role="status" @if (!$sinStockSeleccionado) hidden @endif>El stock a ajustar en este punto es 0.</small>
@@ -72,6 +73,7 @@
                                     <option value="Vencido" {{ old('motivo') === 'Vencido' ? 'selected' : '' }}>Vencido</option>
                                     <option value="Desgaste" {{ old('motivo') === 'Desgaste' ? 'selected' : '' }}>Desgaste</option>
                                     <option value="Baja" {{ old('motivo') === 'Baja' ? 'selected' : '' }}>Baja</option>
+                                    <option value="Producción" {{ old('motivo') === 'Producción' ? 'selected' : '' }}>Producción</option>
                                 </select>
                                 @error('motivo') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>

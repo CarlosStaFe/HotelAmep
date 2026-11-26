@@ -382,12 +382,6 @@ return [
                     'classes' => 'bg-blue text-white',
                     'submenu' => [
                         [
-                            'text' => 'Permisos de Menú',
-                            'url' => '/admin/permisos',
-                            'icon' => 'bi bi-shield-lock',
-                            'classes' => 'bg-cyan text-white',
-                        ],
-                        [
                             'text' => 'Copia de Seguridad',
                             'url' => '/admin/copias/index',
                             'icon' => 'bi bi-database-fill-check',
@@ -397,6 +391,12 @@ return [
                             'text' => 'Restaurar Copias',
                             'url' => '/admin/copias/restaurar',
                             'icon' => 'bi bi-database-lock',
+                            'classes' => 'bg-cyan text-white',
+                        ],
+                        [
+                            'text' => 'Permisos de Menú',
+                            'url' => '/admin/permisos',
+                            'icon' => 'bi bi-shield-lock',
                             'classes' => 'bg-cyan text-white',
                         ],
                     ],

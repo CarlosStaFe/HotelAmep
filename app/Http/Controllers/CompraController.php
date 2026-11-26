@@ -31,6 +31,25 @@ class CompraController extends Controller
         return view('admin.proveedores.listarcpras', compact('compras'));
     }
 
+    public function show(int $id)
+    {
+        $compra = DB::table('compras')
+            ->leftJoin('proveedores', 'compras.proveedor_id', '=', 'proveedores.id')
+            ->where('compras.id', $id)
+            ->select('compras.*', 'proveedores.nombre as proveedor_nombre', 'proveedores.razonSocial as proveedor_razon_social')
+            ->first();
+
+        abort_if(! $compra, 404);
+
+        $detalles = DB::table('detallecpras')
+            ->leftJoin('articulos', 'detallecpras.articulo_id', '=', 'articulos.id')
+            ->where('detallecpras.compra_id', (string) $compra->id)
+            ->orderBy('detallecpras.id')
+            ->get(['detallecpras.*', 'articulos.nombre as articulo_nombre']);
+
+        return view('admin.proveedores.detallecompra', compact('compra', 'detalles'));
+    }
+
     public function store(Request $request)
     {
         $datos = $request->validate([

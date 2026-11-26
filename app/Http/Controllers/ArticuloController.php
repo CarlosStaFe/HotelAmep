@@ -245,7 +245,7 @@ class ArticuloController extends Controller
     private function stocksPorPunto(Articulo $articulo): array
     {
         $stocksPorPunto = [];
-        foreach (['Deposito', 'Comedor', 'Bar', 'Recepción'] as $punto) {
+        foreach (['Deposito', 'Comedor', 'Bar', 'Recepción', 'Producción'] as $punto) {
             $stocksPorPunto[$punto] = (float) (DB::table('stocks')
                 ->where('articulo_id', $articulo->id)
                 ->where('punto', $punto)
@@ -300,8 +300,8 @@ class ArticuloController extends Controller
         $datos = $request->validate([
             'tipo' => 'required|in:Entrada,Salida',
             'cantidad' => 'required|numeric|gt:0|decimal:0,3|max:999999999.999',
-            'punto' => 'required|in:Deposito,Comedor,Bar,Recepción',
-            'motivo' => 'required|in:Ajuste,Rotura,Perdida,Vencido,Desgaste,Baja',
+            'punto' => 'required|in:Deposito,Comedor,Bar,Recepción,Producción',
+            'motivo' => 'required|in:Ajuste,Rotura,Perdida,Vencido,Desgaste,Baja,Producción',
             'observacion' => 'required|string|max:255',
         ]);
 

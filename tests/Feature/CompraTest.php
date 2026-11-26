@@ -49,7 +49,7 @@ class CompraTest extends TestCase
     public function test_muestra_compras_en_el_listado_segun_sus_encabezados(): void
     {
         [$proveedor] = $this->datos();
-        DB::table('compras')->insert([
+        $compra = DB::table('compras')->insertGetId([
             'proveedor_id' => $proveedor,
             'fechaCpra' => '2026-11-19',
             'tipoCpbte' => 'Factura A',
@@ -76,7 +76,63 @@ class CompraTest extends TestCase
             ->assertSee('<td style="text-align: right;">1</td>', false)
             ->assertSee('<td style="text-align: right;">23</td>', false)
             ->assertSeeText('Pendiente')
-            ->assertSeeText('Proveedor SA');
+            ->assertSeeText('Proveedor SA')
+            ->assertSee('href="'.route('compras.show', $compra).'"', false)
+            ->assertSee('aria-label="Ver detalle de la compra '.$compra.'"', false);
+    }
+
+    public function test_detalle_muestra_solo_las_lineas_de_la_compra_seleccionada(): void
+    {
+        [$proveedor, $articulos] = $this->datos();
+        $base = [
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 30, 'total' => '1543.25',
+            'estado' => 'Pendiente', 'usuario_id' => 1,
+        ];
+        $compra = DB::table('compras')->insertGetId($base);
+        $otraCompra = DB::table('compras')->insertGetId($base);
+        DB::table('detallecpras')->insert([
+            ['compra_id' => $compra, 'articulo_id' => $articulos[0], 'cantidad' => '1.250', 'precio' => '1234.60', 'subtotal' => '1543.25', 'vence' => '2027-03-01', 'punto' => 'Deposito'],
+            ['compra_id' => $compra, 'articulo_id' => 999999, 'cantidad' => '1.000', 'precio' => '0.00', 'subtotal' => '0.00', 'vence' => null, 'punto' => 'Bar'],
+            ['compra_id' => $otraCompra, 'articulo_id' => $articulos[1], 'cantidad' => '2.000', 'precio' => '1.00', 'subtotal' => '2.00', 'vence' => null, 'punto' => 'Deposito'],
+        ]);
+        $usuario = User::factory()->create();
+        DB::table('user_menu_access')->insert(['user_id' => $usuario->id, 'menu_key' => 'compras.index']);
+
+        $this->be($usuario)->get(route('compras.show', $compra))
+            ->assertOk()
+            ->assertViewIs('admin.proveedores.detallecompra')
+            ->assertViewHas('detalles', fn ($detalles) => $detalles->count() === 2)
+            ->assertSeeText('Detalle de compra Nro. '.$compra)
+            ->assertSeeText('19/11/2026')
+            ->assertSeeText('Agua')
+            ->assertSeeText('1.250')
+            ->assertSeeText('1,234.60')
+            ->assertSeeText('1,543.25')
+            ->assertSeeText('01/03/2027')
+            ->assertSeeText('Sin vencimiento')
+            ->assertSeeText('Artículo no disponible (ID: 999999)')
+            ->assertDontSeeText('Jugo')
+            ->assertSee('href="'.route('compras.index').'"', false);
+    }
+
+    public function test_detalle_requiere_permiso_y_maneja_compra_inexistente_o_sin_lineas(): void
+    {
+        [$proveedor] = $this->datos();
+        $compra = DB::table('compras')->insertGetId([
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 0, 'total' => 0,
+            'estado' => 'Contado', 'usuario_id' => 1,
+        ]);
+        $this->get(route('compras.show', $compra))->assertRedirect(route('login'));
+        $usuario = User::factory()->create();
+        DB::table('user_menu_access')->insert(['user_id' => $usuario->id, 'menu_key' => 'compras.create']);
+        $this->be($usuario)->get(route('compras.show', $compra))->assertForbidden();
+
+        DB::table('user_menu_access')->insert(['user_id' => $usuario->id, 'menu_key' => 'compras.index']);
+        $this->be($usuario->fresh())->get(route('compras.show', $compra))
+            ->assertOk()->assertSeeText('Esta compra no tiene detalles.');
+        $this->get(route('compras.show', 999999))->assertNotFound();
     }
 
     public function test_resalta_compras_solo_cuando_la_fecha_de_vencimiento_ya_paso(): void

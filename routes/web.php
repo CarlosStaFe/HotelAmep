@@ -192,6 +192,10 @@ Route::get('/admin/compras/create', [App\Http\Controllers\ProveedorController::c
 Route::get('/admin/compras/index', [App\Http\Controllers\CompraController::class, 'index'])
 ->name('compras.index')
 ->middleware('auth');
+Route::get('/admin/compras/{id}', [App\Http\Controllers\CompraController::class, 'show'])
+->whereNumber('id')
+->name('compras.show')
+->middleware('auth');
 Route::post('/admin/compras', [App\Http\Controllers\CompraController::class, 'store'])
 ->name('compras.store')
 ->middleware('auth');
