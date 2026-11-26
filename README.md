@@ -15,6 +15,8 @@ La restauración de copias es exclusiva de administradores. Para evitar asignaci
 
 Al agregar una opción o ruta administrativa, actualice `config/menu_access.php` con sus rutas relacionadas y ejecute las migraciones antes de habilitar la aplicación.
 
+Tras restaurar una copia, ejecute las migraciones pendientes para actualizar la estructura de la base de datos.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

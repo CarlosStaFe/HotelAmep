@@ -14,7 +14,7 @@ return [
     'articulos.listar-ajustes' => ['grupo' => 'Administración / Artículos', 'texto' => 'Listado de Ajustes', 'url' => '/admin/articulos/listar-ajustes', 'rutas' => ['articulos.listar-ajustes']],
     'proveedores.index' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Listado de Proveedores', 'url' => '/admin/proveedores/index', 'rutas' => ['proveedores.index', 'proveedores.show', 'proveedores.edit', 'proveedores.update', 'proveedores.delete', 'proveedores.destroy', 'localidades.provincia', 'localidades.codigos_postales']],
     'proveedores.create' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Registrar Proveedor', 'url' => '/admin/proveedores/create', 'rutas' => ['proveedores.create', 'proveedores.store', 'localidades.provincia', 'localidades.codigos_postales']],
-    'compras.index' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Listar Compras', 'url' => '/admin/compras/index', 'rutas' => ['compras.index', 'compras.show']],
+    'compras.index' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Listar Compras', 'url' => '/admin/compras/index', 'rutas' => ['compras.index', 'compras.show', 'compras.pagar']],
     'compras.create' => ['grupo' => 'Administración / Proveedores', 'texto' => 'Cargar Compras', 'url' => '/admin/compras/create', 'rutas' => ['compras.create', 'compras.store']],
     'calendarios.calendario' => ['grupo' => 'Disponibilidad', 'texto' => 'Calendario', 'url' => '/admin/calendarios/calendario', 'rutas' => ['calendarios.calendario', 'calendarios.reservar']],
     'calendarios.disponibilidad' => ['grupo' => 'Disponibilidad', 'texto' => 'Generar Calendario', 'url' => '/admin/calendarios/disponibilidad', 'rutas' => ['calendarios.disponibilidad', 'calendarios.store']],

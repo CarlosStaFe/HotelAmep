@@ -56,29 +56,67 @@ class CompraTest extends TestCase
             'prefijo' => 1,
             'subfijo' => 23,
             'dias' => 30,
-            'total' => 9.36,
+            'total' => 1234.56,
             'estado' => 'Pendiente',
             'usuario_id' => 1,
             'created_at' => now(),
-            'updated_at' => now(),
+            'updated_at' => '2026-11-24 18:20:30',
         ]);
 
         $this->actingAs(User::factory()->create())
             ->get(route('compras.index'))
             ->assertOk()
             ->assertSeeText('Fecha')
-            ->assertSee('<td style="text-align: right;">19/11/2026</td>', false)
+            ->assertSee('<td style="text-align: right;" data-order="2026-11-19">19/11/2026</td>', false)
             ->assertSeeText('Nombre')
             ->assertSeeText('Razón Social')
             ->assertSeeText('Factura A')
             ->assertSeeText('PreFijo')
             ->assertSeeText('SubFijo')
+            ->assertSeeText('Total')
+            ->assertSeeText('Modificado')
+            ->assertSee('<td class="text-right" data-order="1234.56">1,234.56</td>', false)
+            ->assertSee('<td class="text-right" data-order="2026-11-24 18:20:30">24/11/2026 18:20:30</td>', false)
             ->assertSee('<td style="text-align: right;">1</td>', false)
             ->assertSee('<td style="text-align: right;">23</td>', false)
             ->assertSeeText('Pendiente')
             ->assertSeeText('Proveedor SA')
             ->assertSee('href="'.route('compras.show', $compra).'"', false)
             ->assertSee('aria-label="Ver detalle de la compra '.$compra.'"', false);
+    }
+
+    public function test_listado_ordena_por_fecha_de_compra_mas_reciente_y_luego_por_numero(): void
+    {
+        [$proveedor] = $this->datos();
+        $base = [
+            'proveedor_id' => $proveedor, 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 0, 'total' => 0,
+            'estado' => 'Contado', 'usuario_id' => 1,
+        ];
+        $diciembre = DB::table('compras')->insertGetId($base + ['fechaCpra' => '2026-12-31']);
+        $enero = DB::table('compras')->insertGetId($base + ['fechaCpra' => '2027-01-02']);
+        $noviembre = DB::table('compras')->insertGetId($base + ['fechaCpra' => '2026-11-15']);
+        $mismoDia = DB::table('compras')->insertGetId($base + ['fechaCpra' => '2027-01-02']);
+
+        $this->actingAs(User::factory()->create())->get(route('compras.index'))->assertOk()
+            ->assertViewHas('compras', fn ($compras) => $compras->pluck('id')->all() === [$mismoDia, $enero, $diciembre, $noviembre])
+            ->assertSee('data-order="2027-01-02">02/01/2027', false)
+            ->assertSee('data-order="2026-12-31">31/12/2026', false)
+            ->assertSee('"order": [[1, "desc"], [0, "desc"]]', false);
+    }
+
+    public function test_listado_muestra_un_guion_si_la_compra_no_tiene_fecha_de_modificacion(): void
+    {
+        [$proveedor] = $this->datos();
+        DB::table('compras')->insert([
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 0, 'total' => 0,
+            'estado' => 'Contado', 'usuario_id' => 1, 'updated_at' => null,
+        ]);
+
+        $this->actingAs(User::factory()->create())->get(route('compras.index'))->assertOk()
+            ->assertSee('<td class="text-right" data-order="">-</td>', false)
+            ->assertSee('>0.00</td>', false);
     }
 
     public function test_detalle_muestra_solo_las_lineas_de_la_compra_seleccionada(): void
@@ -133,6 +171,153 @@ class CompraTest extends TestCase
         $this->be($usuario->fresh())->get(route('compras.show', $compra))
             ->assertOk()->assertSeeText('Esta compra no tiene detalles.');
         $this->get(route('compras.show', 999999))->assertNotFound();
+    }
+
+    public function test_solo_muestra_y_aplica_el_pago_a_la_compra_pendiente_seleccionada(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-25 12:00:00'));
+        [$proveedor] = $this->datos();
+        $base = [
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-01', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 3, 'total' => '125.50',
+            'usuario_id' => 1, 'updated_at' => '2026-11-01 10:00:00', 'observacion' => 'Compra original',
+        ];
+        $pendiente = DB::table('compras')->insertGetId($base + ['estado' => 'Pendiente']);
+        $otraPendiente = DB::table('compras')->insertGetId($base + ['estado' => 'Pendiente']);
+        $contado = DB::table('compras')->insertGetId($base + ['estado' => 'Contado']);
+        $pagada = DB::table('compras')->insertGetId($base + ['estado' => 'Pagada']);
+        $usuario = User::factory()->create();
+        DB::table('user_menu_access')->insert(['user_id' => $usuario->id, 'menu_key' => 'compras.index']);
+
+        $listado = $this->be($usuario)->get(route('compras.index'))->assertOk()
+            ->assertSee('data-url="'.route('compras.pagar', $pendiente).'"', false)
+            ->assertSee('data-url="'.route('compras.pagar', $otraPendiente).'"', false)
+            ->assertDontSee('data-url="'.route('compras.pagar', $contado).'"', false)
+            ->assertDontSee('data-url="'.route('compras.pagar', $pagada).'"', false)
+            ->assertSee('class="btn btn-success" aria-label="Marcar compra '.$pendiente.' como pagada"', false)
+            ->assertSee('<i class="bi bi-currency-dollar"></i>', false)
+            ->assertSee('name="datos_pago"', false);
+        foreach ([$contado, $pagada] as $id) {
+            $this->assertMatchesRegularExpression(
+                '/<tr class="table-success">\s*<td style="text-align: right;">'.$id.'<\/td>/',
+                $listado->getContent()
+            );
+        }
+
+        $this->patch(route('compras.pagar', $pendiente), ['estado' => 'Contado', 'datos_pago' => 'Transferencia 123'])
+            ->assertRedirect(route('compras.index'))->assertSessionHas('success', 'Compra marcada como pagada.');
+        $this->assertDatabaseHas('compras', [
+            'id' => $pendiente, 'estado' => 'Pagada', 'total' => 125.50, 'dias' => 3,
+            'observacion' => "Compra original\nPago: Transferencia 123",
+        ]);
+        $this->assertDatabaseHas('compras', ['id' => $otraPendiente, 'estado' => 'Pendiente', 'updated_at' => '2026-11-01 10:00:00']);
+        $this->assertDatabaseHas('compras', ['id' => $contado, 'estado' => 'Contado', 'updated_at' => '2026-11-01 10:00:00']);
+
+        $respuesta = $this->get(route('compras.index'))->assertOk()
+            ->assertSee('Compra marcada como pagada.')
+            ->assertSee('<td class="text-right" data-order="2026-11-25 12:00:00">25/11/2026 12:00:00</td>', false)
+            ->assertDontSee('data-url="'.route('compras.pagar', $pendiente).'"', false);
+        $this->assertMatchesRegularExpression(
+            '/<tr class="table-success">\s*<td style="text-align: right;">'.$pendiente.'<\/td>/',
+            $respuesta->getContent()
+        );
+        $this->get(route('compras.show', $pendiente))->assertOk()
+            ->assertSeeText('Compra original')->assertSeeText('Pago: Transferencia 123');
+    }
+
+    public function test_pago_requiere_permiso_y_rechaza_compras_no_pendientes_o_inexistentes(): void
+    {
+        [$proveedor] = $this->datos();
+        $base = [
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 0, 'total' => 10,
+            'usuario_id' => 1, 'updated_at' => '2026-11-19 10:00:00',
+        ];
+        $pendiente = DB::table('compras')->insertGetId($base + ['estado' => 'Pendiente']);
+        $contado = DB::table('compras')->insertGetId($base + ['estado' => 'Contado']);
+        $pagada = DB::table('compras')->insertGetId($base + ['estado' => 'Pagada']);
+
+        $this->patch(route('compras.pagar', $pendiente), ['datos_pago' => 'Efectivo'])->assertRedirect(route('login'));
+        $usuario = User::factory()->create();
+        DB::table('user_menu_access')->insert(['user_id' => $usuario->id, 'menu_key' => 'compras.create']);
+        $this->be($usuario)->patch(route('compras.pagar', $pendiente), ['datos_pago' => 'Efectivo'])->assertForbidden();
+        $this->assertDatabaseHas('compras', ['id' => $pendiente, 'estado' => 'Pendiente']);
+
+        DB::table('user_menu_access')->insert(['user_id' => $usuario->id, 'menu_key' => 'compras.index']);
+        $this->be($usuario->fresh());
+        foreach ([$contado, $pagada] as $id) {
+            $this->patch(route('compras.pagar', $id), ['datos_pago' => 'Efectivo'])->assertRedirect(route('compras.index'))
+                ->assertSessionHas('error', 'Solo se pueden pagar compras pendientes.');
+        }
+        $this->assertDatabaseHas('compras', ['id' => $contado, 'estado' => 'Contado', 'updated_at' => '2026-11-19 10:00:00']);
+        $this->assertDatabaseHas('compras', ['id' => $pagada, 'estado' => 'Pagada', 'updated_at' => '2026-11-19 10:00:00']);
+        $this->patch(route('compras.pagar', 999999), ['datos_pago' => 'Efectivo'])->assertNotFound();
+    }
+
+    public function test_pago_exige_datos_validos_y_recupera_el_formulario(): void
+    {
+        [$proveedor] = $this->datos();
+        $compra = DB::table('compras')->insertGetId([
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 30, 'total' => 10,
+            'estado' => 'Pendiente', 'usuario_id' => 1, 'observacion' => 'Original',
+        ]);
+        $this->actingAs(User::factory()->create());
+
+        foreach (['', '   ', ['no es texto'], str_repeat('a', 256)] as $datosPago) {
+            $this->from(route('compras.index'))->patch(route('compras.pagar', $compra), ['datos_pago' => $datosPago])
+                ->assertRedirect(route('compras.index'))->assertSessionHasErrors('datos_pago');
+            $this->assertDatabaseHas('compras', ['id' => $compra, 'estado' => 'Pendiente', 'observacion' => 'Original']);
+        }
+
+        $this->get(route('compras.index'))->assertOk()
+            ->assertSee('action="'.route('compras.pagar', $compra).'"', false)
+            ->assertSee(str_repeat('a', 256))
+            ->assertSee('Los datos del pago no pueden superar 255 caracteres.')
+            ->assertSee("$('#pagoModal').modal('show');", false);
+    }
+
+    public function test_pago_conserva_una_observacion_extensa_y_registra_los_datos(): void
+    {
+        [$proveedor] = $this->datos();
+        $original = str_repeat('á', 255);
+        $pago = str_repeat('b', 255);
+        $compra = DB::table('compras')->insertGetId([
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 30, 'total' => 10,
+            'estado' => 'Pendiente', 'usuario_id' => 1, 'observacion' => $original,
+        ]);
+
+        $this->actingAs(User::factory()->create())->patch(route('compras.pagar', $compra), ['datos_pago' => $pago])
+            ->assertRedirect(route('compras.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('compras', [
+            'id' => $compra, 'estado' => 'Pagada', 'observacion' => $original."\nPago: ".$pago,
+        ]);
+
+        $migracion = require database_path('migrations/2026_11_26_180000_expand_observacion_compras_table.php');
+        try {
+            $migracion->down();
+            $this->fail('La migración no debe truncar observaciones extensas.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('más de 255 caracteres', $exception->getMessage());
+        }
+        $this->assertDatabaseHas('compras', ['id' => $compra, 'observacion' => $original."\nPago: ".$pago]);
+    }
+
+    public function test_pago_sin_observacion_previa_y_repeticion_no_altera_los_datos(): void
+    {
+        [$proveedor] = $this->datos();
+        $compra = DB::table('compras')->insertGetId([
+            'proveedor_id' => $proveedor, 'fechaCpra' => '2026-11-19', 'tipoCpbte' => 'Factura A',
+            'prefijo' => 1, 'subfijo' => 23, 'dias' => 30, 'total' => 10,
+            'estado' => 'Pendiente', 'usuario_id' => 1, 'observacion' => null,
+        ]);
+        $this->actingAs(User::factory()->create());
+        $this->patch(route('compras.pagar', $compra), ['datos_pago' => 'Efectivo'])
+            ->assertRedirect(route('compras.index'))->assertSessionHasNoErrors();
+        $this->patch(route('compras.pagar', $compra), ['datos_pago' => 'Otro pago'])
+            ->assertRedirect(route('compras.index'))->assertSessionHas('error');
+        $this->assertDatabaseHas('compras', ['id' => $compra, 'estado' => 'Pagada', 'observacion' => 'Pago: Efectivo']);
     }
 
     public function test_resalta_compras_solo_cuando_la_fecha_de_vencimiento_ya_paso(): void

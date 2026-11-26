@@ -51,6 +51,9 @@
                 </table>
             </div>
             <p class="text-right"><strong>Total: {{ number_format((float) $compra->total, 2, '.', ',') }}</strong></p>
+            @if ($compra->observacion)
+                <p style="white-space: pre-line"><strong>Observación:</strong> {{ $compra->observacion }}</p>
+            @endif
             <a href="{{ route('compras.index') }}" class="btn btn-secondary">Volver</a>
         </div>
     </div>

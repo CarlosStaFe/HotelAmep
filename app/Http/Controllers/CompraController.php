@@ -15,6 +15,7 @@ class CompraController extends Controller
     {
         $compras = DB::table('compras')
             ->leftJoin('proveedores', 'compras.proveedor_id', '=', 'proveedores.id')
+            ->orderByDesc('compras.fechaCpra')
             ->orderByDesc('compras.id')
             ->get([
                 'compras.id',
@@ -24,8 +25,10 @@ class CompraController extends Controller
                 'compras.tipoCpbte',
                 'compras.prefijo',
                 'compras.subfijo',
+                'compras.total',
                 'compras.estado',
                 'compras.dias',
+                'compras.updated_at',
             ]);
 
         return view('admin.proveedores.listarcpras', compact('compras'));
@@ -48,6 +51,41 @@ class CompraController extends Controller
             ->get(['detallecpras.*', 'articulos.nombre as articulo_nombre']);
 
         return view('admin.proveedores.detallecompra', compact('compra', 'detalles'));
+    }
+
+    public function marcarPagada(Request $request, int $id)
+    {
+        $request->merge(['compra_id' => $id]);
+        $datos = $request->validate([
+            'datos_pago' => ['required', 'string', 'max:255'],
+        ], [
+            'datos_pago.required' => 'Ingrese los datos del pago.',
+            'datos_pago.string' => 'Los datos del pago deben ser texto.',
+            'datos_pago.max' => 'Los datos del pago no pueden superar 255 caracteres.',
+        ]);
+
+        $actualizada = DB::transaction(function () use ($id, $datos) {
+            $compra = DB::table('compras')->where('id', $id)->lockForUpdate()->first();
+            abort_if(! $compra, 404);
+
+            if ($compra->estado !== 'Pendiente') {
+                return false;
+            }
+
+            DB::table('compras')->where('id', $id)->update([
+                'estado' => 'Pagada',
+                'observacion' => ($compra->observacion !== null && $compra->observacion !== ''
+                    ? $compra->observacion."\n" : '').'Pago: '.$datos['datos_pago'],
+                'updated_at' => now(),
+            ]);
+
+            return true;
+        });
+
+        return redirect()->route('compras.index')->with(
+            $actualizada ? 'success' : 'error',
+            $actualizada ? 'Compra marcada como pagada.' : 'Solo se pueden pagar compras pendientes.'
+        );
     }
 
     public function store(Request $request)

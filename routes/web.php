@@ -196,6 +196,10 @@ Route::get('/admin/compras/{id}', [App\Http\Controllers\CompraController::class,
 ->whereNumber('id')
 ->name('compras.show')
 ->middleware('auth');
+Route::patch('/admin/compras/{id}/pagar', [App\Http\Controllers\CompraController::class, 'marcarPagada'])
+->whereNumber('id')
+->name('compras.pagar')
+->middleware('auth');
 Route::post('/admin/compras', [App\Http\Controllers\CompraController::class, 'store'])
 ->name('compras.store')
 ->middleware('auth');
