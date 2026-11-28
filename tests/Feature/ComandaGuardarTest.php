@@ -77,6 +77,49 @@ class ComandaGuardarTest extends TestCase
         ];
     }
 
+    public function test_no_libera_ni_elimina_reserva_con_comandas_abiertas(): void
+    {
+        [$habitacion, $pasajeros, $articulos] = $this->datos();
+        DB::table('habitaciones')->where('id', $habitacion)->update(['numero' => '03']);
+        $usuario = User::factory()->create();
+        $reserva = DB::table('reservas')->where('habitacion_id', $habitacion)->first();
+        foreach (['2026-11-19', '2026-11-20'] as $fecha) {
+            DB::table('calendarios')->insert([
+                'habitacion_id' => $habitacion, 'pasajero_id' => $pasajeros[0],
+                'title' => 'Habitación', 'description' => 'Reserva',
+                'start' => $fecha.' 00:00:00', 'end' => $fecha.' 23:59:59',
+                'estado' => 'Ocupada', 'color' => '#B82E27',
+            ]);
+        }
+        $comanda = [
+            'articulo_id' => $articulos[0], 'pasajero_id' => $pasajeros[1], 'user_id' => $usuario->id,
+            'fecha' => now(), 'habitacion' => '03', 'puntoVenta' => 'Bar',
+            'cantidad' => 1, 'precio' => 10, 'total' => 10, 'estado' => 'Abierta',
+            'fecha_creacion' => now(), 'fecha_actualizacion' => now(),
+        ];
+        $id = DB::table('comandas')->insertGetId($comanda);
+        $this->actingAs($usuario);
+        foreach (['Liberada', 'Disponible'] as $estado) {
+            $this->from(route('calendarios.index'))
+                ->patch(route('reservas.cambiar-estado', $reserva->id), ['estado' => $estado])
+                ->assertRedirect(route('calendarios.index'))
+                ->assertSessionHasErrors(['estado' => 'No se puede liberar porque tiene comandas abiertas']);
+            $this->get(route('calendarios.index'))->assertSee('No se puede liberar porque tiene comandas abiertas');
+            $this->assertDatabaseHas('reservas', ['id' => $reserva->id, 'estado' => 'Ocupada']);
+            $this->assertSame(2, DB::table('calendarios')->where('habitacion_id', $habitacion)->where('estado', 'Ocupada')->count());
+            $this->assertSame(2, DB::table('asignadas')->where('reserva_id', $reserva->id)->where('estado', 'Ocupada')->count());
+            $this->assertDatabaseHas('comandas', ['id' => $id, 'estado' => 'Abierta']);
+        }
+
+        $this->post(route('comandas.cerrar'), ['habitacion' => '03', 'efectivo' => '10'])
+            ->assertRedirect(route('comandas.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('comandas', ['id' => $id, 'estado' => 'Cerrada']);
+        DB::table('comandas')->insert(array_merge($comanda, ['habitacion' => '20']));
+        $this->patch(route('reservas.cambiar-estado', $reserva->id), ['estado' => 'Liberada'])
+            ->assertRedirect(route('calendarios.index'))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('reservas', ['id' => $reserva->id, 'estado' => 'Liberada']);
+    }
+
     public function test_listado_muestra_solo_los_consumos_y_devoluciones_abiertos(): void
     {
         [$habitacion, $pasajeros, $articulos] = $this->datos();

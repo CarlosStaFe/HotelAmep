@@ -20,7 +20,7 @@ class ReservaController extends Controller
         ]);
 
         DB::transaction(function () use ($reserva, $datos) {
-            Habitacion::whereKey($reserva->habitacion_id)->lockForUpdate()->firstOrFail();
+            $habitacion = Habitacion::whereKey($reserva->habitacion_id)->lockForUpdate()->firstOrFail();
             $reserva = Reserva::whereKey($reserva->id)->lockForUpdate()->firstOrFail();
             $estado = $datos['estado'];
             $transiciones = [
@@ -33,6 +33,15 @@ class ReservaController extends Controller
             if (! in_array($estado, $transiciones[$reserva->estado] ?? [], true)) {
                 throw ValidationException::withMessages([
                     'estado' => 'La operación no está permitida para el estado actual de la reserva.',
+                ]);
+            }
+
+            if (in_array($estado, ['Liberada', 'Disponible'], true) && DB::table('comandas')
+                ->where('habitacion', $habitacion->numero)
+                ->where('estado', 'Abierta')
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'estado' => 'No se puede liberar porque tiene comandas abiertas',
                 ]);
             }
 
